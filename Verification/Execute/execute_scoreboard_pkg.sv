@@ -166,6 +166,31 @@ package execute_scoreboard_pkg;
             end 
         endfunction
 
+        function void compare_ints_5_percent(int a, int b);
+            int diff;
+            int max_val;
+            int abs_a, abs_b;
+            
+            // 1. Get absolute values of a and b
+            abs_a = (a < 0) ? -a : a;
+            abs_b = (b < 0) ? -b : b;
+            
+            // 2. Calculate the absolute difference
+            diff = (a > b) ? (a - b) : (b - a);
+            
+            // 3. Find the maximum absolute value to act as our baseline
+            max_val = (abs_a > abs_b) ? abs_a : abs_b;
+            
+            // 4. Compare using integer math (diff * 100 <= max_val * 5)
+            // Using 100 and 5 scales the math so we don't need real numbers
+            if(!((diff * 100) <= (max_val * 5)))         
+            begin
+                real rel_err = (max_val == 0) ? 0 : (diff * 1.0 / max_val);
+                $display("Values %0d and %0d differ by relative error %f @%t , Operation: %s, FPUInputA = %f, FPUInputB = %f", a, b, rel_err, $time,sc_item.FPUControlE.name(),FPUInA_real,FPUInB_real);
+                fail++;
+            end
+        endfunction:compare_ints_5_percent
+
         function automatic int fclass_s(input shortreal rval);
 
             // Extract IEEE-754 fields
@@ -977,8 +1002,14 @@ package execute_scoreboard_pkg;
                 end
                 if (FPUOutM != sc_item.FPUOutM) 
                 begin
-                    compare_shortreal_rel_error($bitstoshortreal(sc_item.FPUOutM), $bitstoshortreal(FPUOutM), 5e-2);
-                    fail++;
+                    if((sc_item.FPUControlE == FCVT_W_S) || (sc_item.FPUControlE == FCVT_WU_S))
+                    begin
+                        compare_ints_5_percent(sc_item.FPUOutM, FPUOutM);
+                    end
+                    else
+                    begin
+                        compare_shortreal_rel_error($bitstoshortreal(sc_item.FPUOutM), $bitstoshortreal(FPUOutM), 5e-2);
+                    end
                 end
                 if (FPURegWriteM != sc_item.FPURegWriteM) 
                 begin

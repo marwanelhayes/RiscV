@@ -1,4 +1,19 @@
 BEGIN 3:execute_interface:fast__2:work
+    ZeroM :  1:execute_top:fast:work
+    RegWriteM :  1:execute_top:fast:work
+    funct3E :  1:execute_top:fast:work
+    UnderflowM :  1:execute_top:fast:work
+    WriteDataM :  1:execute_top:fast:work
+    ResultW :  1:execute_top:fast:work
+    Rs2FE :  1:execute_top:fast:work
+    SoftwareInterrupt :  1:execute_top:fast:work
+    RD1E :  1:execute_top:fast:work
+    ForwardFloatingAE :  1:execute_top:fast:work
+    EbreakE :  1:execute_top:fast:work
+    FPURegWriteE :  1:execute_top:fast:work
+    MemWriteE :  1:execute_top:fast:work
+    RD2FE :  1:execute_top:fast:work
+    CsrIndexE :  1:execute_top:fast:work
     CsrOutPC :  1:execute_top:fast:work
     RegWriteE :  1:execute_top:fast:work
     MoveOperationM :  1:execute_top:fast:work
@@ -47,19 +62,4 @@ BEGIN 3:execute_interface:fast__2:work
     FPURegWriteM :  1:execute_top:fast:work
     funct3M :  1:execute_top:fast:work
     ForwardAE :  1:execute_top:fast:work
-    ZeroM :  1:execute_top:fast:work
-    RegWriteM :  1:execute_top:fast:work
-    funct3E :  1:execute_top:fast:work
-    UnderflowM :  1:execute_top:fast:work
-    WriteDataM :  1:execute_top:fast:work
-    ResultW :  1:execute_top:fast:work
-    Rs2FE :  1:execute_top:fast:work
-    SoftwareInterrupt :  1:execute_top:fast:work
-    RD1E :  1:execute_top:fast:work
-    ForwardFloatingAE :  1:execute_top:fast:work
-    EbreakE :  1:execute_top:fast:work
-    FPURegWriteE :  1:execute_top:fast:work
-    MemWriteE :  1:execute_top:fast:work
-    RD2FE :  1:execute_top:fast:work
-    CsrIndexE :  1:execute_top:fast:work
 END 

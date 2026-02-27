@@ -35,117 +35,53 @@ module risc_fpu #(
         input round_mode_t round
     );
         logic sign;
-        logic [EXP_BITS-1:0] exponent;
-        logic [FRAC_BITS-1:0] fraction;
-        logic [FRAC_BITS:0] mantissa;
+        logic [EXP_BITS-1:0]  exponent;
+        logic [FRAC_BITS:0] mantissa; // Including hidden bit
         logic signed [EXP_BITS:0] exp_unbiased;
-        logic [WIDTH-1:0] abs_trunc;
-        logic [WIDTH:0] abs_rounded;
-        logic guard_bit;
-        logic sticky_bit;
-        logic frac_nonzero;
-        logic round_inc;
-        logic [WIDTH-1:0] signed_max;
-        logic [WIDTH-1:0] signed_min;
-        logic [WIDTH-1:0] unsigned_max;
-        int shift_amt;
+        logic [WIDTH-1:0] InternalResult;
+        logic [EXP_BITS-1:0] shift_amount;
+        logic signed [1:0] round_up;
+        bit frac_not_zero;
 
-        sign         = float_in[WIDTH-1];
-        exponent     = float_in[WIDTH-2 -: EXP_BITS];
-        fraction     = float_in[FRAC_BITS-1:0];
-        mantissa     = (exponent == '0) ? {1'b0, fraction} : {1'b1, fraction};
-        exp_unbiased = $signed({1'b0, exponent}) - BIAS;
+        round_up = 0;
+        sign     = float_in[WIDTH-1];
+        exponent = float_in[WIDTH-2 -:EXP_BITS];
+        mantissa = {1'b1, float_in[FRAC_BITS-1:0]}; // Append hidden bit
+        frac_not_zero = |float_in[FRAC_BITS-1:0];
+        FloatToInt = 0;
 
-        signed_max   = {1'b0, {(WIDTH-1){1'b1}}};
-        signed_min   = {1'b1, {(WIDTH-1){1'b0}}};
-        unsigned_max = {WIDTH{1'b1}};
+        exp_unbiased = exponent - BIAS;
 
-        abs_trunc    = '0;
-        guard_bit    = 1'b0;
-        sticky_bit   = 1'b0;
-        frac_nonzero = 1'b0;
+        InternalResult = mantissa;
 
-        if (exp_unbiased < 0)
-        begin
-            abs_trunc    = '0;
-            frac_nonzero = (mantissa != '0);
-            if (exp_unbiased == -1)
-            begin
-                guard_bit  = mantissa[FRAC_BITS];
-                sticky_bit = |mantissa[FRAC_BITS-1:0];
-            end
-        end
-        else if (exp_unbiased < FRAC_BITS)
-        begin
-            shift_amt    = FRAC_BITS - exp_unbiased;
-            abs_trunc    = {{(WIDTH-(FRAC_BITS+1)){1'b0}}, mantissa} >> shift_amt;
-            frac_nonzero = |mantissa[shift_amt-1:0];
-            guard_bit    = mantissa[shift_amt-1];
-            if (shift_amt > 1)
-                sticky_bit = |mantissa[shift_amt-2:0];
-        end
-        else if (exp_unbiased <= (WIDTH-1))
-        begin
-            shift_amt    = exp_unbiased - FRAC_BITS;
-            abs_trunc    = {{(WIDTH-(FRAC_BITS+1)){1'b0}}, mantissa} << shift_amt;
-            frac_nonzero = 1'b0;
-        end
-        else
-        begin
-            abs_trunc    = '0;
-            frac_nonzero = 1'b0;
-        end
-
-        case (round)
-            RNE: round_inc = guard_bit & (sticky_bit | abs_trunc[0]);
-            RTZ: round_inc = 1'b0;
-            RDN: round_inc = sign & frac_nonzero;
-            RUP: round_inc = (~sign) & frac_nonzero;
-            RMM: round_inc = guard_bit;
-            default: round_inc = guard_bit & (sticky_bit | abs_trunc[0]);
+        case(round)
+            RNE: round_up = (SignOrUnsign & sign) ? {1'b1, InternalResult[FRAC_BITS-1]} : {1'b0, InternalResult[FRAC_BITS-1]};
+            RTZ: round_up = 2'b0;
+            RDN: round_up = (SignOrUnsign & sign) ? 2'b11 : 2'b0;
+            RUP: round_up = 2'b01;
+            RMM: round_up = (SignOrUnsign & sign) ? 2'b11 : 2'b01;
         endcase
 
-        abs_rounded = {1'b0, abs_trunc} + round_inc;
-
-        if (exponent == {EXP_BITS{1'b1}})
+        
+        if ((!exponent) || (exp_unbiased[FRAC_BITS])) 
         begin
-            if (SignOrUnsign)
-                FloatToInt = sign ? signed_min : signed_max;
-            else
-                FloatToInt = sign ? '0 : unsigned_max;
-        end
-        else if (!SignOrUnsign)
+            // Denormalized or zero
+            FloatToInt = 32'd0;
+        end 
+        else if (exp_unbiased > FRAC_BITS) 
         begin
-            if (sign && (mantissa != '0))
-                FloatToInt = '0;
-            else if (exp_unbiased > WIDTH)
-                FloatToInt = unsigned_max;
-            else if (abs_rounded[WIDTH])
-                FloatToInt = unsigned_max;
-            else
-                FloatToInt = abs_rounded[WIDTH-1:0];
-        end
-        else
+            // Overflow beyond mantissa width
+            FloatToInt = mantissa << (exp_unbiased[EXP_BITS-1:0] - FRAC_BITS);
+        end 
+        else 
         begin
-            if (!sign)
-            begin
-                if (exp_unbiased >= (WIDTH-1))
-                    FloatToInt = signed_max;
-                else if (abs_rounded[WIDTH-1])
-                    FloatToInt = signed_max;
-                else
-                    FloatToInt = $signed(abs_rounded[WIDTH-1:0]);
-            end
-            else
-            begin
-                if (exp_unbiased > (WIDTH-1))
-                    FloatToInt = signed_min;
-                else if (abs_rounded > {1'b0, signed_min})
-                    FloatToInt = signed_min;
-                else
-                    FloatToInt = -$signed(abs_rounded[WIDTH-1:0]);
-            end
+            // Shift mantissa according to exponent
+            shift_amount = FRAC_BITS - exp_unbiased[EXP_BITS-1:0];
+            FloatToInt = mantissa >> shift_amount;
         end
+        FloatToInt += round_up;
+        if(SignOrUnsign && sign)
+            FloatToInt = -FloatToInt;
     endfunction
 
     function logic [WIDTH-1:0] IntToFloat
@@ -411,10 +347,12 @@ module risc_fpu #(
             FCVT_S_W:
             begin
                 Result = IntToFloat(InA, 1'b1, round_mode);
+                {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
             end
             FCVT_S_WU:
             begin
                 Result = IntToFloat(InA, 1'b0, round_mode);
+                {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
             end
             FMV_S_X:
             begin

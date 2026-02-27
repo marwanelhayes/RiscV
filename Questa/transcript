@@ -1,1307 +1,330 @@
-# project open test.mpf
-# Loading project test
-#  project compileall
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/alu_decoder.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package alu_decoder_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module alu_decoder
-# 
-# Top level modules:
-# 	alu_decoder
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/data_memory.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module data_memory
-# 
-# Top level modules:
-# 	data_memory
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/decode_stage.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_stage_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module decode_stage
-# 
-# Top level modules:
-# 	decode_stage
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/execute_stage.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_stage_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module execute_stage
-# 
-# Top level modules:
-# 	execute_stage
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/fetch_stage.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module fetch_stage
-# 
-# Top level modules:
-# 	fetch_stage
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/hazard_unit.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_unit_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module hazard_unit
-# 
-# Top level modules:
-# 	hazard_unit
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/memory_stage.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package memory_stage_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module memory_stage
-# 
-# Top level modules:
-# 	memory_stage
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/opcode_decoder.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package opcode_decoder_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module opcode_decoder
-# 
-# Top level modules:
-# 	opcode_decoder
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/pc_adder.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module pc_adder
-# 
-# Top level modules:
-# 	pc_adder
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_alu.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_alu_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_alu
-# 
-# Top level modules:
-# 	risc_alu
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_control_unit.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_control_unit_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_control_unit
-# 
-# Top level modules:
-# 	risc_control_unit
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_data_memory.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_data_memory_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_data_memory
-# 
-# Top level modules:
-# 	risc_data_memory
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module risc_instruction_memory
-# 
-# Top level modules:
-# 	risc_instruction_memory
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_mem.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_mem_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_mem
-# 
-# Top level modules:
-# 	risc_mem
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_mux2.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module risc_mux2
-# 
-# Top level modules:
-# 	risc_mux2
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_mux3.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module risc_mux3
-# 
-# Top level modules:
-# 	risc_mux3
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_reg_file.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_reg_file_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_reg_file
-# 
-# Top level modules:
-# 	risc_reg_file
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/riscv_processor.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package riscv_processor_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module riscv_processor
-# 
-# Top level modules:
-# 	riscv_processor
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/shared_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/wb_stage.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package wb_stage_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module wb_stage
-# 
-# Top level modules:
-# 	wb_stage
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_agent_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_config_pkg
-# -- Importing package decode_scoreboard_pkg
-# -- Importing package decode_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface decode_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package decode_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_env_pkg
-# -- Importing package decode_agent_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_config_pkg
-# -- Importing package decode_scoreboard_pkg
-# -- Importing package decode_subscriber_pkg
-# -- Importing package decode_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module decode_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package decode_test_pkg
-# -- Importing package decode_env_pkg
-# -- Importing package decode_agent_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_config_pkg
-# -- Importing package decode_scoreboard_pkg
-# -- Importing package decode_subscriber_pkg
-# -- Importing package decode_seq_pkg
-# 
-# Top level modules:
-# 	decode_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/parameters_decode.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_agent_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_config_pkg
-# -- Importing package execute_scoreboard_pkg
-# -- Importing package execute_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface execute_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package execute_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_env_pkg
-# -- Importing package execute_agent_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_config_pkg
-# -- Importing package execute_scoreboard_pkg
-# -- Importing package execute_subscriber_pkg
-# -- Importing package execute_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module execute_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package execute_test_pkg
-# -- Importing package execute_env_pkg
-# -- Importing package execute_agent_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_config_pkg
-# -- Importing package execute_scoreboard_pkg
-# -- Importing package execute_subscriber_pkg
-# -- Importing package execute_seq_pkg
-# 
-# Top level modules:
-# 	execute_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/parameters_exe.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_agent_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_config_pkg
-# -- Importing package fetch_scoreboard_pkg
-# -- Importing package fetch_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface fetch_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fetch_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_env_pkg
-# -- Importing package fetch_agent_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_config_pkg
-# -- Importing package fetch_scoreboard_pkg
-# -- Importing package fetch_subscriber_pkg
-# -- Importing package fetch_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/fetch_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module fetch_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Fetch/fetch_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_test_pkg
-# -- Importing package fetch_env_pkg
-# -- Importing package fetch_agent_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_config_pkg
-# -- Importing package fetch_scoreboard_pkg
-# -- Importing package fetch_subscriber_pkg
-# -- Importing package fetch_seq_pkg
-# 
-# Top level modules:
-# 	fetch_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Fetch/parameters_fetch.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_agent_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_config_pkg
-# -- Importing package mem_scoreboard_pkg
-# -- Importing package mem_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface mem_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package mem_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_env_pkg
-# -- Importing package mem_agent_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_config_pkg
-# -- Importing package mem_scoreboard_pkg
-# -- Importing package mem_subscriber_pkg
-# -- Importing package mem_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module mem_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package mem_test_pkg
-# -- Importing package mem_env_pkg
-# -- Importing package mem_agent_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_config_pkg
-# -- Importing package mem_scoreboard_pkg
-# -- Importing package mem_subscriber_pkg
-# -- Importing package mem_seq_pkg
-# 
-# Top level modules:
-# 	mem_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/parameters_mem.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/parameters_risc.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/risc_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling interface risc_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/risc_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/risc_test_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package fetch_config_pkg
-# -- Importing package fetch_env_pkg
-# -- Importing package fetch_agent_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_scoreboard_pkg
-# -- Importing package fetch_subscriber_pkg
-# -- Importing package mem_config_pkg
-# -- Importing package mem_env_pkg
-# -- Importing package mem_agent_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_scoreboard_pkg
-# -- Importing package mem_subscriber_pkg
-# -- Importing package decode_config_pkg
-# -- Importing package decode_env_pkg
-# -- Importing package decode_agent_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_scoreboard_pkg
-# -- Importing package decode_subscriber_pkg
-# -- Importing package execute_config_pkg
-# -- Importing package execute_env_pkg
-# -- Importing package execute_agent_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_scoreboard_pkg
-# -- Importing package execute_subscriber_pkg
-# -- Importing package writeback_config_pkg
-# -- Importing package writeback_env_pkg
-# -- Importing package writeback_agent_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_scoreboard_pkg
-# -- Importing package writeback_subscriber_pkg
-# -- Importing package hazard_config_pkg
-# -- Importing package hazard_env_pkg
-# -- Importing package hazard_agent_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_scoreboard_pkg
-# -- Importing package hazard_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/risc_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module risc_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/risc_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package risc_test_pkg
-# -- Importing package fetch_config_pkg
-# -- Importing package fetch_env_pkg
-# -- Importing package fetch_agent_pkg
-# -- Importing package fetch_driver_pkg
-# -- Importing package fetch_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package fetch_monitor_pkg
-# -- Importing package fetch_scoreboard_pkg
-# -- Importing package fetch_subscriber_pkg
-# -- Importing package mem_config_pkg
-# -- Importing package mem_env_pkg
-# -- Importing package mem_agent_pkg
-# -- Importing package mem_driver_pkg
-# -- Importing package mem_item_pkg
-# -- Importing package mem_monitor_pkg
-# -- Importing package mem_scoreboard_pkg
-# -- Importing package mem_subscriber_pkg
-# -- Importing package decode_config_pkg
-# -- Importing package decode_env_pkg
-# -- Importing package decode_agent_pkg
-# -- Importing package decode_driver_pkg
-# -- Importing package decode_item_pkg
-# -- Importing package decode_monitor_pkg
-# -- Importing package decode_scoreboard_pkg
-# -- Importing package decode_subscriber_pkg
-# -- Importing package execute_config_pkg
-# -- Importing package execute_env_pkg
-# -- Importing package execute_agent_pkg
-# -- Importing package execute_driver_pkg
-# -- Importing package execute_item_pkg
-# -- Importing package execute_monitor_pkg
-# -- Importing package execute_scoreboard_pkg
-# -- Importing package execute_subscriber_pkg
-# -- Importing package writeback_config_pkg
-# -- Importing package writeback_env_pkg
-# -- Importing package writeback_agent_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_scoreboard_pkg
-# -- Importing package writeback_subscriber_pkg
-# -- Importing package hazard_config_pkg
-# -- Importing package hazard_env_pkg
-# -- Importing package hazard_agent_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_scoreboard_pkg
-# -- Importing package hazard_subscriber_pkg
-# 
-# Top level modules:
-# 	risc_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/parameters_wb.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_agent_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_config_pkg
-# -- Importing package writeback_scoreboard_pkg
-# -- Importing package writeback_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface writeback_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package writeback_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_env_pkg
-# -- Importing package writeback_agent_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_config_pkg
-# -- Importing package writeback_scoreboard_pkg
-# -- Importing package writeback_subscriber_pkg
-# -- Importing package writeback_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module writeback_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/WriteBack/writeback_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package writeback_test_pkg
-# -- Importing package writeback_env_pkg
-# -- Importing package writeback_agent_pkg
-# -- Importing package writeback_driver_pkg
-# -- Importing package writeback_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package writeback_monitor_pkg
-# -- Importing package writeback_config_pkg
-# -- Importing package writeback_scoreboard_pkg
-# -- Importing package writeback_subscriber_pkg
-# -- Importing package writeback_seq_pkg
-# 
-# Top level modules:
-# 	writeback_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/fetch_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/fetch_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package fetch_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface fetch_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/execute_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/execute_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package execute_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Importing package shared_pkg
-# -- Compiling interface execute_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/decode_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/decode_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package decode_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Importing package shared_pkg
-# -- Compiling interface decode_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/memory_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/memory_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package memory_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Importing package shared_pkg
-# -- Compiling interface memory_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/wb_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/wb_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package wb_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Importing package shared_pkg
-# -- Compiling interface wb_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_agent_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_agent_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_config_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_config_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_config_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_driver_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_driver_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_env_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_env_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_env_pkg.sv(5): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_agent_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_config_pkg
-# -- Importing package hazard_scoreboard_pkg
-# -- Importing package hazard_subscriber_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_interface.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_interface_sv_unit
-# -- Importing package shared_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Compiling interface hazard_interface
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_item_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_item_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_monitor_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_monitor_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_scoreboard_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_scoreboard_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_seq_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_seq_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_item_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_subscriber_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_subscriber_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_test_pkg.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package hazard_test_pkg
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_test_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_env_pkg
-# -- Importing package hazard_agent_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_config_pkg
-# -- Importing package hazard_scoreboard_pkg
-# -- Importing package hazard_subscriber_pkg
-# -- Importing package hazard_seq_pkg
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/hazard_top.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module hazard_top
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Hazard/hazard_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Importing package hazard_test_pkg
-# -- Importing package hazard_env_pkg
-# -- Importing package hazard_agent_pkg
-# -- Importing package hazard_driver_pkg
-# -- Importing package hazard_item_pkg
-# -- Importing package shared_pkg
-# -- Importing package hazard_monitor_pkg
-# -- Importing package hazard_config_pkg
-# -- Importing package hazard_scoreboard_pkg
-# -- Importing package hazard_subscriber_pkg
-# -- Importing package hazard_seq_pkg
-# 
-# Top level modules:
-# 	hazard_top
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Hazard/parameters_hazard.svh
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/hazard_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/hazard_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
-# -- Compiling package hazard_wr_sv_unit
-# -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-# -- Importing package shared_pkg
-# -- Compiling interface hazard_wr
-# 
-# Top level modules:
-# 	--none--
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/csr_file.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package csr_file_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module csr_file
-# 
-# Top level modules:
-# 	csr_file
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/csr_defs.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/non_restoring_divider.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module non_restoring_divider
-# 
-# Top level modules:
-# 	non_restoring_divider
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/wallace_tree.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package wallace_tree_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module wallace_tree
-# 
-# Top level modules:
-# 	wallace_tree
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_add_sub.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package flp_add_sub_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module flp_add_sub
-# 
-# Top level modules:
-# 	flp_add_sub
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_div.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# ** Error: (vlog-13069) C:/Ain_shams/RiscV/Design/flp_div.sv(303): near "#": syntax error, unexpected '#'.
-# ** Error: C:/Ain_shams/RiscV/Design/flp_div.sv(303): (vlog-13205) Syntax error found in the scope following 'lzc_wr'. Is there a missing '::'?
-# C:/questasim64_2024.1/win64/vlog failed.
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_mul.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package flp_mul_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module flp_mul
-# 
-# Top level modules:
-# 	flp_mul
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_sqrt.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package flp_sqrt_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module flp_sqrt
-# 
-# Top level modules:
-# 	flp_sqrt
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/fp_reg_file.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fp_reg_file_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module fp_reg_file
-# 
-# Top level modules:
-# 	fp_reg_file
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/fpu_decoder.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package fpu_decoder_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module fpu_decoder
-# 
-# Top level modules:
-# 	fpu_decoder
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_fpu.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling package risc_fpu_sv_unit
-# -- Importing package shared_pkg
-# -- Compiling module risc_fpu
-# ** Error: C:/Ain_shams/RiscV/Design/risc_fpu.sv(82): Range must be bounded by constant expressions.
-# ** Error: C:/Ain_shams/RiscV/Design/risc_fpu.sv(85): Range must be bounded by constant expressions.
-# C:/questasim64_2024.1/win64/vlog failed.
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_mux4.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module risc_mux4
-# 
-# Top level modules:
-# 	risc_mux4
-# vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/lzc_wr.sv
-# QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
-# -- Compiling module lzc_wr
-# -- Compiling module lzc
-# 
-# Top level modules:
-# 	lzc_wr
-# 121 compiles, 0 failed with no errors.
-#  vsim work.execute_top
-# vsim work.execute_top 
-# Start time: 11:52:49 on Feb 27,2026
-# ** Note: (vsim-3812) Design is being optimized...
-# Support of the MGLS_LICENSE_FILE and LM_LICENSE_FILE licensing environment variables will be discontinued starting with the 2025.1 release. Please update to using the SALT_LICENSE_SERVER variable.
-# Please contact Siemens EDA Customer Support (https://support.sw.siemens.com/) for assistance.
-# ** Error: C:/Ain_shams/RiscV/Design/execute_stage.sv(95): Module 'risc_fpu' is not defined.
-#  For instance 'FPU' at path 'execute_top.DUT'
-# Optimization failed
-# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=1, Warnings=0.
-# Error loading design
-# End time: 11:52:50 on Feb 27,2026, Elapsed time: 0:00:01
-# Errors: 1, Warnings: 1
+# vsim work.execute_top +UVM_TESTNAME=execute_test
+# vsim work.execute_top "+UVM_TESTNAME=execute_test" 
+# Start time: 12:06:00 on Feb 27,2026
+# ** Note: (vsim-8009) Loading existing optimized design _opt5
+# //  Questa Sim-64
+# //  Version 2024.1 win64 Feb  1 2024
+# //
+# // Unpublished work. Copyright 2024 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# Loading sv_std.std
+# Loading work.shared_pkg(fast)
+# Loading work.csr_file_sv_unit(fast)
+# Loading work.flp_sqrt_sv_unit(fast)
+# Loading work.flp_div_sv_unit(fast)
+# Loading work.flp_mul_sv_unit(fast)
+# Loading work.flp_add_sub_sv_unit(fast)
+# Loading work.risc_fpu_sv_unit(fast)
+# Loading work.wallace_tree_sv_unit(fast)
+# Loading work.risc_alu_sv_unit(fast)
+# Loading work.execute_stage_sv_unit(fast)
+# Loading work.execute_interface(fast)
+# Loading mtiUvm.uvm_pkg(fast)
+# Loading work.execute_item_pkg(fast)
+# Loading work.execute_interface_sv_unit(fast)
+# Loading work.execute_seq_pkg(fast)
+# Loading work.execute_subscriber_pkg(fast)
+# Loading work.execute_scoreboard_pkg(fast)
+# Loading work.execute_config_pkg(fast)
+# Loading work.execute_monitor_pkg(fast)
+# Loading work.execute_driver_pkg(fast)
+# Loading work.execute_agent_pkg(fast)
+# Loading work.execute_env_pkg(fast)
+# Loading work.execute_test_pkg(fast)
+# Loading mtiUvm.questa_uvm_pkg(fast)
+# Loading work.execute_top(fast)
+# Loading work.non_restoring_divider(fast)
+# Loading C:/questasim64_2024.1/uvm-1.1d\win64\uvm_dpi.dll
+#  run -all
+# ----------------------------------------------------------------
+# UVM-1.1d
+# (C) 2007-2013 Mentor Graphics Corporation
+# (C) 2007-2013 Cadence Design Systems, Inc.
+# (C) 2006-2013 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(277) @ 0: reporter [Questa UVM] QUESTA_UVM-1.2.3
+# UVM_INFO verilog_src/questa_uvm_pkg-1.2/src/questa_uvm_pkg.sv(278) @ 0: reporter [Questa UVM]  questa_uvm::init(+struct)
+# UVM_INFO @ 0: reporter [RNTST] Running test execute_test...
+# UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+# --------------------------------------------------------------
+# Name                       Type                    Size  Value
+# --------------------------------------------------------------
+# uvm_test_top               execute_test            -     @472 
+#   env                      uvm_env                 -     @485 
+#     agent                  uvm_agent               -     @499 
+#       drv                  uvm_driver #(REQ,RSP)   -     @530 
+#         rsp_port           uvm_analysis_port       -     @545 
+#         seq_item_port      uvm_seq_item_pull_port  -     @537 
+#       mon                  uvm_monitor             -     @662 
+#         mon_port           uvm_analysis_port       -     @669 
+#       seq                  uvm_sequencer           -     @553 
+#         rsp_export         uvm_analysis_export     -     @560 
+#         seq_item_export    uvm_seq_item_pull_imp   -     @654 
+#         arbitration_queue  array                   0     -    
+#         lock_queue         array                   0     -    
+#         num_last_reqs      integral                32    'd1  
+#         num_last_rsps      integral                32    'd1  
+#     scoreboard             uvm_scoreboard          -     @506 
+#       sc_port              uvm_analysis_imp        -     @686 
+#     sub                    uvm_component           -     @513 
+#       analysis_imp         uvm_analysis_imp        -     @520 
+# --------------------------------------------------------------
+# 
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 315: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 955: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 1575: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 2395: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -0.000000 and 1204924006554140672.000000 differ by relative error 1.000000 (tolerance 0.050000) @                3155 , Operation: FCVT_W_S, FPUInputA = -7020886528.000000, FPUInputB = -28014188.000000
+# Values -0.000000 and -144115188075855872.000000 differ by relative error 1.000000 (tolerance 0.050000) @                3735 , Operation: FCVT_W_S, FPUInputA = -765136142860288.000000, FPUInputB = -765136142860288.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 5705: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 1 -- NaNM = 0, operation = FSQRT_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -0.000000 and 158456325028528675187087900672.000000 differ by relative error 1.000000 (tolerance 0.050000) @                6115 , Operation: FCVT_W_S, FPUInputA = -2901536292208640.000000, FPUInputB = 0.000000
+# Values 0.000000 and 8221760.000000 differ by relative error 1.000000 (tolerance 0.050000) @                6225 , Operation: FCVT_WU_S, FPUInputA = -1257957504.000000, FPUInputB = -177950965760.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 6675: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 8245: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FMUL_S , FPUOutM = -0.000000 , 80000a7f
+# Values -0.000000 and -1892.062500 differ by relative error 1.000000 (tolerance 0.050000) @                8265 , Operation: FCVT_W_S, FPUInputA = -5286100480.000000, FPUInputB = 0.000000
+# Values -0.000000 and 54368650970267648.000000 differ by relative error 1.000000 (tolerance 0.050000) @                8305 , Operation: FCVT_W_S, FPUInputA = -2763970560.000000, FPUInputB = 0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 12005: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 12205: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# Values -0.000000 and 590295810358705651712.000000 differ by relative error 1.000000 (tolerance 0.050000) @               13645 , Operation: FCVT_W_S, FPUInputA = -319011346710528.000000, FPUInputB = -319011346710528.000000
+# Values 0.000000 and -24495119557339819499428971020288.000000 differ by relative error 1.000000 (tolerance 0.050000) @               14105 , Operation: FCVT_WU_S, FPUInputA = -8381961728.000000, FPUInputB = 0.017895
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 15375: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 2147483648.000000 and -2147483648.000000 differ by relative error 2.000000 (tolerance 0.050000) @               16245 , Operation: FCVT_S_WU, FPUInputA = -0.000000, FPUInputB = -0.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 16715: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 16865: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 1 -- NaNM = 0, operation = FSQRT_S
+# Values inf and 0.000000 differ by relative error inf (tolerance 0.050000) @               17835 , Operation: FDIV_S, FPUInputA = -0.000000, FPUInputB = -4124082573200588800.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 17835: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 17835: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 17835: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 18235: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 18275: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# Values inf and 0.000000 differ by relative error inf (tolerance 0.050000) @               18765 , Operation: FDIV_S, FPUInputA = -0.000000, FPUInputB = -12261652517888196608.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 18765: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 18765: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 18765: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# Values -0.000000 and 668503069687808.000000 differ by relative error 1.000000 (tolerance 0.050000) @               19435 , Operation: FCVT_W_S, FPUInputA = -5423065726976.000000, FPUInputB = nan
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               20715 , Operation: FDIV_S, FPUInputA = 0.000000, FPUInputB = -177605001084928.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 20715: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 20715: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 20715: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 22419865600.000000 differ by relative error 1.000000 (tolerance 0.050000) @               21515 , Operation: FCVT_WU_S, FPUInputA = -1353124480.000000, FPUInputB = -0.004264
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 21925: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 2147483648.000000 and -2147483648.000000 differ by relative error 2.000000 (tolerance 0.050000) @               23725 , Operation: FCVT_S_WU, FPUInputA = -0.000000, FPUInputB = -0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -0.000000 and 2.000000 differ by relative error 1.000000 (tolerance 0.050000) @               24005 , Operation: FCVT_W_S, FPUInputA = -10806428700770304.000000, FPUInputB = 0.000017
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 24465: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 24645: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 27035: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 27145: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 27735: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 28675: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# Values 0.000000 and -512.000000 differ by relative error 1.000000 (tolerance 0.050000) @               29265 , Operation: FCVT_WU_S, FPUInputA = -62452112818176.000000, FPUInputB = 0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 29905: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 31255: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 31275: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               31505 , Operation: FDIV_S, FPUInputA = -0.000000, FPUInputB = 1178173244926632286399045628992684032.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 31505: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 31505: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 31505: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 32365: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FMUL_S
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               33725 , Operation: FDIV_S, FPUInputA = 0.000000, FPUInputB = -66203909817863940079616.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 33725: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 33725: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 33725: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 33935: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FMUL_S , FPUOutM = 0.000000 , 2b7
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 38975: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 39075: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               41755 , Operation: FDIV_S, FPUInputA = -0.000000, FPUInputB = 20715669761098875125249597500955820032.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 41755: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 41755: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 41755: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# Values -0.000000 and 134727434652602073088.000000 differ by relative error 1.000000 (tolerance 0.050000) @               42575 , Operation: FCVT_W_S, FPUInputA = -2669037824.000000, FPUInputB = -794849727646338646016.000000
+# Values 0.000000 and 2.000000 differ by relative error 1.000000 (tolerance 0.050000) @               43675 , Operation: FCVT_WU_S, FPUInputA = -12091248840015872.000000, FPUInputB = 0.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 43785: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FMUL_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 44795: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# Values -0.000000 and 0.125000 differ by relative error 1.000000 (tolerance 0.050000) @               45725 , Operation: FCVT_W_S, FPUInputA = -153015759667200.000000, FPUInputB = -17.906256
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               46435 , Operation: FDIV_S, FPUInputA = 0.000000, FPUInputB = -586054199824373795311467754422272.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 46435: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 46435: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 46435: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 52775: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# Values 0.000000 and 319388530135628110923974049792.000000 differ by relative error 1.000000 (tolerance 0.050000) @               53855 , Operation: FCVT_WU_S, FPUInputA = -182276128768.000000, FPUInputB = 0.000000
+# Values -0.000000 and 0.496094 differ by relative error 1.000000 (tolerance 0.050000) @               54355 , Operation: FCVT_W_S, FPUInputA = -114907283456.000000, FPUInputB = 0.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 57635: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -inf and -0.000000 differ by relative error inf (tolerance 0.050000) @               58245 , Operation: FDIV_S, FPUInputA = 0.000000, FPUInputB = -3482874604794413056.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1010) @ 58245: uvm_test_top.env.scoreboard [SCB] Actual output InfM = 1 -- InfM = 0, operation = FDIV_S
+# Values -0.000000 and 63802943797675961899382738893456539648.000000 differ by relative error 1.000000 (tolerance 0.050000) @               59455 , Operation: FCVT_W_S, FPUInputA = -70143287754752.000000, FPUInputB = -70143287754752.000000
+# Values 0.000000 and 269783632078002192384.000000 differ by relative error 1.000000 (tolerance 0.050000) @               62825 , Operation: FCVT_WU_S, FPUInputA = -1582182301696.000000, FPUInputB = -1582182301696.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 63815: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 8686934740675334734035879460864.000000 differ by relative error 1.000000 (tolerance 0.050000) @               66355 , Operation: FCVT_WU_S, FPUInputA = -1926973952.000000, FPUInputB = 15.725833
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 69485: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 69995: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 70775: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -0.000000 and -2.000000 differ by relative error 1.000000 (tolerance 0.050000) @               73135 , Operation: FCVT_W_S, FPUInputA = -14821602499756032.000000, FPUInputB = 0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 73375: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 75655: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 32.000000 differ by relative error 1.000000 (tolerance 0.050000) @               76395 , Operation: FCVT_WU_S, FPUInputA = -97612829032448.000000, FPUInputB = -97612829032448.000000
+# Values 0.000000 and -152.000000 differ by relative error 1.000000 (tolerance 0.050000) @               76975 , Operation: FCVT_WU_S, FPUInputA = -4547348529152.000000, FPUInputB = 0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 812088665771209460333825490944.000000 differ by relative error 1.000000 (tolerance 0.050000) @               78145 , Operation: FCVT_WU_S, FPUInputA = -792172167168.000000, FPUInputB = -103881443135210855071744.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 81935: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 82325: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 2264142814251389107579502240727040.000000 differ by relative error 1.000000 (tolerance 0.050000) @               82985 , Operation: FCVT_WU_S, FPUInputA = -1994343168.000000, FPUInputB = -1994343168.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 83435: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 7253554917687775048237056.000000 differ by relative error 1.000000 (tolerance 0.050000) @               84715 , Operation: FCVT_WU_S, FPUInputA = -993894858752.000000, FPUInputB = -993894858752.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 1921345029931008.000000 differ by relative error 1.000000 (tolerance 0.050000) @               86235 , Operation: FCVT_WU_S, FPUInputA = -1490710144.000000, FPUInputB = -0.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 86685: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = 0.000000 , 0
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 89325: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 91685: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values 0.000000 and 1325461267283968.000000 differ by relative error 1.000000 (tolerance 0.050000) @               93445 , Operation: FCVT_WU_S, FPUInputA = -14371172352.000000, FPUInputB = 301198144448807620868044750848.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(692): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1005) @ 94085: uvm_test_top.env.scoreboard [SCB] Actual output NaNM = 0 -- NaNM = 1, operation = FDIV_S
+# Values 0.000000 and -123145302310912.000000 differ by relative error 1.000000 (tolerance 0.050000) @               94255 , Operation: FCVT_WU_S, FPUInputA = -29265217191936.000000, FPUInputB = -29265217191936.000000
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1000) @ 94325: uvm_test_top.env.scoreboard [SCB] Actual output UnderflowM = 0 -- UnderflowM = 1 , operation = FDIV_S , FPUOutM = -0.000000 , 80000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1015) @ 96385: uvm_test_top.env.scoreboard [SCB] Actual output ZeroM = 0 -- ZeroM = 1, operation = FMUL_S
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# Values -0.000000 and -302231454903657293676544.000000 differ by relative error 1.000000 (tolerance 0.050000) @               97715 , Operation: FCVT_W_S, FPUInputA = -66392032280576.000000, FPUInputB = -66392032280576.000000
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# ** Error (suppressible): (vsim-8604) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(159): NaN (not a number) resulted from a division operation.
+# UVM_INFO verilog_src/uvm-1.1d/src/base/uvm_objection.svh(1267) @ 100045: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1037) @ 100045: uvm_test_top.env.scoreboard [SCB] sc_itemoreboard report
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1038) @ 100045: uvm_test_top.env.scoreboard [SCB] Actual Success count = 124
+# UVM_INFO C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(1039) @ 100045: uvm_test_top.env.scoreboard [SCB] Actual Fail count = 1151
+# 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :   77
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [Questa UVM]     2
+# [RNTST]     1
+# [SCB]    72
+# [TEST_DONE]     1
+# [UVMTOP]     1
+# ** Note: $finish    : C:/questasim64_2024.1/win64/../verilog_src/uvm-1.1d/src/base/uvm_root.svh(430)
+#    Time: 100045 ns  Iteration: 69  Instance: /execute_top
+# End time: 12:06:02 on Feb 27,2026, Elapsed time: 0:00:02
+# Errors: 104, Warnings: 0
