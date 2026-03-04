@@ -297,12 +297,9 @@ module flp_div
             
         end: normal_division
     end:comb
-      
-endmodule
 
-lzc_wr #(
-    .WIDTH(FRAC_BITS + 1)
-)InputALZC(
+
+lzc_wr #(.WIDTH(FRAC_BITS + 1)) InputALZC(
     .A_in({a[FRAC_BITS-1:0],1'b0}),
     .leading_zeros(LeadZeroCountA),
     .is_zero(MantAIsZero)
@@ -315,3 +312,5 @@ lzc_wr #(
     .leading_zeros(LeadZeroCountB),
     .is_zero(MantBIsZero)
 );
+
+endmodule

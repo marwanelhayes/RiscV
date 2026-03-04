@@ -19,6 +19,7 @@ module risc_fpu #(
     localparam int EXP_BITS     = (PRECISION == SINGLE) ? 8  : 11;
     localparam int FRAC_BITS    = (PRECISION == SINGLE) ? 23 : 52;
     localparam int BIAS         = (PRECISION == SINGLE) ? 127: 1023;
+    localparam int WIDTHBITS    = $clog2(WIDTH);
     
     mode_t add_sub_mode;
 
@@ -40,8 +41,11 @@ module risc_fpu #(
         logic signed [EXP_BITS:0] exp_unbiased;
         logic [WIDTH-1:0] InternalResult;
         logic [EXP_BITS-1:0] shift_amount;
-        logic signed [1:0] round_up;
+        int round_up ;
         bit frac_not_zero;
+        logic special; //Flag for special cases where rounding not needed
+        logic inf;
+        logic nan;
 
         round_up = 0;
         sign     = float_in[WIDTH-1];
@@ -49,25 +53,55 @@ module risc_fpu #(
         mantissa = {1'b1, float_in[FRAC_BITS-1:0]}; // Append hidden bit
         frac_not_zero = |float_in[FRAC_BITS-1:0];
         FloatToInt = 0;
+        inf = 0;
+        inf = ((exponent == {EXP_BITS{1'b1}}) && !frac_not_zero);
+        nan = ((exponent == {EXP_BITS{1'b1}}) &&  frac_not_zero);
+        special = 0;
 
         exp_unbiased = exponent - BIAS;
 
         InternalResult = mantissa;
 
-        case(round)
-            RNE: round_up = (SignOrUnsign & sign) ? {1'b1, InternalResult[FRAC_BITS-1]} : {1'b0, InternalResult[FRAC_BITS-1]};
-            RTZ: round_up = 2'b0;
-            RDN: round_up = (SignOrUnsign & sign) ? 2'b11 : 2'b0;
-            RUP: round_up = 2'b01;
-            RMM: round_up = (SignOrUnsign & sign) ? 2'b11 : 2'b01;
-        endcase
-
-        
-        if ((!exponent) || (exp_unbiased[FRAC_BITS])) 
+        if(nan)
+        begin
+            FloatToInt = 32'h7FFFFFFF; // Max Positive for NaN
+            special = 1'b1;
+        end
+        else if(inf)
+        begin
+            if(sign && SignOrUnsign)
+            begin
+                FloatToInt = 32'h80000000; // Max Negative
+            end
+            else
+            begin
+                FloatToInt = 32'h7FFFFFFF; // Max Positive
+            end
+            special = 1'b1;
+        end
+        else if ((!exponent)) 
         begin
             // Denormalized or zero
             FloatToInt = 32'd0;
-        end 
+            special = 1'b1;
+        end
+        else if(exp_unbiased[EXP_BITS]) //If exponent is negative, it will underflow to 0
+        begin
+            FloatToInt = 32'd0;
+            //special = 1'b1;
+        end
+        else if (|exp_unbiased[EXP_BITS-1:WIDTHBITS]) //If exponent is greater than or equal to WIDTH, it will overflow
+        begin
+            special = 1'b1;
+            if(sign && SignOrUnsign)
+            begin
+                FloatToInt = 32'h80000000; // Max Negative
+            end
+            else
+            begin
+                FloatToInt = 32'h7FFFFFFF; // Max Positive
+            end
+        end
         else if (exp_unbiased > FRAC_BITS) 
         begin
             // Overflow beyond mantissa width
@@ -79,10 +113,89 @@ module risc_fpu #(
             shift_amount = FRAC_BITS - exp_unbiased[EXP_BITS-1:0];
             FloatToInt = mantissa >> shift_amount;
         end
-        FloatToInt += round_up;
+        
+        case(round)
+            RNE:
+            begin 
+                if(FloatToInt[0]) // Check if the least significant bit is 1 (odd)
+                begin
+                    round_up = 1; // Round to nearest, ties away from zero
+                end
+                else                
+                begin
+                    round_up = 0; // No rounding needed
+                end
+            end
+            RTZ:
+            begin
+                if(SignOrUnsign && sign)
+                begin
+                    if(InternalResult[FRAC_BITS-1])
+                    begin
+                        round_up = 1; // Round to nearest, ties away from zero
+                    end
+                    else
+                    begin
+                        round_up = 0; // No rounding needed
+                    end
+                end
+                else
+                begin
+                   round_up = 0; // No rounding needed
+                end
+            end
+            RDN: round_up = 0;
+            RUP: round_up = 1;
+            RMM:
+            begin 
+                if(SignOrUnsign && sign)
+                begin
+                    if(InternalResult[FRAC_BITS-1])                    
+                    begin
+                        round_up = -1; // Round to nearest, ties away from zero
+                    end
+                    else
+                    begin
+                        round_up = 0; // Round to nearest, ties away from zero
+                    end
+                end
+                else
+                begin
+                    if(InternalResult[FRAC_BITS-1])                    
+                    begin
+                        round_up = 1; // Round to nearest, ties away from zero
+                    end
+                    else
+                    begin
+                        round_up = 0; // Round to nearest, ties away from zero
+                    end
+                end
+            end
+            default:
+            begin 
+                if(FloatToInt[0]) // Check if the least significant bit is 1 (odd)
+                begin
+                    round_up = 1; // Round to nearest, ties away from zero
+                end
+                else                
+                begin
+                    round_up = 0; // No rounding needed
+                end
+            end
+        endcase
+
+        
+        if(!special)
+        begin
+            FloatToInt += round_up;
+        end
+        
         if(SignOrUnsign && sign)
             FloatToInt = -FloatToInt;
-    endfunction
+        else if(!SignOrUnsign && sign)
+            FloatToInt = 0; 
+    
+    endfunction: FloatToInt
 
     function logic [WIDTH-1:0] IntToFloat
     (
@@ -96,7 +209,7 @@ module risc_fpu #(
         logic [FRAC_BITS:0] mantissa;
         logic signed [EXP_BITS:0] exp_unbiased;
         int msb_index;
-        logic signed [1:0] round_up;
+        logic signed [1:0] round_up_down;
         logic [WIDTH-1:0] result;
 
         // Step 1: Extract sign and absolute value
@@ -133,16 +246,16 @@ module risc_fpu #(
             mantissa = abs_val[WIDTH-2 -: FRAC_BITS];
 
             // Step 7: Rounding logic (similar to FloatToInt)
-            round_up = 0;
+            round_up_down = 0;
             case(round)
-                RNE: round_up = mantissa[0]; // round to nearest even
-                RTZ: round_up = 0;
-                RDN: round_up = (sign) ? 2'b11 : 2'b0;
-                RUP: round_up = (!sign) ? 2'b01 : 2'b0;
-                RMM: round_up = 2'b01;
+                RNE: round_up_down = mantissa[0]; // round to nearest even
+                RTZ: round_up_down = 0;
+                RDN: round_up_down = (sign) ? 2'b11 : 2'b0;
+                RUP: round_up_down = (!sign) ? 2'b01 : 2'b0;
+                RMM: round_up_down = 2'b01;
             endcase
 
-            mantissa = mantissa + round_up;
+            mantissa = mantissa + round_up_down;
             if(mantissa == (1 << FRAC_BITS)) // Check for mantissa overflow (e.g., 1.111... + 0.000... = 10.000...)
             begin
                 mantissa = 0;
@@ -347,12 +460,12 @@ module risc_fpu #(
             FCVT_S_W:
             begin
                 Result = IntToFloat(InA, 1'b1, round_mode);
-                {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
+                //{Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
             end
             FCVT_S_WU:
             begin
                 Result = IntToFloat(InA, 1'b0, round_mode);
-                {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
+               // {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
             end
             FMV_S_X:
             begin

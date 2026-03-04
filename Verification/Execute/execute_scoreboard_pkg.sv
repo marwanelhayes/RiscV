@@ -109,6 +109,101 @@ package execute_scoreboard_pkg;
         endcase
         endfunction:apply_rounding
 
+        function automatic int fcvt_float_to_int(
+            input real val,
+            input round_mode_t mode,
+            input logic is_unsigned  // 1 for FCVT.WU.S, 0 for FCVT.W.S
+        );
+            real floor_val;
+            real diff;
+            int rounded;
+            logic is_nan;
+
+            // 1. Detect NaN (IEEE-754 property: NaN != NaN)
+            is_nan = (val != val);
+
+            // 2. Isolate integer floor and fractional difference
+            floor_val = $floor(val);
+            diff = val - floor_val;
+            //$display("Val: %0f, Floor: %0f, Diff: %0f", val, floor_val, diff);
+
+            // 3. Apply exact rounding to a safe 64-bit intermediate
+            if (is_nan) 
+            begin
+                rounded = 0; // Value doesn't matter, handled by clamping
+            end 
+            else 
+            begin
+                case (mode)
+                    RNE: 
+                    begin // Nearest, ties to Even
+                        if (diff < 0.5) 
+                            rounded = int'(floor_val);
+                        else if (diff > 0.5) 
+                            rounded = int'(floor_val + 1.0);
+                        else 
+                        begin
+                            rounded = int'(floor_val);
+                            if (rounded % 2 != 0) 
+                                rounded += 1; 
+                        end
+                    end
+                    RTZ: begin // Towards Zero
+                        if (val >= 0.0) 
+                            rounded = int'(floor_val);
+                        else 
+                            rounded = int'($ceil(val));
+                    end
+                    RDN: rounded = int'(floor_val); // Towards -∞
+                    RUP: rounded = int'($ceil(val)); // Towards +∞
+                    RMM: begin // Nearest, ties to Max Magnitude
+                        if (diff < 0.5) rounded = int'(floor_val);
+                        else if (diff > 0.5) rounded = int'(floor_val + 1.0);
+                        else begin
+                            if (val >= 0.0) rounded = int'(floor_val + 1.0);
+                            else rounded = int'(floor_val);
+                        end
+                    end
+                    default: begin  
+                        if (diff < 0.5) rounded = int'(floor_val);
+                        else if (diff > 0.5) rounded = int'(floor_val + 1.0);
+                        else 
+                        begin
+                            rounded = int'(floor_val);
+                            if (rounded % 2 != 0) rounded += 1; 
+                        end
+                    end
+                endcase
+            end
+
+            // 4. Apply strict RISC-V boundary clamping
+            if (is_unsigned) 
+            begin 
+                // --- FCVT.WU.S (Unsigned) Limits ---
+                if (is_nan) 
+                    fcvt_float_to_int = 32'h7FFFFFFF;
+                else if (val >= 4294967295.0 || rounded >= 64'h00000000FFFFFFFF) 
+                    fcvt_float_to_int =  32'h7FFFFFFF; // Max Positive
+                else if (val <= 0.0 || rounded <= 0) 
+                    fcvt_float_to_int =  32'h00000000;                             // Negative clamp to 0
+                else 
+                    fcvt_float_to_int =  rounded;
+            end 
+            else 
+            begin 
+                // --- FCVT.W.S (Signed) Limits ---
+                if (is_nan) 
+                    fcvt_float_to_int =  32'h7FFFFFFF;
+                else if (val >= 2147483647.0 || rounded >= 64'sd2147483647) 
+                    fcvt_float_to_int =  32'h7FFFFFFF;       // Max Positive
+                else if (val <= -2147483648.0 || rounded <= -64'sd2147483648) 
+                    fcvt_float_to_int =  32'h80000000;      // Max Negative
+                else 
+                    fcvt_float_to_int =  rounded;
+            end
+            $display("Input: %f, Rounded: %d, Output: %h @%0t", val, rounded, fcvt_float_to_int,$time);
+        endfunction:fcvt_float_to_int
+
 
         function automatic bit compare_with_threshold
         (
@@ -186,7 +281,7 @@ package execute_scoreboard_pkg;
             if(!((diff * 100) <= (max_val * 5)))         
             begin
                 real rel_err = (max_val == 0) ? 0 : (diff * 1.0 / max_val);
-                $display("Values %0d and %0d differ by relative error %f @%t , Operation: %s, FPUInputA = %f, FPUInputB = %f", a, b, rel_err, $time,sc_item.FPUControlE.name(),FPUInA_real,FPUInB_real);
+                $display("Values %0d and %0d differ by relative error %f @%0t , Operation: %s,round = %s FPUInputA = %f, FPUInputB = %f", a, b, rel_err, $time,sc_item.FPUControlE.name(),sc_item.RoundModeE.name(),FPUInA_real,FPUInB_real);
                 fail++;
             end
         endfunction:compare_ints_5_percent
@@ -757,19 +852,17 @@ package execute_scoreboard_pkg;
                     end
                     FCVT_W_S:
                     begin
-                        FPUOutM = $signed(int'(FPUInA_real));
-                        FPUOut_real = $bitstoshortreal(FPUOutM);
-                        FPUOutM = apply_rounding($itor(FPUOutM), sc_item.RoundModeE);
+                        //FPUOutM = $signed(int'(FPUInA_real));
+                        FPUOutM = fcvt_float_to_int(FPUInA_real,sc_item.RoundModeE, 1'b0);
                         FPUOut_real = $bitstoshortreal(FPUOutM);
                     end
                     FCVT_WU_S:
                     begin
-                        if(FPUInA_real < 0)
-                            FPUOutM = -$signed(int'(FPUInA_real));
-                        else
-                            FPUOutM = $signed(int'(FPUInA_real));
-                        FPUOut_real = $bitstoshortreal(FPUOutM);
-                        FPUOutM = apply_rounding($itor(FPUOutM), sc_item.RoundModeE);
+                        //if(FPUInA_real < 0)
+                        //    FPUOutM = 'b0;
+                        //else
+                        //    FPUOutM = $signed(int'(FPUInA_real));
+                        FPUOutM = fcvt_float_to_int(FPUInA_real,sc_item.RoundModeE, 1'b1);
                         FPUOut_real = $bitstoshortreal(FPUOutM);
                     end
                     FMV_X_S:
