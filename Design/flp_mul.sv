@@ -248,16 +248,21 @@ module flp_mul
             end
 
             
-            if (ExpRes[EXP_BITS + 1] == 1'b1) // Check for underflow (exponent is negative)
+            if (ExpRes[EXP_BITS + 1]) // Check for underflow (exponent is negative)
             begin
-                Underflow = 1;
+                Underflow = 0;
+                Zero = 0;
                 // Shift mantissa into subnormal range
                 shift_amt = 1 - ExpRes; 
-                mant_sub = MantMult >> shift_amt;
-                if (mant_sub == 0) begin
+                mant_sub = MantMult[((2*FRAC_BITS)-1) -: (FRAC_BITS)] >> shift_amt;
+                if (mant_sub == 0) 
+                begin
                     Zero = 1;
+                    Underflow = 1;
                     result = {SignRes, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}}; // true zero
-                end else begin
+                end 
+                else 
+                begin
                     result = {SignRes, {EXP_BITS{1'b0}}, mant_sub[FRAC_BITS-1:0]}; // subnormal
                 end
             end
@@ -274,6 +279,7 @@ module flp_mul
                 result = {SignRes, ExpRes[EXP_BITS-1:0], MantMult[((2*FRAC_BITS)-1) -: (FRAC_BITS)]};
                 result = Rounding(result, guard, round, sticky, round_mode);
                 {SubRes , NaN , Inf , Zero} = classify_value(result[WIDTH-2 -: EXP_BITS], result[FRAC_BITS-1:0]);
+                //Underflow = Zero;
             end
         end 
     end:comb

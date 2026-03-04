@@ -25,7 +25,6 @@ module flp_div
     logic SignA, SignB, SignRes;
     logic signed [EXP_BITS+1:0] ExpA, ExpB;
     logic [FRAC_BITS:0] MantA, MantB , MantRes; // +1 for hidden bit
-    logic [((2*FRAC_BITS)+1):0] MantMult;     // +1 for hidden bit
     logic signed [EXP_BITS + 1:0] ExpDiff;
 
     // Special case flags
@@ -38,7 +37,7 @@ module flp_div
 
     logic SubnormalResult;
 
-    logic [$clog2(FRAC_BITS+1):0] LeadZeroCountA, LeadZeroCountB;
+    logic [$clog2(FRAC_BITS+1)-1:0] LeadZeroCountA, LeadZeroCountB;
     logic MantAIsZero,MantBIsZero;
 
 
@@ -124,9 +123,9 @@ module flp_div
         logic                   lsb;
         logic                   tie;         // exactly half-way case
         logic                   round_up;
-        logic [FRAC_BITS:0]     mantissa_in;
-        logic [FRAC_BITS+1:0]   mantissa_out;
-        logic [EXP_BITS+1:0]    exponent_out;
+        logic        [FRAC_BITS:0]     mantissa_in;
+        logic        [FRAC_BITS+1:0]   mantissa_out;
+        logic signed [EXP_BITS+1:0]    exponent_out;
         logic                   carry_out;
         logic                   inexact;
 
@@ -176,14 +175,17 @@ module flp_div
             mantissa_out = mantissa_out >> 1;
         end
 
-        if (exponent_out >= {2'b0, {EXP_BITS{1'b1}}}) 
+        if (exponent_out[EXP_BITS+1]) 
+        begin
+            mantissa_out = mantissa_in >> (1-exponent_out);
+            Rounding = {sign, {EXP_BITS{1'b0}}, mantissa_out[FRAC_BITS-1:0]}; // Underflow to Zero
+            Underflow = !mantissa_out[FRAC_BITS-1:0]; //Indicate underflow occurred
+        end
+        else if (exponent_out[EXP_BITS]) 
         begin
             Rounding = {sign, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}}; // Overflow to Inf
-        end 
-        else if (exponent_out <= 0) 
-        begin
-            Rounding = {sign, {EXP_BITS{1'b0}}, mantissa_out[FRAC_BITS-1:0]}; // Underflow to subnormal/zero
-        end 
+            Overflow = 1'b1; //Indicate overflow occurred
+        end  
         else 
         begin
             Rounding =  {sign, exponent_out[EXP_BITS-1:0], mantissa_out[FRAC_BITS-1:0]}; // Normal
@@ -229,6 +231,7 @@ module flp_div
         begin: handle_invalid
             result   = 32'h7FC0_0000;
             invalid     = 1'b1; //Stop division operation
+            NaN      = 1'b1; //NaN is the result for invalid operations
         end: handle_invalid
         
         else if (!AIsNan && !AIsInf && !AIsZero && BIsZero) 
@@ -275,10 +278,10 @@ module flp_div
             else          
                 MantB = {1'b1, b[FRAC_BITS-1:0]};
 
-            //if(!ExpA)
-            //    ExpA = 10'b1;
-            //if(!ExpB)
-            //    ExpB = 10'b1;
+            if(!ExpA)
+                ExpA = 10'b1;
+            if(!ExpB)
+                ExpB = 10'b1;
 
             ExpDiff = ExpA - ExpB + BIAS;
             // Perform division using non-restoring divider

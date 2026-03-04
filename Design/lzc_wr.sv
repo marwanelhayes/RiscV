@@ -3,7 +3,7 @@ module lzc_wr #(
 )(
     input  logic [WIDTH-1:0]       A_in,
     // Output size is automatically calculated to hold 'WIDTH'
-    output logic [$clog2(WIDTH):0] leading_zeros, 
+    output logic [$clog2(WIDTH)-1:0] leading_zeros, 
     output logic                   is_zero
 );
 
@@ -39,7 +39,7 @@ module lzc_wr #(
         if (is_zero) begin
             leading_zeros = WIDTH; // If empty, the count is exactly WIDTH
         end else begin
-            leading_zeros = tree_count[$clog2(WIDTH):0]; // Truncate to needed bits
+            leading_zeros = tree_count[$clog2(WIDTH)-1:0]; // Truncate to needed bits
         end
     end
 
@@ -65,7 +65,8 @@ module lzc #(
         // -----------------------------------------------------------------
         // BASE CASE 1: 1-Bit Wide
         // -----------------------------------------------------------------
-        if (WIDTH == 1) begin : gen_base_1
+        if (WIDTH == 1) 
+        begin : gen_base_1
             assign Z_out = '0;
             assign V_flag = A_in[0];
         end 
@@ -73,7 +74,8 @@ module lzc #(
         // -----------------------------------------------------------------
         // BASE CASE 2: 2-Bit Wide (The building block)
         // -----------------------------------------------------------------
-        else if (WIDTH == 2) begin : gen_base_2
+        else if (WIDTH == 2) 
+        begin : gen_base_2
             // Concurrent evaluation of the 2 bits 
             assign V_flag = A_in[1] | A_in[0]; 
             assign Z_out  = ~A_in[1];          // If MSB is 0, count is 1. Else 0.
@@ -82,7 +84,8 @@ module lzc #(
         // -----------------------------------------------------------------
         // RECURSIVE STEP: N-Bit Wide
         // -----------------------------------------------------------------
-        else begin : gen_tree
+        else 
+        begin : gen_tree
             // Split the input into Left (Upper) and Right (Lower) halves
             localparam int HALF_WIDTH = WIDTH / 2;
             
@@ -117,12 +120,16 @@ module lzc #(
             // -------------------------------------------------------------
             assign V_flag = V_left | V_right;
             
-            always_comb begin
-                if (V_left) begin
+            always_comb 
+            begin
+                if (V_left) 
+                begin
                     // If the left (upper) half has a 1, the MSB of the count is 0, 
                     // and we use the left half's count.
                     Z_out = {1'b0, Z_left};
-                end else begin
+                end 
+                else 
+                begin
                     // If the left half is all 0s, the MSB of the count is 1, 
                     // and we use the right half's count.
                     Z_out = {1'b1, Z_right};

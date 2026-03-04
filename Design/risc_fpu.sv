@@ -27,7 +27,7 @@ module risc_fpu #(
     logic OverflowMul, UnderflowMul, NaNMul, InfMul, ZeroMul;
     logic OverflowDiv, UnderflowDiv, NaNDiv, InfDiv, ZeroDiv;
     logic InfSqrt, NanSqrt, ZeroSqrt;
-    logic Subnormal;
+    logic Subnormal,InvalidDivActual;
 
     function logic signed [WIDTH-1:0] FloatToInt 
     (
@@ -39,28 +39,33 @@ module risc_fpu #(
         logic [EXP_BITS-1:0]  exponent;
         logic [FRAC_BITS:0] mantissa; // Including hidden bit
         logic signed [EXP_BITS:0] exp_unbiased;
-        logic [WIDTH-1:0] InternalResult;
         logic [EXP_BITS-1:0] shift_amount;
-        int round_up ;
         bit frac_not_zero;
-        logic special; //Flag for special cases where rounding not needed
+        logic guard_bit;
+        logic sticky_bit;
+        logic round_increment;
+        logic special; // Flag for special cases where rounding not needed
+        logic is_zero;
+        logic overflow_from_round;
         logic inf;
         logic nan;
+        int sticky_idx;
 
-        round_up = 0;
         sign     = float_in[WIDTH-1];
         exponent = float_in[WIDTH-2 -:EXP_BITS];
         mantissa = {1'b1, float_in[FRAC_BITS-1:0]}; // Append hidden bit
         frac_not_zero = |float_in[FRAC_BITS-1:0];
         FloatToInt = 0;
-        inf = 0;
+        guard_bit = 1'b0;
+        sticky_bit = 1'b0;
+        round_increment = 1'b0;
+        overflow_from_round = 1'b0;
         inf = ((exponent == {EXP_BITS{1'b1}}) && !frac_not_zero);
         nan = ((exponent == {EXP_BITS{1'b1}}) &&  frac_not_zero);
+        is_zero = ((exponent == '0) && !frac_not_zero);
         special = 0;
 
         exp_unbiased = exponent - BIAS;
-
-        InternalResult = mantissa;
 
         if(nan)
         begin
@@ -79,18 +84,13 @@ module risc_fpu #(
             end
             special = 1'b1;
         end
-        else if ((!exponent)) 
+        else if (is_zero) 
         begin
-            // Denormalized or zero
+            // Exact zero is always converted without rounding.
             FloatToInt = 32'd0;
             special = 1'b1;
         end
-        else if(exp_unbiased[EXP_BITS]) //If exponent is negative, it will underflow to 0
-        begin
-            FloatToInt = 32'd0;
-            //special = 1'b1;
-        end
-        else if (|exp_unbiased[EXP_BITS-1:WIDTHBITS]) //If exponent is greater than or equal to WIDTH, it will overflow
+        else if ((|exp_unbiased[EXP_BITS-1:WIDTHBITS])|| (& exp_unbiased[WIDTHBITS-1:0])) //If exponent is greater than or equal to WIDTH, it will overflow
         begin
             special = 1'b1;
             if(sign && SignOrUnsign)
@@ -100,6 +100,22 @@ module risc_fpu #(
             else
             begin
                 FloatToInt = 32'h7FFFFFFF; // Max Positive
+            end
+        end
+        else if ((!exponent) || exp_unbiased[EXP_BITS])
+        begin
+            // Subnormal values and magnitudes below 1.0 still need rounding-mode handling.
+            FloatToInt = '0;
+
+            if ((exponent != '0) && (exp_unbiased == -1))
+            begin
+                guard_bit = 1'b1;
+                sticky_bit = frac_not_zero;
+            end
+            else
+            begin
+                guard_bit = 1'b0;
+                sticky_bit = frac_not_zero;
             end
         end
         else if (exp_unbiased > FRAC_BITS) 
@@ -112,88 +128,66 @@ module risc_fpu #(
             // Shift mantissa according to exponent
             shift_amount = FRAC_BITS - exp_unbiased[EXP_BITS-1:0];
             FloatToInt = mantissa >> shift_amount;
-        end
-        
-        case(round)
-            RNE:
-            begin 
-                if(FloatToInt[0]) // Check if the least significant bit is 1 (odd)
-                begin
-                    round_up = 1; // Round to nearest, ties away from zero
-                end
-                else                
-                begin
-                    round_up = 0; // No rounding needed
-                end
-            end
-            RTZ:
+            if (shift_amount != 0)
             begin
-                if(SignOrUnsign && sign)
+                guard_bit = mantissa[shift_amount-1];
+                if (shift_amount > 1)
                 begin
-                    if(InternalResult[FRAC_BITS-1])
-                    begin
-                        round_up = 1; // Round to nearest, ties away from zero
-                    end
-                    else
-                    begin
-                        round_up = 0; // No rounding needed
-                    end
-                end
-                else
-                begin
-                   round_up = 0; // No rounding needed
+                    for (sticky_idx = 0; sticky_idx < (shift_amount - 1); sticky_idx++)
+                        sticky_bit |= mantissa[sticky_idx];
                 end
             end
-            RDN: round_up = 0;
-            RUP: round_up = 1;
-            RMM:
-            begin 
-                if(SignOrUnsign && sign)
-                begin
-                    if(InternalResult[FRAC_BITS-1])                    
-                    begin
-                        round_up = -1; // Round to nearest, ties away from zero
-                    end
-                    else
-                    begin
-                        round_up = 0; // Round to nearest, ties away from zero
-                    end
-                end
-                else
-                begin
-                    if(InternalResult[FRAC_BITS-1])                    
-                    begin
-                        round_up = 1; // Round to nearest, ties away from zero
-                    end
-                    else
-                    begin
-                        round_up = 0; // Round to nearest, ties away from zero
-                    end
-                end
-            end
-            default:
-            begin 
-                if(FloatToInt[0]) // Check if the least significant bit is 1 (odd)
-                begin
-                    round_up = 1; // Round to nearest, ties away from zero
-                end
-                else                
-                begin
-                    round_up = 0; // No rounding needed
-                end
-            end
-        endcase
+        end
 
-        
         if(!special)
         begin
-            FloatToInt += round_up;
+            case(round)
+                RNE:
+                begin
+                    round_increment = guard_bit && (sticky_bit || FloatToInt[0]);
+                end
+                RTZ:
+                begin
+                    round_increment = 1'b0;
+                end
+                RDN:
+                begin
+                    round_increment = sign && (guard_bit || sticky_bit);
+                end
+                RUP:
+                begin
+                    round_increment = !sign && (guard_bit || sticky_bit);
+                end
+                RMM:
+                begin
+                    round_increment = guard_bit;
+                end
+                default:
+                begin
+                    round_increment = guard_bit && (sticky_bit || FloatToInt[0]);
+                end
+            endcase
+
+            overflow_from_round = round_increment &&
+                                  !sign &&
+                                  SignOrUnsign &&
+                                  (FloatToInt == {1'b0, {(WIDTH-1){1'b1}}});
+
+            if (overflow_from_round)
+            begin
+                FloatToInt = 32'h7FFFFFFF;
+                special = 1'b1;
+            end
+            else
+            begin
+                FloatToInt = FloatToInt + round_increment;
+
+                if(SignOrUnsign && sign)
+                    FloatToInt = -FloatToInt;
+                else if(!SignOrUnsign && sign)
+                    FloatToInt = 0;
+            end
         end
-        
-        if(SignOrUnsign && sign)
-            FloatToInt = -FloatToInt;
-        else if(!SignOrUnsign && sign)
-            FloatToInt = 0; 
     
     endfunction: FloatToInt
 
@@ -297,6 +291,7 @@ module risc_fpu #(
         Result      = '0;
         Subnormal   = 1'b0;
         add_sub_mode = ADD_FLP;
+        InvalidDiv = 1'b0;
         
         case(operation)
             FADD_S:
@@ -344,6 +339,7 @@ module risc_fpu #(
                 Inf             = InfDiv;
                 Zero            = ZeroDiv;
                 Result          = ResultDiv;
+                InvalidDiv      = InvalidDivActual;
             end
             FSQRT_S:
             begin
@@ -512,7 +508,7 @@ module risc_fpu #(
         .NaN(NaNDiv),
         .Inf(InfDiv),
         .Zero(ZeroDiv),
-        .invalid(InvalidDiv),
+        .invalid(InvalidDivActual),
         .result(ResultDiv)
     );
 

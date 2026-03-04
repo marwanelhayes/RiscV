@@ -1,4 +1,8 @@
 BEGIN 3:execute_interface:fast__2:work
+    TrapIsSet :  1:execute_top:fast:work
+    RdE :  1:execute_top:fast:work
+    FPURegWriteM :  1:execute_top:fast:work
+    funct3M :  1:execute_top:fast:work
     ForwardAE :  1:execute_top:fast:work
     ZeroM :  1:execute_top:fast:work
     RegWriteM :  1:execute_top:fast:work
@@ -58,8 +62,4 @@ BEGIN 3:execute_interface:fast__2:work
     ALUSrcE :  1:execute_top:fast:work
     RD1FE :  1:execute_top:fast:work
     CsrOperationE :  1:execute_top:fast:work
-    TrapIsSet :  1:execute_top:fast:work
-    RdE :  1:execute_top:fast:work
-    FPURegWriteM :  1:execute_top:fast:work
-    funct3M :  1:execute_top:fast:work
 END 

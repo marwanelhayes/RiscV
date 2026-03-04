@@ -201,7 +201,7 @@ package execute_scoreboard_pkg;
                 else 
                     fcvt_float_to_int =  rounded;
             end
-            $display("Input: %f, Rounded: %d, Output: %h @%0t", val, rounded, fcvt_float_to_int,$time);
+            //$display("Input: %f, Rounded: %d, Output: %h @%0t", val, rounded, fcvt_float_to_int,$time);
         endfunction:fcvt_float_to_int
 
 
@@ -777,10 +777,10 @@ package execute_scoreboard_pkg;
                                 UnderflowM = 1'b1;
                                 ZeroM = 1'b1;
                             end
-                            if(Subnormal == 1'b1)
-                            begin
-                                UnderflowM = 1'b1;
-                            end
+                            //if(Subnormal == 1'b1)
+                            //begin
+                            //    UnderflowM = 1'b1;
+                            //end
                             if((FPUOutM[30:23] == {8{1'b1}}) && (FPUOutM[22:0] == {23{1'b0}})) // Check for overflow
                             begin
                                 OverflowM = 1'b1;
@@ -795,7 +795,7 @@ package execute_scoreboard_pkg;
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             NaNM = 1'b1;
                         end
-                        else if ((FPUInAIsInf || FPUInBIsInf) && (FPUInAIsZero || FPUInBIsZero))
+                        else if ((FPUInAIsInf && FPUInBIsInf) || (FPUInAIsZero && FPUInBIsZero))
                         begin
                             FPUOutM ={1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
@@ -814,15 +814,31 @@ package execute_scoreboard_pkg;
                             {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
                             if(((FPUOutM[30:23] == 0) && (FPUOutM[22:0] == 0))) // Check for underflow
                             begin
-                                UnderflowM = 1'b1;
+                                if(!FPUInAIsZero)
+                                    UnderflowM = 1'b1;
                             end
+                            OverflowM = InfM;
                         end
                     end
                     FSQRT_S :
                     begin
-                        FPUOut_real = $sqrt(FPUInA_real);
-                        FPUOutM = $shortrealtobits(FPUOut_real);
-                        {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                        if(FPUInAIsNaN || FPUInAIsInf || FPUInAIsZero)
+                        begin
+                            FPUOut_real = FPUInA_real;
+                            FPUOutM = FPUInA;
+                            if(FPUInAIsNaN)
+                                NaNM = 1'b1;
+                            else if(FPUInAIsInf)
+                                InfM = 1'b1;
+                            else if(FPUInAIsZero)
+                                ZeroM = 1'b1;
+                        end
+                        else
+                        begin
+                            FPUOut_real = $sqrt(FPUInA_real);
+                            FPUOutM = $shortrealtobits(FPUOut_real);
+                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                        end
                     end
                     FSGNJ_S:
                     begin
@@ -888,11 +904,12 @@ package execute_scoreboard_pkg;
                     end
                     FCVT_S_WU:
                     begin
-                        if(SrcA < 0)
+                        if(SrcA <= 0)
                             FPUOut_real = shortreal'(-SrcA);
                         else
                             FPUOut_real = shortreal'(SrcA);
                         FPUOutM = $shortrealtobits(FPUOut_real);
+                        FPUOutM[31] = 1'b0; // Set sign bit to 0 for unsigned input
                     end
                     FMV_S_X:
                     begin
@@ -1116,27 +1133,27 @@ package execute_scoreboard_pkg;
                 end
                 if (OverflowM != sc_item.OverflowM) 
                 begin
-                    `uvm_info("SCB", $sformatf("Actual output OverflowM = %0h -- OverflowM = %0h , operation = %s", sc_item.OverflowM, OverflowM,sc_item.FPUControlE.name()), UVM_MEDIUM)
+                    `uvm_info("SCB", $sformatf("Actual output OverflowM = %0h -- OverflowM = %0h , operation = %s , FPUOutM = %f , %0h , InA = %f , InB = %f", sc_item.OverflowM, OverflowM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM, FPUInA_real, FPUInB_real), UVM_MEDIUM)
                     fail++;
                 end
                 if (UnderflowM != sc_item.UnderflowM) 
                 begin
-                    `uvm_info("SCB", $sformatf("Actual output UnderflowM = %0h -- UnderflowM = %0h , operation = %s , FPUOutM = %f , %0h", sc_item.UnderflowM, UnderflowM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM), UVM_MEDIUM)
+                    `uvm_info("SCB", $sformatf("Actual output UnderflowM = %0h -- UnderflowM = %0h , operation = %s , FPUOutM = %f , %0h , InA = %f , InB = %f", sc_item.UnderflowM, UnderflowM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM, FPUInA_real, FPUInB_real), UVM_MEDIUM)
                     fail++;
                 end
                 if (NaNM != sc_item.NaNM) 
                 begin
-                    `uvm_info("SCB", $sformatf("Actual output NaNM = %0h -- NaNM = %0h, operation = %s", sc_item.NaNM, NaNM,sc_item.FPUControlE.name()), UVM_MEDIUM)
+                    `uvm_info("SCB", $sformatf("Actual output NaNM = %0h -- NaNM = %0h, operation = %s, FPUOutM = %f , %0h , InA = %f , InB = %f", sc_item.NaNM, NaNM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM, FPUInA_real, FPUInB_real), UVM_MEDIUM)
                     fail++;
                 end
                 if (InfM != sc_item.InfM) 
                 begin
-                    `uvm_info("SCB", $sformatf("Actual output InfM = %0h -- InfM = %0h, operation = %s", sc_item.InfM, InfM,sc_item.FPUControlE.name()), UVM_MEDIUM)
+                    `uvm_info("SCB", $sformatf("Actual output InfM = %0h -- InfM = %0h, operation = %s, FPUOutM = %f , %0h , InA = %f , InB = %f", sc_item.InfM, InfM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM, FPUInA_real, FPUInB_real), UVM_MEDIUM)
                     fail++;
                 end
                 if (ZeroM != sc_item.ZeroM) 
                 begin
-                    `uvm_info("SCB", $sformatf("Actual output ZeroM = %0h -- ZeroM = %0h, operation = %s", sc_item.ZeroM, ZeroM,sc_item.FPUControlE.name()), UVM_MEDIUM)
+                    `uvm_info("SCB", $sformatf("Actual output ZeroM = %0h -- ZeroM = %0h, operation = %s, FPUOutM = %f , %0h , InA = %f , InB = %f", sc_item.ZeroM, ZeroM,sc_item.FPUControlE.name(), $bitstoshortreal(FPUOutM),FPUOutM, FPUInA_real, FPUInB_real), UVM_MEDIUM)
                     fail++;
                 end
                 if (RdFM != sc_item.RdFM) 
