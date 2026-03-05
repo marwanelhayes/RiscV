@@ -1,1 +1,56 @@
+C:/Ain_shams/RiscV/Design/flp_div.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_div.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package flp_div_sv_unit
+-- Importing package shared_pkg
+-- Compiling module flp_div
 
+Top level modules:
+	flp_div
+
+} {} {}} C:/Ain_shams/RiscV/Design/lzc_wr.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/lzc_wr.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling module lzc_wr
+-- Compiling module lzc
+
+Top level modules:
+	lzc_wr
+
+} {} {}} C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package execute_scoreboard_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Execute/execute_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package shared_pkg
+-- Importing package execute_item_pkg
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Design/flp_sqrt.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_sqrt.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package flp_sqrt_sv_unit
+-- Importing package shared_pkg
+-- Compiling module flp_sqrt
+
+Top level modules:
+	flp_sqrt
+
+} {} {}} C:/Ain_shams/RiscV/Design/risc_fpu.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/risc_fpu.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package risc_fpu_sv_unit
+-- Importing package shared_pkg
+-- Compiling module risc_fpu
+
+Top level modules:
+	risc_fpu
+
+} {} {}} C:/Ain_shams/RiscV/Design/flp_mul.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/flp_mul.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package flp_mul_sv_unit
+-- Importing package shared_pkg
+-- Compiling module flp_mul
+
+Top level modules:
+	flp_mul
+
+} {} {}}

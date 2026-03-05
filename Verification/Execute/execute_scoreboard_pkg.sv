@@ -56,6 +56,7 @@ package execute_scoreboard_pkg;
         logic FPUInAIsInf, FPUInBIsInf;
         logic FPUInAIsZero, FPUInBIsZero;
         logic Subnormal;
+        round_mode_t ActualRoundMode;
 
         localparam int EXP_BITS = (DATA_WIDTH == 32) ? 8 : 11;
         localparam int FRAC_BITS = (DATA_WIDTH == 32) ? 23 : 52;
@@ -240,12 +241,51 @@ package execute_scoreboard_pkg;
 
         function void compare_shortreal_rel_error(shortreal a, shortreal b, shortreal tol);
             shortreal diff, denom, rel_err , epsilon;
+            logic is_zero_a, is_zero_b;
+            logic is_inf_a, is_inf_b;
+            logic is_nan_a, is_nan_b;
+            logic [DATA_WIDTH-1:0] a_bits, b_bits;
+            a_bits = $shortrealtobits(a);
+            b_bits = $shortrealtobits(b);
+            is_zero_a = (a_bits[30:0] == 0);
+            is_zero_b = (b_bits[30:0] == 0);
+            is_inf_a = (a_bits[30:23] == 8'hFF) && (a_bits[22:0] == 0);
+            is_inf_b = (b_bits[30:23] == 8'hFF) && (b_bits[22:0] == 0);
+            is_nan_a = (a_bits[30:23] == 8'hFF) && (a_bits[22:0] != 0);
+            is_nan_b = (b_bits[30:23] == 8'hFF) && (b_bits[22:0] != 0);
             diff   = a - b;
             diff   = (diff < 0.0) ? -diff : diff; // abs(diff)
             denom  = (b < 0.0) ? -b : b; // abs(b)
             epsilon = 1e-3;
             //$display("The denominator is %f", denom);
-            if((denom <= epsilon) && (denom >= -epsilon))
+            if(is_nan_a || is_nan_b)
+            begin
+                if(a_bits != b_bits)
+                begin
+                    $display("Values %f/%0h and %f/%0h differ  @%t , Operation: %s, FPUInputA = %f, FPUInputB = %f", a,a_bits, b,b_bits, $time,sc_item.FPUControlE.name(),FPUInA_real,FPUInB_real);
+                    fail++;
+                    return;
+                end
+            end
+            else if(is_inf_a || is_inf_b)
+            begin
+                if(a_bits != b_bits)
+                begin
+                    $display("Values %f/%0h and %f/%0h differ  @%t , Operation: %s, FPUInputA = %f, FPUInputB = %f", a,a_bits, b,b_bits, $time,sc_item.FPUControlE.name(),FPUInA_real,FPUInB_real);
+                    fail++;
+                    return;
+                end
+            end
+            else if(is_zero_a || is_zero_b)
+            begin
+                if(a_bits != b_bits)
+                begin
+                    $display("Values %f/%0h and %f/%0h differ  @%t , Operation: %s, FPUInputA = %f, FPUInputB = %f", a,a_bits, b,b_bits, $time,sc_item.FPUControlE.name(),FPUInA_real,FPUInB_real);
+                    fail++;
+                    return;
+                end
+            end
+            else if((denom <= epsilon) && (denom >= -epsilon))
             begin 
                 rel_err = diff;
             end
@@ -281,7 +321,7 @@ package execute_scoreboard_pkg;
             if(!((diff * 100) <= (max_val * 5)))         
             begin
                 real rel_err = (max_val == 0) ? 0 : (diff * 1.0 / max_val);
-                $display("Values %0d and %0d differ by relative error %f @%0t , Operation: %s,round = %s FPUInputA = %f, FPUInputB = %f", a, b, rel_err, $time,sc_item.FPUControlE.name(),sc_item.RoundModeE.name(),FPUInA_real,FPUInB_real);
+                $display("Values %0d and %0d differ by relative error %f @%0t , Operation: %s,round = %s FPUInputA = %f, FPUInputB = %f", a, b, rel_err, $time,sc_item.FPUControlE.name(),ActualRoundMode.name(),FPUInA_real,FPUInB_real);
                 fail++;
             end
         endfunction:compare_ints_5_percent
@@ -692,8 +732,7 @@ package execute_scoreboard_pkg;
                 InfM = 1'b0;
                 ZeroM = 1'b0;
                 InvalidDivM = 1'b0;
-                //FPUOutM = 'b0;
-
+                
                 CSROperation();
 
                 case(sc_item.ForwardAE)
@@ -733,6 +772,14 @@ package execute_scoreboard_pkg;
 
                 {FPUAIsSubnormal, FPUInAIsNaN, FPUInAIsInf, FPUInAIsZero} = classify_value(FPUInA[30:23], FPUInA[22:0]);
                 {FPUBIsSubnormal, FPUInBIsNaN, FPUInBIsInf, FPUInBIsZero} = classify_value(FPUInB[30:23], FPUInB[22:0]);
+                if(sc_item.RoundModeE == DYN)
+                begin
+                    ActualRoundMode = CSRFile[fcsr][2:0];
+                end
+                else                
+                begin
+                    ActualRoundMode = sc_item.RoundModeE;
+                end
 
                 case (sc_item.FPUControlE)
                     FADD_S:
@@ -777,10 +824,6 @@ package execute_scoreboard_pkg;
                                 UnderflowM = 1'b1;
                                 ZeroM = 1'b1;
                             end
-                            //if(Subnormal == 1'b1)
-                            //begin
-                            //    UnderflowM = 1'b1;
-                            //end
                             if((FPUOutM[30:23] == {8{1'b1}}) && (FPUOutM[22:0] == {23{1'b0}})) // Check for overflow
                             begin
                                 OverflowM = 1'b1;
@@ -835,9 +878,18 @@ package execute_scoreboard_pkg;
                         end
                         else
                         begin
-                            FPUOut_real = $sqrt(FPUInA_real);
-                            FPUOutM = $shortrealtobits(FPUOut_real);
-                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                            if(FPUInA[31] == 1'b1)
+                            begin
+                                FPUOutM = 32'h7fc00000;
+                                FPUOut_real = $bitstoshortreal(FPUOutM);
+                                NaNM = 1'b1;
+                            end
+                            else
+                            begin
+                                FPUOut_real = $sqrt(FPUInA_real);
+                                FPUOutM = $shortrealtobits(FPUOut_real);
+                                {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                            end
                         end
                     end
                     FSGNJ_S:
@@ -868,17 +920,12 @@ package execute_scoreboard_pkg;
                     end
                     FCVT_W_S:
                     begin
-                        //FPUOutM = $signed(int'(FPUInA_real));
-                        FPUOutM = fcvt_float_to_int(FPUInA_real,sc_item.RoundModeE, 1'b0);
+                        FPUOutM = fcvt_float_to_int(FPUInA_real,ActualRoundMode, 1'b0);
                         FPUOut_real = $bitstoshortreal(FPUOutM);
                     end
                     FCVT_WU_S:
                     begin
-                        //if(FPUInA_real < 0)
-                        //    FPUOutM = 'b0;
-                        //else
-                        //    FPUOutM = $signed(int'(FPUInA_real));
-                        FPUOutM = fcvt_float_to_int(FPUInA_real,sc_item.RoundModeE, 1'b1);
+                        FPUOutM = fcvt_float_to_int(FPUInA_real,ActualRoundMode, 1'b1);
                         FPUOut_real = $bitstoshortreal(FPUOutM);
                     end
                     FMV_X_S:
@@ -927,8 +974,6 @@ package execute_scoreboard_pkg;
                         FPUOutM = 'b0;
                     end
                 endcase
-
-                //threshold_exceeded = compare_with_threshold(FPUOut_real, shortreal'(sc_item.FPUOutM));
 
                 WriteDataM = IntermediateB;
 
@@ -1028,8 +1073,11 @@ package execute_scoreboard_pkg;
                 PCSrcE = (sc_item.BranchE & branch_true) || sc_item.JumpE;
                 ALUOutM_past = sc_item.ALUOutM;
                 FPUOutM_past = sc_item.FPUOutM;
+                
                 CSRInterruptOperation();
+                
                 check_output();
+
             end:NotReset
         endfunction:ref_model
 

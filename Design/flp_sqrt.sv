@@ -49,9 +49,43 @@ module flp_sqrt
         Sign = a[WIDTH-1];
         Exp  = a[WIDTH-2 -: EXP_BITS];
         Mant = a[FRAC_BITS-1:0];
-        ExpHalf = Exp - 1;
-        InHalf = {Sign, ExpHalf, Mant};
-        InMagic = MAGIC - (a >> 1);
+        {SubnormalIn,NaNIn,InfIn,ZeroIn} = classify_value(Exp,Mant);
+        if(SubnormalIn)
+        begin
+            InHalf = {Sign, Exp, Mant};
+            InMagic = MAGIC - (a >> 1);            
+        end
+        else
+        begin
+            ExpHalf = Exp - 1;
+            InHalf = {Sign, ExpHalf, Mant};
+            InMagic = MAGIC - (a >> 1);
+        end
+    end
+
+    always_comb
+    begin
+        Zero = 1'b0;
+        NaN = 1'b0;
+        Inf = 1'b0;
+        Subnormal = 1'b0;
+        if(Sign)
+        begin
+            NaN = 1'b1;
+            result = 32'h7FC00000;
+        end
+        else if(NaNIn || InfIn || ZeroIn)
+        begin
+            result = a;
+            NaN = NaNIn;
+            Inf = InfIn;
+            Zero = ZeroIn;
+        end
+        else
+        begin
+            {Subnormal, NaN, Inf, Zero} = classify_value(Result5[WIDTH-2 -: EXP_BITS], Result5[FRAC_BITS-1:0]);
+            result = Result5;
+        end
     end
 
     flp_mul #(.PRECISION(PRECISION)) MUL1 (
@@ -84,35 +118,5 @@ module flp_sqrt
         .b(Result4),
         .result(Result5)
     );
-
-    always_comb
-    begin
-        NaN = 1'b0;
-        Inf = 1'b0;
-        Subnormal = 1'b0;
-        Zero = 1'b0;
-        ZeroIn = 1'b0;
-        InfIn = 1'b0;
-        NaNIn = 1'b0;
-        SubnormalIn = 1'b0; 
-        {SubnormalIn,NaNIn,InfIn,ZeroIn} = classify_value(Exp,Mant);
-        if(Sign)
-        begin
-            NaN = 1'b1;
-            result = 32'h7FC00000;
-        end
-        else if(NaNIn || InfIn || ZeroIn)
-        begin
-            result = a;
-            NaN = NaNIn;
-            Inf = InfIn;
-            Zero = ZeroIn;
-        end
-        else
-        begin
-            {Subnormal, NaN, Inf, Zero} = classify_value(Result5[WIDTH-2 -: EXP_BITS], Result5[FRAC_BITS-1:0]);
-            result = Result5;
-        end
-    end
 
 endmodule

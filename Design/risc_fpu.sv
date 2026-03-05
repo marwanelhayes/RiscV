@@ -427,7 +427,6 @@ module risc_fpu #(
             end
             FCLASS_S:
             begin
-                //{Subnormal, NaN, Inf, Zero} = classify_value(InA[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], InA[(PRECISION == SINGLE) ? 22 : 51 :0]);
                 if(!InA[WIDTH-2 -: EXP_BITS])
                 begin
                     if(!InA[FRAC_BITS-1:0])
@@ -456,12 +455,10 @@ module risc_fpu #(
             FCVT_S_W:
             begin
                 Result = IntToFloat(InA, 1'b1, round_mode);
-                //{Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
             end
             FCVT_S_WU:
             begin
-                Result = IntToFloat(InA, 1'b0, round_mode);
-               // {Subnormal, NaN, Inf, Zero} = classify_value(Result[(PRECISION == SINGLE) ? 30 : 62 : (PRECISION == SINGLE) ? 23 : 52], Result[(PRECISION == SINGLE) ? 22 : 51 :0]);
+                Result = IntToFloat(InA, 1'b0, round_mode);            
             end
             FMV_S_X:
             begin

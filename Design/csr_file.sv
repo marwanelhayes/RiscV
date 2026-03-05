@@ -24,7 +24,8 @@ module csr_file
     
     output logic [ADDR_WIDTH-1:0] CsrOutPC,
     output logic [DATA_WIDTH-1:0] CsrOut,
-    output logic TrapIsSet
+    output logic TrapIsSet,
+    output round_mode_t RoundingMode
 );
 
     (* ram_style = "block" *) logic [DATA_WIDTH-1:0] CsrFile [4096]; // CSR file with 4096 entries, each 32 bits wide
@@ -275,6 +276,8 @@ module csr_file
         end:Not_interrupt
     
     end:CSR_File
+
+    assign RoundingMode = CsrFile[frm][2:0];
 
 
 endmodule

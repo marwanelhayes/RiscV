@@ -81,6 +81,7 @@ module execute_stage
     traps_t TrapsE;
     logic OverflowE, UnderflowE, NaNE, InfE, ZeroE, InvalidDivE;
     logic [DATA_WIDTH-1:0] FPUInAE,FPUInBE, FPUInAETemp;
+    round_mode_t DynRoundMode,ActualRoundMode;
 
     risc_alu #(.DATA_WIDTH(DATA_WIDTH)) ALU
     (
@@ -96,7 +97,7 @@ module execute_stage
     (
         .InA(FPUInAE),
         .InB(FPUInBE),
-        .round_mode(RoundModeE),
+        .round_mode(ActualRoundMode),
         .operation(FPUControlE),
         .Overflow(OverflowE),
         .Underflow(UnderflowE),
@@ -184,7 +185,8 @@ module execute_stage
         .CsrIndex(CsrIndexE),
         .CsrOutPC(CsrOutPC),
         .CsrOut(CsrOutM),
-        .TrapIsSet(TrapIsSet)
+        .TrapIsSet(TrapIsSet),
+        .RoundingMode(DynRoundMode)
     );
 
     always_ff @(posedge clk or negedge rst)
@@ -278,5 +280,14 @@ module execute_stage
         FPUInAE = FPUInAETemp;
         if(MoveOperationE == RegToFPU)
             FPUInAE = SrcAE;
+    end
+
+    always_comb
+    begin
+        ActualRoundMode = RoundModeE;
+        if(RoundModeE == DYN)
+        begin
+            ActualRoundMode = DynRoundMode;
+        end
     end
 endmodule
