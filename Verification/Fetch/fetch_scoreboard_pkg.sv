@@ -42,13 +42,13 @@ package fetch_scoreboard_pkg;
             if(!sc_item.rst)
             begin
                 PCPlus4D = 0;
-                InstructionD = 0;
+                InstructionD = 32'h00_00_00_33;
             end
             else
             begin
                 if(sc_item.FlushD)
                 begin
-                    InstructionD = 0;
+                    InstructionD = 32'h00_00_00_33;
                     PCPlus4D = 0;
                 end
                 else if(!sc_item.StallD)

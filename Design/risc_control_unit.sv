@@ -8,7 +8,7 @@ module risc_control_unit
     input [2:0] funct3,
     input [6:0] funct7,
     input csr_t CsrOperationD,
-    input [4:0] Rs2,
+    input gpr_t Rs2,
     output alu_operation_t ALUControlD,
     output logic RegWriteD,
     output selector_t SelectorD,

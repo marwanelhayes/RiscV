@@ -31,14 +31,14 @@ interface hazard_interface
     logic FPURegWriteM;
     logic FPURegWriteW; 
     
-    wire [2:0] ForwardAE;
-    wire [2:0] ForwardBE;
-    wire StallD;
-    wire StallF;
-    wire FlushE;
-    wire FlushD;
-    wire [1:0] ForwardFloatingAE;
-    wire [1:0] ForwardFloatingBE; 
+    logic [2:0] ForwardAE;
+    logic [2:0] ForwardBE;
+    logic StallD;
+    logic StallF;
+    logic FlushE;
+    logic FlushD;
+    logic [1:0] ForwardFloatingAE;
+    logic [1:0] ForwardFloatingBE; 
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);

@@ -774,7 +774,7 @@ package execute_scoreboard_pkg;
                 {FPUBIsSubnormal, FPUInBIsNaN, FPUInBIsInf, FPUInBIsZero} = classify_value(FPUInB[30:23], FPUInB[22:0]);
                 if(sc_item.RoundModeE == DYN)
                 begin
-                    ActualRoundMode = CSRFile[fcsr][2:0];
+                    ActualRoundMode = round_mode_t'(CSRFile[fcsr][2:0]);
                 end
                 else                
                 begin

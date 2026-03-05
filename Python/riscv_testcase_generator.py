@@ -25,7 +25,11 @@ TYPES_TO_INSTRUCTION = dict(U_TYPE={'LUI', 'AUIPC'}, UJ_TYPE={'JAL'},
                                     'SRAI'}, S_TYPE={'SB', 'SH', 'SW'},
                             R_TYPE={'ADD', 'SUB', 'SLL', 'SLT', 'SLTU', 'XOR', 'SRL', 'SRA', 'OR', 'AND', 'MUL', 'MULH',
                                     'MULHSU', 'MULHU', 'DIV', 'DIVU', 'REM', 'REMU'},
-                            CSR_TYPE={'CSRRW', 'CSRRS', 'CSRRC', 'CSRRWI', 'CSRRSI', 'CSRRCI'})
+                            CSR_TYPE={'CSRRW', 'CSRRS', 'CSRRC', 'CSRRWI', 'CSRRSI', 'CSRRCI'},
+                            F_TYPE={'FADD.S', 'FSUB.S', 'FMUL.S', 'FDIV.S', 'FSQRT.S',
+                                    'FSGNJ.S', 'FSGNJN.S', 'FSGNJX.S', 'FMIN.S', 'FMAX.S',
+                                    'FCVT.W.S', 'FCVT.WU.S', 'FMV.X.W', 'FEQ.S', 'FLT.S', 'FLE.S', 'FCLASS.S',
+                                    'FCVT.S.W', 'FCVT.S.WU', 'FMV.W.X'})
 # Opcodes of all instructions
 OPCODES = dict(LUI='0110111', AUIPC='0010111', JAL='1101111', JALR='1100111', BEQ='1100011', BNE='1100011',
                BLT='1100011', BGE='1100011', BLTU='1100011', BGEU='1100011', LB='0000011', LH='0000011', LW='0000011',
@@ -35,7 +39,11 @@ OPCODES = dict(LUI='0110111', AUIPC='0010111', JAL='1101111', JALR='1100111', BE
                XOR='0110011', SRL='0110011', SRA='0110011', OR='0110011', AND='0110011', MUL='0110011', MULH='0110011',
                MULHSU='0110011', MULHU='0110011', DIV='0110011', DIVU='0110011', REM='0110011', REMU='0110011',
                CSRRW='1110011', CSRRS='1110011', CSRRC='1110011',
-               CSRRWI='1110011', CSRRSI='1110011', CSRRCI='1110011')
+               CSRRWI='1110011', CSRRSI='1110011', CSRRCI='1110011',
+               **{name: '1010011' for name in {'FADD.S', 'FSUB.S', 'FMUL.S', 'FDIV.S', 'FSQRT.S',
+                                               'FSGNJ.S', 'FSGNJN.S', 'FSGNJX.S', 'FMIN.S', 'FMAX.S',
+                                               'FCVT.W.S', 'FCVT.WU.S', 'FMV.X.W', 'FEQ.S', 'FLT.S', 'FLE.S', 'FCLASS.S',
+                                               'FCVT.S.W', 'FCVT.S.WU', 'FMV.W.X'}})
 
 # Function codes of all instructions that need one
 FUNCT_CODES = dict(JALR='000', BEQ='000', BNE='001', BLT='100', BGE='101', BLTU='110', BGEU='111', LB='000', LH='001',
@@ -47,9 +55,10 @@ FUNCT_CODES = dict(JALR='000', BEQ='000', BNE='001', BLT='100', BGE='101', BLTU=
 )
 
 CSR_SET = [
-    (0x300, 'mstatus'), (0x301,'misa') , (0x302 ,'mdeleg'), (0x303, 'mideleg'), (0x304, 'mie'), (0x305, 'mtvec'),
-    (0x340, 'mscratch'), (0x341, 'mepc'), (0x342, 'mcause'),
-    (0x342, 'mtval'), (0x344, 'mtval'), (0xC00, 'mcycle') , (0xC01 , 'mtime') , (0xF14 , 'mhartid')
+    (0x001, 'fflags'), (0x002, 'frm'), (0x003, 'fcsr'),
+    (0x300, 'mstatus'), (0x301, 'misa'), (0x302, 'medeleg'), (0x303, 'mideleg'), (0x304, 'mie'), (0x305, 'mtvec'),
+    (0x340, 'mscratch'), (0x341, 'mepc'), (0x342, 'mcause'), (0x343, 'mbadaddr'), (0x344, 'mip'),
+    (0xC00, 'mcycle'), (0xF14, 'mhartid'), (0xF11, 'mvendorid')
 ]
 
 
@@ -274,6 +283,77 @@ def generate_csr(name):
         convert_to_hex(instruction_binary)
     )
 
+
+def generate_f(name):
+    opcode_instruction = OPCODES[name]
+
+    rm_map = {
+        'FADD.S': '000', 'FSUB.S': '000', 'FMUL.S': '000', 'FDIV.S': '000', 'FSQRT.S': '000',
+        'FCVT.W.S': '000', 'FCVT.WU.S': '000', 'FCVT.S.W': '000', 'FCVT.S.WU': '000'
+    }
+
+    enc = {
+        'FADD.S': ('0000000', None, 'ffr'),
+        'FSUB.S': ('0000100', None, 'ffr'),
+        'FMUL.S': ('0001000', None, 'ffr'),
+        'FDIV.S': ('0001100', None, 'ffr'),
+        'FSQRT.S': ('0101100', '00000', 'ff'),
+        'FSGNJ.S': ('0010000', None, 'ffr'),
+        'FSGNJN.S': ('0010000', None, 'ffr'),
+        'FSGNJX.S': ('0010000', None, 'ffr'),
+        'FMIN.S': ('0010100', None, 'ffr'),
+        'FMAX.S': ('0010100', None, 'ffr'),
+        'FCVT.W.S': ('1100000', '00000', 'fgr'),
+        'FCVT.WU.S': ('1100000', '00001', 'fgr'),
+        'FMV.X.W': ('1110000', '00000', 'fgr'),
+        'FEQ.S': ('1010000', None, 'ffg'),
+        'FLT.S': ('1010000', None, 'ffg'),
+        'FLE.S': ('1010000', None, 'ffg'),
+        'FCLASS.S': ('1110000', '00000', 'fgr'),
+        'FCVT.S.W': ('1101000', '00000', 'gfr'),
+        'FCVT.S.WU': ('1101000', '00001', 'gfr'),
+        'FMV.W.X': ('1111000', '00000', 'gfr')
+    }
+
+    funct3_map = {
+        'FADD.S': '000', 'FSUB.S': '000', 'FMUL.S': '000', 'FDIV.S': '000', 'FSQRT.S': '000',
+        'FSGNJ.S': '000', 'FSGNJN.S': '001', 'FSGNJX.S': '010',
+        'FMIN.S': '000', 'FMAX.S': '001',
+        'FCVT.W.S': '000', 'FCVT.WU.S': '000',
+        'FMV.X.W': '000',
+        'FEQ.S': '010', 'FLT.S': '001', 'FLE.S': '000',
+        'FCLASS.S': '001',
+        'FCVT.S.W': '000', 'FCVT.S.WU': '000', 'FMV.W.X': '000'
+    }
+
+    funct7, forced_rs2, form = enc[name]
+    rm = rm_map.get(name, funct3_map[name])
+
+    rs1_decimal = random.choice(REGISTERS_TO_USE)
+    rs1_binary = f"{rs1_decimal:05b}"
+    rs2_decimal = random.choice(REGISTERS_TO_USE)
+    rs2_binary = f"{rs2_decimal:05b}"
+    rd_decimal = random.choice(REGISTERS_TO_USE)
+    rd_binary = f"{rd_decimal:05b}"
+
+    if forced_rs2 is not None:
+        rs2_binary = forced_rs2
+
+    instruction_binary = funct7 + rs2_binary + rs1_binary + rm + rd_binary + opcode_instruction
+
+    if form == 'ffr':
+        instruction_assembly = f"{format(name, '10s')}\tf{rd_decimal}, f{rs1_decimal}, f{rs2_decimal}"
+    elif form == 'ff':
+        instruction_assembly = f"{format(name, '10s')}\tf{rd_decimal}, f{rs1_decimal}"
+    elif form == 'fgr':
+        instruction_assembly = f"{format(name, '10s')}\tx{rd_decimal}, f{rs1_decimal}"
+    elif form == 'ffg':
+        instruction_assembly = f"{format(name, '10s')}\tx{rd_decimal}, f{rs1_decimal}, f{rs2_decimal}"
+    else:
+        instruction_assembly = f"{format(name, '10s')}\tf{rd_decimal}, x{rs1_decimal}"
+
+    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+
 # Instruction generation wrapper
 def generate_instruction(name):
     if INSTRUCTION_TO_TYPE[name] == 'R_TYPE':
@@ -290,6 +370,8 @@ def generate_instruction(name):
         generate_uj(name)
     elif INSTRUCTION_TO_TYPE[name] == 'CSR_TYPE':
         generate_csr(name)
+    elif INSTRUCTION_TO_TYPE[name] == 'F_TYPE':
+        generate_f(name)
 
 
 # Validaing Input

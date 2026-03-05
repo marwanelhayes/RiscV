@@ -123,6 +123,7 @@ package risc_test_pkg;
             phase.raise_objection(this);
             //Initialize the clocking block
             intf.initialize();
+            `uvm_info("TEST",$sformatf("Starting the test with WAIT = %0d",WAIT),UVM_LOW)
                 repeat(WAIT)
                 begin
                     @(posedge intf.clk);

@@ -11,17 +11,26 @@ interface risc_interface
     localparam CLK = (CLK_PERIOD/5.0);
     
     logic rst;
+    logic ExternalInterrupt;
+    logic TimerInterrupt;
+    logic SoftwareInterrupt; 
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);
         default input #0; 
         default output #CLK;
         output rst;
+        output ExternalInterrupt;
+        output TimerInterrupt;
+        output SoftwareInterrupt;
     endclocking:cb
 
 
     task initialize;
         rst = 0;
+        ExternalInterrupt = 0;
+        TimerInterrupt = 0;
+        SoftwareInterrupt = 0;
         repeat(5)
         begin
             @(cb);
@@ -31,7 +40,7 @@ interface risc_interface
 
     modport DUT 
     (
-        input clk, rst
+        input clk, rst , ExternalInterrupt , TimerInterrupt , SoftwareInterrupt
     );
 
     modport TEST (clocking cb); 

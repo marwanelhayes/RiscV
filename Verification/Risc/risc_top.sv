@@ -19,7 +19,10 @@ module risc_top;
     DUT 
     (
         .clk(intf.clk),
-        .rst(intf.rst)
+        .rst(intf.rst),
+        .ExternalInterrupt(intf.ExternalInterrupt),
+        .TimerInterrupt(intf.TimerInterrupt),
+        .SoftwareInterrupt(intf.SoftwareInterrupt)
     );
 
     bind DUT.Fetch fetch_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 

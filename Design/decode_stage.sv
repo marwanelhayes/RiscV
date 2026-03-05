@@ -98,7 +98,7 @@ module decode_stage
         .funct3(funct3D),
         .funct7(funct7D),
         .BranchD(BranchD),
-        .Rs2(logic'(Rs2D)),
+        .Rs2(Rs2D),
         .ALUControlD(ALUControlD),
         .ImmediateD(ImmediateD),
         .RegWriteD(RegWriteD),

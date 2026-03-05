@@ -37,7 +37,7 @@ interface mem_interface
     logic RegWriteW;
     selector_t SelectorW;
     logic [ADDR_WIDTH-1:0] PCPlus4W;
-    wire [DATA_WIDTH-1:0] CsrOutW;
+    logic [DATA_WIDTH-1:0] CsrOutW;
     logic signed [DATA_WIDTH-1:0] ALUOutW;
     fpr_t RdFW;
     logic OverflowW;

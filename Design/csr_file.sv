@@ -277,7 +277,7 @@ module csr_file
     
     end:CSR_File
 
-    assign RoundingMode = CsrFile[frm][2:0];
+    assign RoundingMode = round_mode_t'(CsrFile[frm][2:0]);
 
 
 endmodule

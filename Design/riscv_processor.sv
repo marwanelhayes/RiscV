@@ -34,8 +34,8 @@ module riscv_processor
     wire [ADDR_WIDTH-1:0] PCPlus4E;
     wire JumpE;
     wire ALUSrcE;
-    wire [1:0] ForwardAE;
-    wire [1:0] ForwardBE;
+    wire [2:0] ForwardAE;
+    wire [2:0] ForwardBE;
     wire FlushE;
     wire RegWriteE;
     selector_t SelectorE;
@@ -214,6 +214,7 @@ module riscv_processor
         .RegWriteM(RegWriteM),
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
+        .FPUOutW(FPUOutW),
         .RdFE(RdFE),
         .RD1FE(RD1FE),
         .RD2FE(RD2FE),

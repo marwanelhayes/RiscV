@@ -16,9 +16,9 @@ interface fetch_interface
     logic StallD;
     logic FlushD;
     
-    wire [ADDR_WIDTH-1:0] PCPlus4D;
-    wire [DATA_WIDTH-1:0] InstructionD;
-    wire [ADDR_WIDTH-1:0] PCPlus4F;
+    logic [ADDR_WIDTH-1:0] PCPlus4D;
+    logic [DATA_WIDTH-1:0] InstructionD;
+    logic [ADDR_WIDTH-1:0] PCPlus4F;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);

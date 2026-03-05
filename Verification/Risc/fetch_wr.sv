@@ -13,9 +13,9 @@ interface fetch_wr
     input StallD,
     input FlushD,
     
-    input wire [ADDR_WIDTH-1:0] PCPlus4D,
-    input wire [DATA_WIDTH-1:0] InstructionD,
-    input wire [ADDR_WIDTH-1:0] PCPlus4F
+    input logic [ADDR_WIDTH-1:0] PCPlus4D,
+    input logic [DATA_WIDTH-1:0] InstructionD,
+    input logic [ADDR_WIDTH-1:0] PCPlus4F
 );
 
     fetch_interface #(.CLK_PERIOD(CLK_PERIOD),.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
@@ -23,7 +23,17 @@ interface fetch_wr
     (
         .clk(clk)
     );
-
+    always_comb 
+    begin
+        fetch_intf.rst = rst;
+        fetch_intf.PCF = PCF;
+        fetch_intf.StallD = StallD;
+        fetch_intf.FlushD = FlushD;
+        fetch_intf.PCPlus4D = PCPlus4D ;
+        fetch_intf.InstructionD = InstructionD ;
+        fetch_intf.PCPlus4F = PCPlus4F ;
+    end
+    /*
     assign fetch_intf.rst = rst;
     assign fetch_intf.PCF = PCF;
     assign fetch_intf.StallD = StallD;
@@ -32,7 +42,7 @@ interface fetch_wr
     assign fetch_intf.PCPlus4D = PCPlus4D ;
     assign fetch_intf.InstructionD = InstructionD ;
     assign fetch_intf.PCPlus4F = PCPlus4F ;
-
+*/
     initial
     begin
         uvm_config_db #(virtual fetch_interface #(CLK_PERIOD,DATA_WIDTH,ADDR_WIDTH) )::set(null,"","INTF",fetch_intf.TEST);
