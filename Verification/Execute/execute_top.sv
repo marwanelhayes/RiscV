@@ -2,18 +2,14 @@ module execute_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_exe.svh"
-
     import execute_test_pkg::*;
+    import shared_pkg::*;
 
     bit clk;
 
-    localparam CLK_PERIOD = 10;
+    execute_interface intf (clk);
 
-    execute_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
-
-    execute_stage #(`DATA_WIDTH,`ADDR_WIDTH,2) DUT 
+    execute_stage #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH)) DUT 
     (
         .clk(intf.clk),
         .rst(intf.rst),
@@ -91,7 +87,7 @@ module execute_top;
 
     initial
     begin
-        uvm_config_db #(virtual execute_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH))::set(null,"","INTF",intf);
+        uvm_config_db #(virtual execute_interface)::set(null,"","INTF",intf);
         run_test();
     end
 

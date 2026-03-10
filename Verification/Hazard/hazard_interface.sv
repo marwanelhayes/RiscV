@@ -1,11 +1,6 @@
 import shared_pkg::*;
 import hazard_item_pkg::*;
-interface hazard_interface 
-#(
-    parameter int CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
+interface hazard_interface  
 (
     input bit clk
 );
@@ -102,7 +97,7 @@ interface hazard_interface
         end
     endtask:initialize
 
-    task drv2intf (hazard_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (hazard_item drv);
         @(cb);
         
         Rs1E <= drv.Rs1E;
@@ -127,7 +122,7 @@ interface hazard_interface
 
     endtask:drv2intf
 
-    task intf2mon (hazard_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (hazard_item mon);
         
         @(cb);
         

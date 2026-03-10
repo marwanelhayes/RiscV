@@ -1,5 +1,4 @@
 package fetch_test_pkg;
-    `include "parameters_fetch.svh"
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
@@ -17,23 +16,23 @@ package fetch_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        fetch_env #(`DATA_WIDTH,`ADDR_WIDTH) env;
-        fetch_seq #(`DATA_WIDTH,`ADDR_WIDTH) main_sequence;
-        fetch_config #(`DATA_WIDTH,`ADDR_WIDTH) configuration;
+        fetch_env env;
+        fetch_seq main_sequence;
+        fetch_config configuration;
 
         function void set_config_params();
             configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual fetch_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",configuration.vif))
+            if(!uvm_config_db #(virtual fetch_interface)::get(this,"","INTF",configuration.vif))
                 `uvm_fatal("TEST","Couldn't receive interface")
         endfunction
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            configuration = fetch_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("configuration",this);
+            configuration = fetch_config::type_id::create("configuration",this);
             set_config_params();
-            uvm_config_db #(fetch_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"env","CONFG",configuration);
-            env = fetch_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("env",this);
-            main_sequence = fetch_seq #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("main_sequence",this);
+            uvm_config_db #(fetch_config)::set(this,"env","CONFG",configuration);
+            env = fetch_env::type_id::create("env",this);
+            main_sequence = fetch_seq::type_id::create("main_sequence",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);

@@ -4,13 +4,13 @@ package mem_subscriber_pkg;
     `include "uvm_macros.svh"
     import mem_item_pkg::*;
 
-    class mem_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(mem_item #(DATA_WIDTH,ADDR_WIDTH));
+    class mem_subscriber extends uvm_subscriber #(mem_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(mem_subscriber #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(mem_subscriber)
 
 
-        mem_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        mem_item sub_item;
 
 
         covergroup cvr_grp();

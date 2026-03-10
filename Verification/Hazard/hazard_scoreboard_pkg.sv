@@ -5,7 +5,7 @@ package hazard_scoreboard_pkg;
     import shared_pkg::*;
     import hazard_item_pkg::*;
 
-    class hazard_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class hazard_scoreboard extends uvm_scoreboard;
 
 
         logic Stall;
@@ -21,15 +21,15 @@ package hazard_scoreboard_pkg;
         int success,fail;
 
         //Register the class to the factory
-        `uvm_component_param_utils(hazard_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(hazard_scoreboard)
 
         //Override the constructor function
         function new (string name = "hazard_scoreboard", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        hazard_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(hazard_item #(DATA_WIDTH,ADDR_WIDTH) , hazard_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        hazard_item sc_item;
+        uvm_analysis_imp #(hazard_item , hazard_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -85,24 +85,24 @@ package hazard_scoreboard_pkg;
                 ForwardBE = 3'b100;
             end
 
-            if(sc_item.FPURegWriteM && (sc_item.RdFM != f0) && (sc_item.RdFM == sc_item.Rs1FE))
-            begin
-                ForwardFloatingAE = 2'b10;
-            end
-            else if(sc_item.FPURegWriteW && (sc_item.RdFW != f0) && (sc_item.RdFW == sc_item.Rs1FE))
+            if(sc_item.FPURegWriteW && (sc_item.RdFW != f0) && (sc_item.RdFW == sc_item.Rs1FE))
             begin
                 ForwardFloatingAE = 2'b01;
             end
-
-            if(sc_item.FPURegWriteM && (sc_item.RdFM != f0) && (sc_item.RdFM == sc_item.Rs2FE))
+            else if(sc_item.FPURegWriteM && (sc_item.RdFM != f0) && (sc_item.RdFM == sc_item.Rs1FE))
             begin
-                ForwardFloatingBE = 2'b10;
+                ForwardFloatingAE = 2'b10;
             end
-            else if(sc_item.FPURegWriteW && (sc_item.RdFW != f0) && (sc_item.RdFW == sc_item.Rs2FE))
+
+            if(sc_item.FPURegWriteW && (sc_item.RdFW != f0) && (sc_item.RdFW == sc_item.Rs2FE))
             begin
                 ForwardFloatingBE = 2'b01;
             end
-        
+            else if(sc_item.FPURegWriteM && (sc_item.RdFM != f0) && (sc_item.RdFM == sc_item.Rs2FE))
+            begin
+                ForwardFloatingBE = 2'b10;
+            end
+                    
             StallD = Stall;
             StallF = Stall;
             FlushE = Stall || sc_item.PCSrcE || sc_item.TrapIsSet;
@@ -163,7 +163,7 @@ package hazard_scoreboard_pkg;
             end
         endfunction
 
-        function void write (hazard_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (hazard_item item);
             sc_item = item;
             check_output();
         endfunction

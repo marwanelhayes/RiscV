@@ -2,20 +2,16 @@ module risc_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_risc.svh"
-
+    import shared_pkg::*;
     import risc_test_pkg::*;
 
     bit clk;
 
 
-    risc_interface #(`CLK,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
-
-    localparam CLK_PERIOD = `CLK;
+    risc_interface intf (clk);
 
 
-    riscv_processor #(.DATA_WIDTH(`DATA_WIDTH), .ADDR_WIDTH(`ADDR_WIDTH)) 
+    riscv_processor #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH)) 
     DUT 
     (
         .clk(intf.clk),
@@ -25,39 +21,33 @@ module risc_top;
         .SoftwareInterrupt(intf.SoftwareInterrupt)
     );
 
-    bind DUT.Fetch fetch_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    Fetch_bind
+    bind DUT.Fetch fetch_wr Fetch_bind
     (
         .*
     );
     
-    bind DUT.Decode decode_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    DecodeBind
+    bind DUT.Decode decode_wr DecodeBind
     (
         .*
     );
     
 
-    bind DUT.Execute execute_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    ExecuteBind
+    bind DUT.Execute execute_wr ExecuteBind
     (
         .*
     );
     
-    bind DUT.Memory memory_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    MemBind
+    bind DUT.Memory memory_wr MemBind
     (
         .*
     );
 
-    bind DUT.WriteBack wb_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    WritebackBind
+    bind DUT.WriteBack wb_wr WritebackBind
     (
         .*
     );
 
-    bind DUT.Hazard hazard_wr #(.CLK_PERIOD(`CLK),.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) 
-    HazardBind
+    bind DUT.Hazard hazard_wr HazardBind
     (        
         .*
     );
@@ -74,7 +64,7 @@ module risc_top;
 
     initial
     begin
-        uvm_config_db #(virtual risc_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH),.CLK_PERIOD(`CLK)))::set(null,"","INTF",intf);
+        uvm_config_db #(virtual risc_interface)::set(null,"","INTF",intf);
         run_test();
     end
 

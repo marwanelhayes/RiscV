@@ -4,13 +4,13 @@ package decode_driver_pkg;
     `include "uvm_macros.svh"
     import decode_item_pkg::*;
 
-    class decode_driver #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH =32) extends uvm_driver #(decode_item #(DATA_WIDTH,ADDR_WIDTH));
+    class decode_driver extends uvm_driver #(decode_item);
         
         //Register the class to the factory
-        `uvm_component_param_utils(decode_driver #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(decode_driver)
 
-        virtual decode_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
-        decode_item #(DATA_WIDTH,ADDR_WIDTH) drv_item;
+        virtual decode_interface vif;
+        decode_item drv_item;
         
         //Overriding the constructor with the child class
         function new (string name = "decode_driver", uvm_component parent = null);

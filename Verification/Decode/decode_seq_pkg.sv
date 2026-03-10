@@ -5,22 +5,22 @@ package decode_seq_pkg;
     import shared_pkg::*;
     import decode_item_pkg::*;
 
-    class decode_seq #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_sequence #(decode_item #(DATA_WIDTH,ADDR_WIDTH));
+    class decode_seq extends uvm_sequence #(decode_item);
 
         //Register the class to the factory
-        `uvm_object_param_utils(decode_seq #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(decode_seq)
 
         //Overriding the constructor with the child class
         function new (string name = "decode_seq");
             super.new(name);
         endfunction: new
 
-        decode_item #(DATA_WIDTH,ADDR_WIDTH) item;
+        decode_item item;
 
         //Overriding the body task
         virtual task body();
 
-            item = decode_item #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("item");
+            item = decode_item::type_id::create("item");
             repeat(100000)
             begin: main_sequence
                 start_item(item);

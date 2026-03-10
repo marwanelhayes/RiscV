@@ -4,13 +4,13 @@ package fetch_driver_pkg;
     `include "uvm_macros.svh"
     import fetch_item_pkg::*;
 
-    class fetch_driver #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH =32) extends uvm_driver #(fetch_item #(DATA_WIDTH,ADDR_WIDTH));
+    class fetch_driver extends uvm_driver #(fetch_item);
         
         //Register the class to the factory
-        `uvm_component_param_utils( fetch_driver #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_param_utils( fetch_driver)
 
-        virtual fetch_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.IsActive(1)) vif;
-        fetch_item #(DATA_WIDTH,ADDR_WIDTH) drv_item;
+        virtual fetch_interface vif;
+        fetch_item drv_item;
         
         //Overriding the constructor with the child class
         function new (string name = "fetch_driver", uvm_component parent = null);

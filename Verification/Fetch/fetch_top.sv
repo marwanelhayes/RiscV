@@ -2,18 +2,14 @@ module fetch_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_fetch.svh"
-
+    import shared_pkg::*;
     import fetch_test_pkg::*;
 
     bit clk;
 
-    localparam CLK_PERIOD = 10;
+    fetch_interface intf (clk);
 
-    fetch_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
-
-    fetch_stage #(`DATA_WIDTH,`ADDR_WIDTH) DUT 
+    fetch_stage #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH) DUT 
     (
         .clk(intf.clk),
         .rst(intf.rst),
@@ -36,7 +32,7 @@ module fetch_top;
 
     initial
     begin
-        uvm_config_db #(virtual fetch_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH))::set(null,"","INTF",intf.TEST);
+        uvm_config_db #(virtual fetch_interface)::set(null,"","INTF",intf.TEST);
         run_test();
     end
 

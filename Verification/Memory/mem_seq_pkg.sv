@@ -5,22 +5,22 @@ package mem_seq_pkg;
     import shared_pkg::*;
     import mem_item_pkg::*;
 
-    class mem_seq #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_sequence #(mem_item);
+    class mem_seq extends uvm_sequence #(mem_item);
 
         //Register the class to the factory
-        `uvm_object_param_utils(mem_seq #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(mem_seq)
 
         //Overriding the constructor with the child class
         function new (string name = "mem_seq");
             super.new(name);
         endfunction: new
 
-        mem_item #(DATA_WIDTH,ADDR_WIDTH) item;
+        mem_item item;
 
         //Overriding the body task
         virtual task body();
 
-            item = mem_item #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("item");
+            item = mem_item::type_id::create("item");
             repeat(10000)
             begin: main_sequence
                 start_item(item);

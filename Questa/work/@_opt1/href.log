@@ -1,22 +1,4 @@
 BEGIN 3:execute_interface:fast__2:work
-    rst :  1:execute_top:fast:work
-    FPUOutW :  1:execute_top:fast:work
-    EcallE :  1:execute_top:fast:work
-    RoundModeE :  1:execute_top:fast:work
-    ALUSrcE :  1:execute_top:fast:work
-    RD1FE :  1:execute_top:fast:work
-    CsrOperationE :  1:execute_top:fast:work
-    TrapIsSet :  1:execute_top:fast:work
-    RdE :  1:execute_top:fast:work
-    FPURegWriteM :  1:execute_top:fast:work
-    funct3M :  1:execute_top:fast:work
-    ForwardAE :  1:execute_top:fast:work
-    ZeroM :  1:execute_top:fast:work
-    RegWriteM :  1:execute_top:fast:work
-    funct3E :  1:execute_top:fast:work
-    UnderflowM :  1:execute_top:fast:work
-    WriteDataM :  1:execute_top:fast:work
-    ResultW :  1:execute_top:fast:work
     Rs2FE :  1:execute_top:fast:work
     SoftwareInterrupt :  1:execute_top:fast:work
     RD1E :  1:execute_top:fast:work
@@ -62,4 +44,22 @@ BEGIN 3:execute_interface:fast__2:work
     SignImmE :  1:execute_top:fast:work
     Rs1FE :  1:execute_top:fast:work
     TimerInterrupt :  1:execute_top:fast:work
+    rst :  1:execute_top:fast:work
+    FPUOutW :  1:execute_top:fast:work
+    EcallE :  1:execute_top:fast:work
+    RoundModeE :  1:execute_top:fast:work
+    ALUSrcE :  1:execute_top:fast:work
+    RD1FE :  1:execute_top:fast:work
+    CsrOperationE :  1:execute_top:fast:work
+    TrapIsSet :  1:execute_top:fast:work
+    RdE :  1:execute_top:fast:work
+    FPURegWriteM :  1:execute_top:fast:work
+    funct3M :  1:execute_top:fast:work
+    ForwardAE :  1:execute_top:fast:work
+    ZeroM :  1:execute_top:fast:work
+    RegWriteM :  1:execute_top:fast:work
+    funct3E :  1:execute_top:fast:work
+    UnderflowM :  1:execute_top:fast:work
+    WriteDataM :  1:execute_top:fast:work
+    ResultW :  1:execute_top:fast:work
 END 

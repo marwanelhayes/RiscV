@@ -11,12 +11,13 @@ module risc_alu
     output logic signed [DATA_WIDTH:0] Y
 );
 
+    localparam int LOG_WIDTH = $clog2(DATA_WIDTH);
+
     logic signed [2*DATA_WIDTH - 1:0] MulOutput;
     logic signed [DATA_WIDTH-1:0] DivOutput;
-    logic signed [DATA_WIDTH-1:0] RemOutput;
-    mul_sel_t mul_sel;
+    logic signed [DATA_WIDTH-1:0] RemOutput;    mul_sel_t mul_sel;
     logic Divsign;
-
+    
     always_comb 
     begin
         if((alu_control == MUL) || (alu_control == MULH))
@@ -78,9 +79,9 @@ module risc_alu
                             else
                                 Y[0] = 0;
                         end
-            SLL     :   Y = SrcA << SrcB;
-            SRL     :   Y = SrcA >> SrcB;
-            SRA     :   Y = SrcA >>> SrcB;
+            SLL     :   Y = $unsigned(SrcA) << $unsigned(SrcB[LOG_WIDTH-1:0]);
+            SRL     :   Y = $unsigned(SrcA) >> $unsigned(SrcB[LOG_WIDTH-1:0]);
+            SRA     :   Y = $signed(SrcA) >>> $unsigned(SrcB[LOG_WIDTH-1:0]);
             MUL     :   Y = MulOutput[DATA_WIDTH-1:0];
             MULH    :   Y = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
             MULHSU  :   Y = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];

@@ -4,10 +4,10 @@ package fetch_item_pkg;
     `include "uvm_macros.svh"
     import shared_pkg::*;
 
-    class fetch_item #(parameter int DATA_WIDTH = 32,ADDR_WIDTH = 32) extends uvm_sequence_item;
+    class fetch_item extends uvm_sequence_item;
         
         //Register the class in the factory
-        `uvm_object_param_utils(fetch_item #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(fetch_item)
 
         //Overriding the build in constructor with the child class
         function new (string name = "fetch_item");
@@ -15,13 +15,13 @@ package fetch_item_pkg;
         endfunction: new
 
         rand logic rst;
-        rand logic [ADDR_WIDTH-1:0] PCF;
+        rand logic [FINAL_ADDR_WIDTH-1:0] PCF;
         rand logic StallD;
         rand logic FlushD;
 
-        logic [ADDR_WIDTH-1:0] PCPlus4D;
-        logic [DATA_WIDTH-1:0] InstructionD;
-        logic [ADDR_WIDTH-1:0] PCPlus4F;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D;
+        logic [FINAL_DATA_WIDTH-1:0] InstructionD;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
         
 
 

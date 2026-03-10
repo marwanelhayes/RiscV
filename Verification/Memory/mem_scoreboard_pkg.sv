@@ -5,17 +5,17 @@ package mem_scoreboard_pkg;
     import shared_pkg::*;
     import mem_item_pkg::*;
 
-    class mem_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class mem_scoreboard extends uvm_scoreboard;
 
 
         
-        logic signed [DATA_WIDTH-1:0] ReadDataW;
+        logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
         gpr_t RdW;
         logic RegWriteW;
         selector_t SelectorW;
-        logic [ADDR_WIDTH-1:0] PCPlus4W;
-        logic [DATA_WIDTH-1:0] CsrOutW;
-        logic signed [DATA_WIDTH-1:0] ALUOutW;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+        logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW;
         fpr_t RdFW;
         logic OverflowW;
         logic UnderflowW;
@@ -23,27 +23,27 @@ package mem_scoreboard_pkg;
         logic InfW;    
         logic ZeroW;
         logic InvalidDivW;
-        logic [DATA_WIDTH-1:0] FPUOutW;
+        logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
         move_operation_t MoveOperationW;
         logic FPURegWriteW;
 
-        localparam int DEPTH = (2**(ADDR_WIDTH-2));
+        localparam int DEPTH = (2**(FINAL_ADDR_WIDTH-2));
 
-        logic signed [DATA_WIDTH-1:0] memory [DEPTH-1:0];
+        logic signed [FINAL_DATA_WIDTH-1:0] memory [DEPTH-1:0];
 
 
         int success,fail;
 
         //Register the class to the factory
-        `uvm_component_param_utils(mem_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(mem_scoreboard)
 
         //Override the constructor function
         function new (string name = "mem_scoreboard", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        mem_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(mem_item #(DATA_WIDTH,ADDR_WIDTH) , mem_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        mem_item sc_item;
+        uvm_analysis_imp #(mem_item , mem_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -79,69 +79,69 @@ package mem_scoreboard_pkg;
                 if(sc_item.MemWriteM)
                 begin
                     case(load_store_t'(sc_item.funct3M))
-                        W: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]] = sc_item.WriteDataM;
+                        W: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]] = sc_item.WriteDataM;
                         HW:  case(sc_item.ALUOutM[1])
-                            1'b1: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:DATA_WIDTH/2] = sc_item.WriteDataM[DATA_WIDTH-1:DATA_WIDTH/2];
-                            1'b0: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH/2-1:'b0] = sc_item.WriteDataM[DATA_WIDTH/2-1:0];
+                            1'b1: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH/2] = sc_item.WriteDataM[FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH/2];
+                            1'b0: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH/2-1:'b0] = sc_item.WriteDataM[FINAL_DATA_WIDTH/2-1:0];
                         endcase
                         B:  case(sc_item.ALUOutM[1:0])
-                            2'b11: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:(3*(DATA_WIDTH/4))] = sc_item.WriteDataM[DATA_WIDTH-1:(3*(DATA_WIDTH/4))];
-                            2'b10: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(3*(DATA_WIDTH/4))-1:(DATA_WIDTH/2)] = sc_item.WriteDataM[(3*(DATA_WIDTH/4))-1:(DATA_WIDTH/2)];
-                            2'b01: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1:(DATA_WIDTH/4)] = sc_item.WriteDataM[(DATA_WIDTH/2)-1:(DATA_WIDTH/4)];
-                            2'b00: memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/4)-1:'b0] = sc_item.WriteDataM[(DATA_WIDTH/4)-1:0];
+                            2'b11: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:(3*(FINAL_DATA_WIDTH/4))] = sc_item.WriteDataM[FINAL_DATA_WIDTH-1:(3*(FINAL_DATA_WIDTH/4))];
+                            2'b10: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(3*(FINAL_DATA_WIDTH/4))-1:(FINAL_DATA_WIDTH/2)] = sc_item.WriteDataM[(3*(FINAL_DATA_WIDTH/4))-1:(FINAL_DATA_WIDTH/2)];
+                            2'b01: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1:(FINAL_DATA_WIDTH/4)] = sc_item.WriteDataM[(FINAL_DATA_WIDTH/2)-1:(FINAL_DATA_WIDTH/4)];
+                            2'b00: memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/4)-1:'b0] = sc_item.WriteDataM[(FINAL_DATA_WIDTH/4)-1:0];
                         endcase
                     endcase
                 end
                 case(load_store_t'(sc_item.funct3M))
-                    W: ReadDataW = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]];
+                    W: ReadDataW = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]];
                     HW:  case(sc_item.ALUOutM[1])
                             1'b1:   begin
-                                        ReadDataW[(DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:(DATA_WIDTH/2)];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/2)] = {DATA_WIDTH/2{memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/2)];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/2)] = {FINAL_DATA_WIDTH/2{memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH)-1]}};
                                     end
                             1'b0:   begin
-                                        ReadDataW[(DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1:'b0];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/2)] = {DATA_WIDTH/2{memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1:'b0];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/2)] = {FINAL_DATA_WIDTH/2{memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1]}};
                                     end
                         endcase
                     HWU:  case(sc_item.ALUOutM[1]) //For unsinged case the most significant bits remain zero
                             1'b1:   begin
-                                        ReadDataW[(DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:(DATA_WIDTH/2)];
+                                        ReadDataW[(FINAL_DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/2)];
                                     end
                             1'b0:   begin
-                                        ReadDataW[(DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1:'b0];
+                                        ReadDataW[(FINAL_DATA_WIDTH/2)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1:'b0];
                                     end
                         endcase
                     B:  case(sc_item.ALUOutM[1:0])
                             2'b11:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:(3*(DATA_WIDTH/4))];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/4)] = {3*(DATA_WIDTH/4){memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:(3*(FINAL_DATA_WIDTH/4))];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/4)] = {3*(FINAL_DATA_WIDTH/4){memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH)-1]}};
                                     end
                             2'b10:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(3*(DATA_WIDTH/4))-1:(DATA_WIDTH/2)];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/4)] = {3*(DATA_WIDTH/4){memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(3*DATA_WIDTH/4)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(3*(FINAL_DATA_WIDTH/4))-1:(FINAL_DATA_WIDTH/2)];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/4)] = {3*(FINAL_DATA_WIDTH/4){memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(3*FINAL_DATA_WIDTH/4)-1]}};
                                     end
                             2'b01:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1:(DATA_WIDTH/4)];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/4)] = {3*(DATA_WIDTH/4){memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1:(FINAL_DATA_WIDTH/4)];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/4)] = {3*(FINAL_DATA_WIDTH/4){memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1]}};
                                     end
                             2'b00:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/4)-1:'b0];
-                                        ReadDataW[DATA_WIDTH-1:(DATA_WIDTH/4)] = {3*(DATA_WIDTH/4){memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/4)-1]}};
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/4)-1:'b0];
+                                        ReadDataW[FINAL_DATA_WIDTH-1:(FINAL_DATA_WIDTH/4)] = {3*(FINAL_DATA_WIDTH/4){memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/4)-1]}};
                                     end
                         endcase
                     BU:  case(sc_item.ALUOutM[1:0]) //For unsinged the most significant bits remain zero
                             2'b11:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][DATA_WIDTH-1:(3*(DATA_WIDTH/4))];
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][FINAL_DATA_WIDTH-1:(3*(FINAL_DATA_WIDTH/4))];
                                     end
                             2'b10:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(3*(DATA_WIDTH/4))-1:(DATA_WIDTH/2)];
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(3*(FINAL_DATA_WIDTH/4))-1:(FINAL_DATA_WIDTH/2)];
                                     end 
                             2'b01:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/2)-1:(DATA_WIDTH/4)];
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/2)-1:(FINAL_DATA_WIDTH/4)];
                                     end
                             2'b00:  begin
-                                        ReadDataW[(DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[ADDR_WIDTH-1:2]][(DATA_WIDTH/4)-1:'b0];
+                                        ReadDataW[(FINAL_DATA_WIDTH/4)-1:'b0] = memory[sc_item.ALUOutM[FINAL_ADDR_WIDTH-1:2]][(FINAL_DATA_WIDTH/4)-1:'b0];
                                     end
                         endcase
                 endcase
@@ -279,7 +279,7 @@ package mem_scoreboard_pkg;
             end
         endfunction
 
-        function void write (mem_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (mem_item item);
             sc_item = item;
             check_output();
         endfunction

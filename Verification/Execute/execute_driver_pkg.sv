@@ -4,13 +4,13 @@ package execute_driver_pkg;
     `include "uvm_macros.svh"
     import execute_item_pkg::*;
 
-    class execute_driver #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH =32) extends uvm_driver #(execute_item #(DATA_WIDTH,ADDR_WIDTH));
+    class execute_driver extends uvm_driver #(execute_item);
         
         //Register the class to the factory
-        `uvm_component_param_utils(execute_driver #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(execute_driver)
 
-        virtual execute_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
-        execute_item #(DATA_WIDTH,ADDR_WIDTH) drv_item;
+        virtual execute_interface vif;
+        execute_item drv_item;
         
         //Overriding the constructor with the child class
         function new (string name = "execute_driver", uvm_component parent = null);

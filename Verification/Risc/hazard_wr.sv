@@ -3,13 +3,8 @@ import uvm_pkg::*;
 import shared_pkg::*;
 
 interface hazard_wr 
-#(
-    parameter int CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-)
 (   
-       input   gpr_t Rs1E,
+    input   gpr_t Rs1E,
     input   gpr_t Rs2E,
     input   gpr_t RdE,
     input   gpr_t Rs1D, 
@@ -73,37 +68,7 @@ interface hazard_wr
         hazard_intf.ForwardFloatingAE = ForwardFloatingAE;
         hazard_intf.ForwardFloatingBE = ForwardFloatingBE;
     end
-    /*
 
-    assign   hazard_intf.Rs1E =Rs1E; 
-    assign   hazard_intf.Rs2E =Rs2E; 
-    assign   hazard_intf.RdE =RdE; 
-    assign   hazard_intf.Rs1D =Rs1D;  
-    assign   hazard_intf.Rs2D =Rs2D;  
-    assign   hazard_intf.RdM =RdM; 
-    assign   hazard_intf.RdW =RdW; 
-    assign   hazard_intf.RegWriteM =RegWriteM; 
-    assign   hazard_intf.RegWriteW =RegWriteW; 
-    assign   hazard_intf.SelectorE =SelectorE; 
-    assign   hazard_intf.PCSrcE =PCSrcE;  
-    assign   hazard_intf.TrapIsSet = TrapIsSet;
-    assign   hazard_intf.MoveOperationE = MoveOperationE;
-    assign   hazard_intf.RdFM = RdFM;
-    assign   hazard_intf.RdFW = RdFW;
-    assign   hazard_intf.Rs1FE = Rs1FE;
-    assign   hazard_intf.Rs2FE = Rs2FE;
-    assign   hazard_intf.FPURegWriteM = FPURegWriteM;
-    assign   hazard_intf.FPURegWriteW = FPURegWriteW;
-    
-    assign   hazard_intf.ForwardAE = ForwardAE;
-    assign   hazard_intf.ForwardBE = ForwardBE;
-    assign   hazard_intf.StallD = StallD;
-    assign   hazard_intf.StallF = StallF;
-    assign   hazard_intf.FlushE = FlushE;
-    assign   hazard_intf.FlushD = FlushD;  
-    assign   hazard_intf.ForwardFloatingAE = ForwardFloatingAE;
-    assign   hazard_intf.ForwardFloatingBE = ForwardFloatingBE;
-    */
     initial 
     begin
         clk = 0;
@@ -113,13 +78,14 @@ interface hazard_wr
         end
     end
 
-    hazard_interface #(.CLK_PERIOD(CLK_PERIOD), .DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) hazard_intf (
+    hazard_interface hazard_intf 
+    (
         .clk(clk)
     );
     
     initial
     begin
-        uvm_config_db #(virtual hazard_interface #(.CLK_PERIOD(CLK_PERIOD),.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)))::set(null,"","INTF",hazard_intf.TEST);
+        uvm_config_db #(virtual hazard_interface)::set(null,"","INTF",hazard_intf.TEST);
     end
 
 endinterface

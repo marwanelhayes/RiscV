@@ -2,16 +2,14 @@ module hazard_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_hazard.svh"
-
+    import shared_pkg::*;
     import hazard_test_pkg::*;
 
     bit clk;
 
     localparam CLK_PERIOD = 10;
 
-    hazard_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
+    hazard_interface intf (clk);
 
     hazard_unit DUT 
     (
@@ -55,7 +53,7 @@ module hazard_top;
 
     initial
     begin
-        uvm_config_db #(virtual hazard_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH))::set(null,"","INTF",intf);
+        uvm_config_db #(virtual hazard_interface)::set(null,"","INTF",intf);
         run_test();
     end
 

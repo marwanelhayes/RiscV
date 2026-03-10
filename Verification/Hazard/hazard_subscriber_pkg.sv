@@ -4,13 +4,13 @@ package hazard_subscriber_pkg;
     `include "uvm_macros.svh"
     import hazard_item_pkg::*;
 
-    class hazard_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(hazard_item #(DATA_WIDTH,ADDR_WIDTH));
+    class hazard_subscriber extends uvm_subscriber #(hazard_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(hazard_subscriber #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(hazard_subscriber)
 
 
-        hazard_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        hazard_item sub_item;
 
         covergroup cvr_grp();
             

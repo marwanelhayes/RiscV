@@ -5,23 +5,23 @@ package fetch_scoreboard_pkg;
     import shared_pkg::*;
     import fetch_item_pkg::*;
 
-    class fetch_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class fetch_scoreboard extends uvm_scoreboard;
 
 
         
-        logic [ADDR_WIDTH-1:0] PCPlus4D;
-        logic [DATA_WIDTH-1:0] InstructionD;
-        logic [ADDR_WIDTH-1:0] PCPlus4F;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D;
+        logic [FINAL_DATA_WIDTH-1:0] InstructionD;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
 
-        localparam int DEPTH = (2**(ADDR_WIDTH-2));
+        localparam int DEPTH = (2**(FINAL_ADDR_WIDTH-2));
 
-        logic signed [DATA_WIDTH-1:0] memory [DEPTH-1:0];
+        logic signed [FINAL_DATA_WIDTH-1:0] memory [DEPTH-1:0];
 
 
         int success,fail;
 
         //Register the class to the factory
-        `uvm_component_param_utils(fetch_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(fetch_scoreboard)
 
         //Override the constructor function
         function new (string name = "fetch_scoreboard", uvm_component parent = null);
@@ -29,8 +29,8 @@ package fetch_scoreboard_pkg;
             $readmemb("C:/Ain_shams/RiscV/Python/binary1.txt",memory);
         endfunction:new
 
-        fetch_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(fetch_item #(DATA_WIDTH,ADDR_WIDTH) , fetch_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        fetch_item sc_item;
+        uvm_analysis_imp #(fetch_item , fetch_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -53,7 +53,7 @@ package fetch_scoreboard_pkg;
                 end
                 else if(!sc_item.StallD)
                 begin
-                    InstructionD = memory[sc_item.PCF[ADDR_WIDTH-1:2]];
+                    InstructionD = memory[sc_item.PCF[FINAL_ADDR_WIDTH-1:2]];
                     PCPlus4D = sc_item.PCF + 4;
                 end
             end
@@ -86,7 +86,7 @@ package fetch_scoreboard_pkg;
             end
         endfunction
 
-        function void write (fetch_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (fetch_item item);
             sc_item = item;
             check_output();
         endfunction

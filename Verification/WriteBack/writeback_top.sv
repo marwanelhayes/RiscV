@@ -2,18 +2,14 @@ module writeback_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_wb.svh"
-
+    import shared_pkg::*;
     import writeback_test_pkg::*;
 
     bit clk;
 
-    localparam CLK_PERIOD = 10;
+    writeback_interface intf (clk);
 
-    writeback_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
-
-    wb_stage #(`DATA_WIDTH,`ADDR_WIDTH) DUT 
+    wb_stage #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH) DUT 
     (
         .clk(intf.clk),
         .rst(intf.rst),
@@ -43,7 +39,7 @@ module writeback_top;
 
     initial
     begin
-        uvm_config_db #(virtual writeback_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH))::set(null,"","INTF",intf);
+        uvm_config_db #(virtual writeback_interface)::set(null,"","INTF",intf);
         run_test();
     end
 

@@ -1,5 +1,4 @@
 package decode_test_pkg;
-    `include "parameters_decode.svh"
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
@@ -17,23 +16,23 @@ package decode_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        decode_env #(`DATA_WIDTH,`ADDR_WIDTH) env;
-        decode_seq #(`DATA_WIDTH,`ADDR_WIDTH) main_sequence;
-        decode_config #(`DATA_WIDTH,`ADDR_WIDTH) configuration;
+        decode_env env;
+        decode_seq main_sequence;
+        decode_config configuration;
 
         function void set_config_params();
             configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual decode_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",configuration.vif))
+            if(!uvm_config_db #(virtual decode_interface)::get(this,"","INTF",configuration.vif))
                 `uvm_fatal("TEST","Couldn't receive interface")
         endfunction
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            configuration = decode_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("configuration",this);
+            configuration = decode_config::type_id::create("configuration",this);
             set_config_params();
-            uvm_config_db #(decode_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"env","CONFG",configuration);
-            env = decode_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("env",this);
-            main_sequence = decode_seq #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("main_sequence",this);
+            uvm_config_db #(decode_config)::set(this,"env","CONFG",configuration);
+            env = decode_env::type_id::create("env",this);
+            main_sequence = decode_seq::type_id::create("main_sequence",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);

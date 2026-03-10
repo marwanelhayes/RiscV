@@ -1,11 +1,6 @@
 import shared_pkg::*;
 import execute_item_pkg::*;
 interface execute_interface 
-#(
-    parameter CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
 (
     input bit clk
 );
@@ -16,11 +11,11 @@ interface execute_interface
 
 
     logic rst;
-    logic signed [DATA_WIDTH-1:0] RD1E;
-    logic signed [DATA_WIDTH-1:0] RD2E;
-    logic signed [DATA_WIDTH-1:0] SignImmE;
-    logic signed [DATA_WIDTH-1:0] ResultW;
-    logic [ADDR_WIDTH-1:0] PCPlus4E;
+    logic signed [FINAL_DATA_WIDTH-1:0] RD1E;
+    logic signed [FINAL_DATA_WIDTH-1:0] RD2E;
+    logic signed [FINAL_DATA_WIDTH-1:0] SignImmE;
+    logic signed [FINAL_DATA_WIDTH-1:0] ResultW;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4E;
     alu_operation_t ALUControlE;
     logic [2:0] funct3E;
     logic BranchE;
@@ -44,31 +39,31 @@ interface execute_interface
     logic ExternalInterrupt;
     logic SoftwareInterrupt;
     fpr_t RdFE;
-    logic [DATA_WIDTH-1:0] RD1FE;
-    logic [DATA_WIDTH-1:0] RD2FE;
+    logic [FINAL_DATA_WIDTH-1:0] RD1FE;
+    logic [FINAL_DATA_WIDTH-1:0] RD2FE;
     fpu_operation_t FPUControlE;
     round_mode_t RoundModeE;
     logic FPURegWriteE;
     move_operation_t MoveOperationE;
-    logic [DATA_WIDTH-1:0] FPUOutW;
+    logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
     logic [1:0] ForwardFloatingAE;
     logic [1:0] ForwardFloatingBE;
     fpr_t Rs1FE;
     fpr_t Rs2FE;
 
 
-    logic signed [DATA_WIDTH-1:0] ALUOutM;
-    logic signed [DATA_WIDTH-1:0] WriteDataM;
+    logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
+    logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
     gpr_t RdM;
     logic PCSrcE;
     logic RegWriteM;
-    logic [ADDR_WIDTH-1:0] PCPlus4M;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
     selector_t SelectorM;
     logic [2:0] funct3M;
-    logic [DATA_WIDTH-1:0] CsrOutM;
+    logic [FINAL_DATA_WIDTH-1:0] CsrOutM;
     logic MemWriteM;
     logic TrapIsSet;
-    logic [ADDR_WIDTH-1:0] CsrOutPC;
+    logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
     fpr_t RdFM;
     logic OverflowM;
     logic UnderflowM;
@@ -76,7 +71,7 @@ interface execute_interface
     logic InfM;
     logic ZeroM;
     logic InvalidDivM;
-    logic [DATA_WIDTH-1:0] FPUOutM;
+    logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
     logic FPURegWriteM;
     move_operation_t MoveOperationM;
 
@@ -198,7 +193,7 @@ interface execute_interface
         end
     endtask:initialize
 
-    task drv2intf (execute_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (execute_item drv);
         @(cb);
         if(!PCSrcE)
         begin
@@ -288,7 +283,7 @@ interface execute_interface
         end
     endtask:drv2intf
 
-    task intf2mon (execute_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (execute_item mon);
         @(cb);
         mon.rst = cb.rst;
         mon.RD1E = cb.RD1E;

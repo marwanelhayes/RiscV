@@ -4,10 +4,10 @@ package hazard_item_pkg;
     `include "uvm_macros.svh"
     import shared_pkg::*;
 
-    class hazard_item #(parameter int DATA_WIDTH = 32,ADDR_WIDTH = 32) extends uvm_sequence_item;
+    class hazard_item extends uvm_sequence_item;
         
         //Register the class in the factory
-        `uvm_object_param_utils(hazard_item #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(hazard_item)
 
         //Overriding the build in constructor with the child class
         function new (string name = "hazard_item");

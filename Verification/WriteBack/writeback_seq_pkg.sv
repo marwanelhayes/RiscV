@@ -5,22 +5,22 @@ package writeback_seq_pkg;
     import shared_pkg::*;
     import writeback_item_pkg::*;
 
-    class writeback_seq #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_sequence #(writeback_item #(DATA_WIDTH,ADDR_WIDTH));
+    class writeback_seq extends uvm_sequence #(writeback_item);
 
         //Register the class to the factory
-        `uvm_object_param_utils(writeback_seq #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(writeback_seq)
 
         //Overriding the constructor with the child class
         function new (string name = "writeback_seq");
             super.new(name);
         endfunction: new
 
-        writeback_item #(DATA_WIDTH,ADDR_WIDTH) item;
+        writeback_item item;
 
         //Overriding the body task
         virtual task body();
 
-            item = writeback_item #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("item");
+            item = writeback_item::type_id::create("item");
             repeat(10000)
             begin: main_sequence
                 start_item(item);

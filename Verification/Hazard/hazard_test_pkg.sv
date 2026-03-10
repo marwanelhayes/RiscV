@@ -1,5 +1,4 @@
 package hazard_test_pkg;
-    `include "parameters_hazard.svh"
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
@@ -17,23 +16,23 @@ package hazard_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        hazard_env #(`DATA_WIDTH,`ADDR_WIDTH) env;
-        hazard_seq #(`DATA_WIDTH,`ADDR_WIDTH) main_sequence;
-        hazard_config #(`DATA_WIDTH,`ADDR_WIDTH) configuration;
+        hazard_env env;
+        hazard_seq main_sequence;
+        hazard_config configuration;
 
         function void set_config_params();
             configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual hazard_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",configuration.vif))
+            if(!uvm_config_db #(virtual hazard_interface)::get(this,"","INTF",configuration.vif))
                 `uvm_fatal("TEST","Couldn't receive interface")
         endfunction
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            configuration = hazard_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("configuration",this);
+            configuration = hazard_config::type_id::create("configuration",this);
             set_config_params();
-            uvm_config_db #(hazard_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"env","CONFG",configuration);
-            env = hazard_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("env",this);
-            main_sequence = hazard_seq #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("main_sequence",this);
+            uvm_config_db #(hazard_config)::set(this,"env","CONFG",configuration);
+            env = hazard_env::type_id::create("env",this);
+            main_sequence = hazard_seq::type_id::create("main_sequence",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);

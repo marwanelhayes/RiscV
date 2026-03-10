@@ -4,10 +4,10 @@ package execute_item_pkg;
     `include "uvm_macros.svh"
     import shared_pkg::*;
 
-    class execute_item #(parameter int DATA_WIDTH = 32,ADDR_WIDTH = 32) extends uvm_sequence_item;
+    class execute_item extends uvm_sequence_item;
         
         //Register the class in the factory
-        `uvm_object_param_utils(execute_item #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(execute_item)
 
         //Overriding the build in constructor with the child class
         function new (string name = "execute_item");
@@ -15,11 +15,11 @@ package execute_item_pkg;
         endfunction: new
 
         rand logic rst;
-        rand logic signed [DATA_WIDTH-1:0] RD1E;
-        rand logic signed [DATA_WIDTH-1:0] RD2E;
-        rand logic signed [DATA_WIDTH-1:0] SignImmE;
-        rand logic signed [DATA_WIDTH-1:0] ResultW;
-        rand logic [ADDR_WIDTH-1:0] PCPlus4E;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] RD1E;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] RD2E;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] SignImmE;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] ResultW;
+        rand logic [FINAL_ADDR_WIDTH-1:0] PCPlus4E;
         rand alu_operation_t ALUControlE;
         rand logic [2:0] funct3E;
         rand logic BranchE;
@@ -43,30 +43,30 @@ package execute_item_pkg;
         rand logic SoftwareInterrupt;
         rand logic ExternalInterrupt;
         rand fpr_t RdFE;
-        rand logic [DATA_WIDTH-1:0] RD1FE;
-        rand logic [DATA_WIDTH-1:0] RD2FE;
+        rand logic [FINAL_DATA_WIDTH-1:0] RD1FE;
+        rand logic [FINAL_DATA_WIDTH-1:0] RD2FE;
         rand fpu_operation_t FPUControlE;
         rand round_mode_t RoundModeE;
         rand logic FPURegWriteE;
         rand move_operation_t MoveOperationE;
-        rand logic [DATA_WIDTH-1:0] FPUOutW;
+        rand logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
         rand logic [1:0] ForwardFloatingAE;
         rand logic [1:0] ForwardFloatingBE;
         rand fpr_t Rs1FE;
         rand fpr_t Rs2FE;
 
-        logic signed [DATA_WIDTH-1:0] ALUOutM;
-        logic signed [DATA_WIDTH-1:0] WriteDataM;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
+        logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
         gpr_t RdM;
         logic PCSrcE;
         logic RegWriteM;
-        logic [ADDR_WIDTH-1:0] PCPlus4M;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
         selector_t SelectorM;
         logic [2:0] funct3M;
-        logic [DATA_WIDTH-1:0] CsrOutM;
+        logic [FINAL_DATA_WIDTH-1:0] CsrOutM;
         logic MemWriteM;
         logic TrapIsSet;
-        logic [ADDR_WIDTH-1:0] CsrOutPC;
+        logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
         fpr_t RdFM;
         logic OverflowM;
         logic UnderflowM;
@@ -74,7 +74,7 @@ package execute_item_pkg;
         logic InfM;
         logic ZeroM;
         logic InvalidDivM;
-        logic [DATA_WIDTH-1:0] FPUOutM;
+        logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
         logic FPURegWriteM;
         move_operation_t MoveOperationM;
 

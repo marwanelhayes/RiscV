@@ -1,25 +1,20 @@
 import shared_pkg::*;
 import decode_item_pkg::*;
 interface decode_interface 
-#(
-    parameter CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
 (
     input bit clk
 );
     localparam CLK = (CLK_PERIOD/5.0);
     
     logic rst;
-    logic [ADDR_WIDTH-1:0] PCPlus4D;
-    logic [DATA_WIDTH-1:0] InstructionD;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D;
+    logic [FINAL_DATA_WIDTH-1:0] InstructionD;
     gpr_t RdW;
     logic FlushE;
     logic RegWriteW;
-    logic signed [DATA_WIDTH-1:0] ResultW;
+    logic signed [FINAL_DATA_WIDTH-1:0] ResultW;
     fpr_t RdFW;
-    logic [DATA_WIDTH-1:0] FPUOutW;
+    logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
     move_operation_t MoveOperationW;
     logic FPURegWriteW;
     
@@ -31,13 +26,13 @@ interface decode_interface
     logic JumpE;
     alu_operation_t ALUControlE;
     csr_t CsrOperationE;
-    logic signed [DATA_WIDTH-1:0] RD1E;
-    logic signed [DATA_WIDTH-1:0] RD2E;
-    logic signed [DATA_WIDTH-1:0] SignImmE;
-    logic [ADDR_WIDTH-1:0] PCBranchE;
+    logic signed [FINAL_DATA_WIDTH-1:0] RD1E;
+    logic signed [FINAL_DATA_WIDTH-1:0] RD2E;
+    logic signed [FINAL_DATA_WIDTH-1:0] SignImmE;
+    logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
     csr_index_t CsrIndexE;
     logic [2:0] funct3E;
-    logic [ADDR_WIDTH-1:0] PCPlus4E;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4E;
     logic RegWriteE ; 
     selector_t SelectorE;
     logic MemWriteE;
@@ -49,8 +44,8 @@ interface decode_interface
     logic MRetE;
     logic IllegaleInstructionE;
     fpr_t RdFE;
-    logic [DATA_WIDTH-1:0] RD1FE;
-    logic [DATA_WIDTH-1:0] RD2FE;
+    logic [FINAL_DATA_WIDTH-1:0] RD1FE;
+    logic [FINAL_DATA_WIDTH-1:0] RD2FE;
     fpu_operation_t FPUControlE;
     round_mode_t RoundModeE;
     logic FPURegWriteE;
@@ -130,7 +125,7 @@ interface decode_interface
         end
     endtask:initialize
 
-    task drv2intf (decode_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (decode_item drv);
         @(cb);
         rst <= drv.rst;
         PCPlus4D <= drv.PCPlus4D;
@@ -145,7 +140,7 @@ interface decode_interface
         FPURegWriteW <= drv.FPURegWriteW;
     endtask:drv2intf
 
-    task intf2mon (decode_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (decode_item mon);
         @(cb);
         mon.rst = cb.rst;
         mon.PCPlus4D = cb.PCPlus4D;

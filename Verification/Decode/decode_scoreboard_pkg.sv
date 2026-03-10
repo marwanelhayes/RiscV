@@ -5,7 +5,7 @@ package decode_scoreboard_pkg;
     import shared_pkg::*;
     import decode_item_pkg::*;
 
-    class decode_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class decode_scoreboard extends uvm_scoreboard;
 
         gpr_t Rs1E;
         gpr_t Rs2E;
@@ -15,13 +15,13 @@ package decode_scoreboard_pkg;
         logic JumpE;
         alu_operation_t ALUControlE;
         csr_t CsrOperationE;
-        logic signed [DATA_WIDTH-1:0] RD1E;
-        logic signed [DATA_WIDTH-1:0] RD2E;
-        logic signed [DATA_WIDTH-1:0] SignImmE;
-        logic [ADDR_WIDTH-1:0] PCBranchE;
+        logic signed [FINAL_DATA_WIDTH-1:0] RD1E;
+        logic signed [FINAL_DATA_WIDTH-1:0] RD2E;
+        logic signed [FINAL_DATA_WIDTH-1:0] SignImmE;
+        logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
         csr_index_t CsrIndexE;
         logic [2:0] funct3E;
-        logic [ADDR_WIDTH-1:0] PCPlus4E;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4E;
         logic RegWriteE ; 
         selector_t SelectorE;
         logic MemWriteE;
@@ -33,8 +33,8 @@ package decode_scoreboard_pkg;
         logic EbreakE;
         logic IllegaleInstructionE;
         fpr_t RdFE;
-        logic [DATA_WIDTH-1:0] RD1FE;
-        logic [DATA_WIDTH-1:0] RD2FE;
+        logic [FINAL_DATA_WIDTH-1:0] RD1FE;
+        logic [FINAL_DATA_WIDTH-1:0] RD2FE;
         fpu_operation_t FPUControlE;
         round_mode_t RoundModeE;
         logic FPURegWriteE;
@@ -44,21 +44,21 @@ package decode_scoreboard_pkg;
         fpr_t Rs1FD;
         fpr_t Rs2FD;
 
-        logic signed [DATA_WIDTH-1:0] RegFile [32];
-        logic [DATA_WIDTH-1:0] FPURegFile [32];
+        logic signed [FINAL_DATA_WIDTH-1:0] RegFile [32];
+        logic [FINAL_DATA_WIDTH-1:0] FPURegFile [32];
 
         int success,fail;
 
         //Register the class to the factory
-        `uvm_component_param_utils(decode_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(decode_scoreboard)
 
         //Override the constructor function
         function new (string name = "decode_scoreboard", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        decode_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(decode_item #(DATA_WIDTH,ADDR_WIDTH) , decode_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        decode_item sc_item;
+        uvm_analysis_imp #(decode_item , decode_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -202,7 +202,7 @@ package decode_scoreboard_pkg;
                     begin:RType
                         RegWriteE = 1'b1;
                         IllegaleInstructionE = 'b0;
-                        if(!sc_item.InstructionD[DATA_WIDTH-1:25])
+                        if(!sc_item.InstructionD[FINAL_DATA_WIDTH-1:25])
                         begin
                             case(sc_item.InstructionD[14:12])
                                 3'b000: ALUControlE = ADD;
@@ -215,14 +215,14 @@ package decode_scoreboard_pkg;
                                 3'b111: ALUControlE = AND;
                             endcase
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b010_0000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b010_0000)
                         begin
                             case(sc_item.InstructionD[14:12])
                                 3'b101: ALUControlE = SRA;
                                 3'b000: ALUControlE = SUB;
                             endcase
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b000_0001) // MUL instructions
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b000_0001) // MUL instructions
                         begin
                             case(sc_item.InstructionD[14:12])
                                 3'b000: ALUControlE = MUL;
@@ -244,7 +244,7 @@ package decode_scoreboard_pkg;
                         IllegaleInstructionE = 'b0;
                         ALUSrcE = 1'b1;
                         ALUControlE = ADD;
-                        SignImmE = {{20{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[DATA_WIDTH-1:20]};
+                        SignImmE = {{20{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[FINAL_DATA_WIDTH-1:20]};
                     end:Load
                     S_TYPE:
                     begin:Store
@@ -252,7 +252,7 @@ package decode_scoreboard_pkg;
                         ALUControlE = ADD;
                         IllegaleInstructionE = 'b0;
                         ALUSrcE = 1'b1;
-                        SignImmE = {{20{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[DATA_WIDTH-1:25],sc_item.InstructionD[11:7]};
+                        SignImmE = {{20{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[FINAL_DATA_WIDTH-1:25],sc_item.InstructionD[11:7]};
                     end:Store
                     B_TYPE:
                     begin:Branch
@@ -266,7 +266,7 @@ package decode_scoreboard_pkg;
                             BLTU: ALUControlE = SLTU;
                             BGEU: ALUControlE = SLTU;
                         endcase
-                        SignImmE = {{20{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[DATA_WIDTH-1],sc_item.InstructionD[7],sc_item.InstructionD[DATA_WIDTH-2:25],sc_item.InstructionD[11:8]};
+                        SignImmE = {{20{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[FINAL_DATA_WIDTH-1],sc_item.InstructionD[7],sc_item.InstructionD[FINAL_DATA_WIDTH-2:25],sc_item.InstructionD[11:8]};
                     end:Branch
                     I_TYPE:
                     begin:Immediate
@@ -281,7 +281,7 @@ package decode_scoreboard_pkg;
                             3'b110: ALUControlE = OR;
                             3'b111: ALUControlE = AND;
                         endcase
-                        SignImmE = {{20{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[DATA_WIDTH-1:20]};
+                        SignImmE = {{20{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[FINAL_DATA_WIDTH-1:20]};
                     end:Immediate
                     JAL:
                     begin:JumpAndLink
@@ -291,7 +291,7 @@ package decode_scoreboard_pkg;
                         IllegaleInstructionE = 'b0;
                         ALUControlE = ADD;
                         SelectorE = PCToReg;
-                        SignImmE = {{12{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[19:12],sc_item.InstructionD[20],sc_item.InstructionD[30:21],1'b0};
+                        SignImmE = {{12{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[19:12],sc_item.InstructionD[20],sc_item.InstructionD[30:21],1'b0};
                     end:JumpAndLink
                     JALR:
                     begin:JumpAndLinkRegister
@@ -301,7 +301,7 @@ package decode_scoreboard_pkg;
                         IllegaleInstructionE = 'b0;
                         SelectorE = PCToReg;
                         ALUControlE = ADD;
-                        SignImmE = {{20{sc_item.InstructionD[DATA_WIDTH-1]}},sc_item.InstructionD[DATA_WIDTH-1:20]};
+                        SignImmE = {{20{sc_item.InstructionD[FINAL_DATA_WIDTH-1]}},sc_item.InstructionD[FINAL_DATA_WIDTH-1:20]};
                     end:JumpAndLinkRegister
                     CSR:
                     begin:ControlAndStatus
@@ -325,35 +325,35 @@ package decode_scoreboard_pkg;
                     end:ControlAndStatus
                     FLOATING_PT:
                     begin:FloatingPoint
-                        if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b000_0000)
+                        if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b000_0000)
                         begin
                             FPURegWriteE = 1'b1;
                             IllegaleInstructionE = 'b0;
                             FPUControlE = FADD_S;
                             MoveOperationE = FPUToFPU;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b000_0100)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b000_0100)
                         begin
                             FPURegWriteE = 1'b1;
                             IllegaleInstructionE = 'b0;
                             FPUControlE = FSUB_S;
                             MoveOperationE = FPUToFPU;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b000_1000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b000_1000)
                         begin
                             FPURegWriteE = 1'b1;
                             IllegaleInstructionE = 'b0;
                             FPUControlE = FMUL_S;
                             MoveOperationE = FPUToFPU;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b000_1100)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b000_1100)
                         begin
                             FPURegWriteE = 1'b1;
                             IllegaleInstructionE = 'b0;
                             FPUControlE = FDIV_S;
                             MoveOperationE = FPUToFPU;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b010_1100)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b010_1100)
                         begin
                             if(Rs2FD == f0)
                             begin
@@ -363,7 +363,7 @@ package decode_scoreboard_pkg;
                                 MoveOperationE = FPUToFPU;
                             end
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b001_0000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b001_0000)
                         begin
                             FPURegWriteE = 1'b1;
                             MoveOperationE = FPUToFPU;
@@ -375,7 +375,7 @@ package decode_scoreboard_pkg;
                             else if(sc_item.InstructionD[14:12] == 3'b010)
                                 FPUControlE = FSGNJX_S;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b001_0100)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b001_0100)
                         begin
                             FPURegWriteE = 1'b1;
                             MoveOperationE = FPUToFPU;
@@ -385,7 +385,7 @@ package decode_scoreboard_pkg;
                             else if(sc_item.InstructionD[14:12] == 3'b001)
                                 FPUControlE = FMAX_S;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b110_0000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b110_0000)
                         begin
                             RegWriteE = 1'b1;
                             MoveOperationE = FPUToReg;
@@ -395,7 +395,7 @@ package decode_scoreboard_pkg;
                             else if(Rs2FD == f1)
                                 FPUControlE = FCVT_WU_S;
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b111_0000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b111_0000)
                         begin
                             if(Rs2FD == f0)
                             begin
@@ -415,7 +415,7 @@ package decode_scoreboard_pkg;
                                 end
                             end
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b101_0000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b101_0000)
                         begin
                             if(sc_item.InstructionD[14:12] == 3'b000)
                             begin
@@ -439,7 +439,7 @@ package decode_scoreboard_pkg;
                                 IllegaleInstructionE = 'b0;
                             end
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b110_1000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b110_1000)
                         begin
                             if(Rs2FD == f0)
                             begin
@@ -456,7 +456,7 @@ package decode_scoreboard_pkg;
                                 FPUControlE = FCVT_S_WU;
                             end
                         end
-                        else if(sc_item.InstructionD[DATA_WIDTH-1:25] == 7'b111_1000)
+                        else if(sc_item.InstructionD[FINAL_DATA_WIDTH-1:25] == 7'b111_1000)
                         begin
                             if(Rs2FD == f0 && sc_item.InstructionD[14:12] == 3'b000)
                             begin
@@ -681,7 +681,7 @@ package decode_scoreboard_pkg;
             end
         endfunction
 
-        function void write (decode_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (decode_item item);
             sc_item = item;
             check_output();
         endfunction

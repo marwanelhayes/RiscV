@@ -2,18 +2,14 @@ module decode_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
-    `include "parameters_decode.svh"
-
+    import shared_pkg::*;
     import decode_test_pkg::*;
 
     bit clk;
 
-    localparam CLK_PERIOD = 10;
+    decode_interface intf (clk);
 
-    decode_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH) intf (clk);
-
-    decode_stage #(`DATA_WIDTH,`ADDR_WIDTH,2) DUT 
+    decode_stage #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,2) DUT 
     (
         .clk(intf.clk),
         .rst(intf.rst),
@@ -74,7 +70,7 @@ module decode_top;
 
     initial
     begin
-        uvm_config_db #(virtual decode_interface #(CLK_PERIOD,`DATA_WIDTH,`ADDR_WIDTH))::set(null,"","INTF",intf);
+        uvm_config_db #(virtual decode_interface)::set(null,"","INTF",intf);
         run_test();
     end
 

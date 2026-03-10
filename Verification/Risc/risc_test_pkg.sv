@@ -1,8 +1,8 @@
 package risc_test_pkg;
     
-    `include "parameters_risc.svh"
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import shared_pkg::*;
 
     import fetch_config_pkg::*;
     import fetch_env_pkg::*;
@@ -32,26 +32,26 @@ package risc_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        localparam int MEM_DEPTH = 2**(`ADDR_WIDTH-2);
+        localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-2);
         localparam int WAIT = MEM_DEPTH + 10;
 
         //Configuration objects for all pipeline stages
-        mem_config #(`DATA_WIDTH,`ADDR_WIDTH) MemoryConfiguration;
-        fetch_config #(`DATA_WIDTH,`ADDR_WIDTH) FetchConfiguration;
-        decode_config #(`DATA_WIDTH,`ADDR_WIDTH) DecodeConfiguration;
-        execute_config #(`DATA_WIDTH,`ADDR_WIDTH) ExecuteConfiguration;
-        writeback_config #(`DATA_WIDTH,`ADDR_WIDTH) WritebackConfiguration;
-        hazard_config #(`DATA_WIDTH,`ADDR_WIDTH) HazardConfiguration;
+        mem_config MemoryConfiguration;
+        fetch_config FetchConfiguration;
+        decode_config DecodeConfiguration;
+        execute_config ExecuteConfiguration;
+        writeback_config WritebackConfiguration;
+        hazard_config HazardConfiguration;
 
         //Environments for all pipeline stages
-        mem_env #(`DATA_WIDTH,`ADDR_WIDTH) MemoryEnvironment;
-        fetch_env #(`DATA_WIDTH,`ADDR_WIDTH) FetchEnvironment;
-        decode_env #(`DATA_WIDTH,`ADDR_WIDTH) DecodeEnvironment;
-        execute_env #(`DATA_WIDTH,`ADDR_WIDTH) ExecuteEnvironment;
-        writeback_env #(`DATA_WIDTH,`ADDR_WIDTH) WritebackEnvironment;
-        hazard_env #(`DATA_WIDTH,`ADDR_WIDTH) HazardEnvironment;
+        mem_env MemoryEnvironment;
+        fetch_env FetchEnvironment;
+        decode_env DecodeEnvironment;
+        execute_env ExecuteEnvironment;
+        writeback_env WritebackEnvironment;
+        hazard_env HazardEnvironment;
 
-        virtual risc_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)) intf;
+        virtual risc_interface intf;
 
         function void set_config_params();
 
@@ -62,25 +62,25 @@ package risc_test_pkg;
             WritebackConfiguration.enable = UVM_PASSIVE;
             HazardConfiguration.enable = UVM_PASSIVE;
             
-            if(!uvm_config_db #(virtual fetch_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",FetchConfiguration.vif))
+            if(!uvm_config_db #(virtual fetch_interface)::get(this,"","INTF",FetchConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive fetch interface")
             
-            if(!uvm_config_db #(virtual decode_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",DecodeConfiguration.vif))
+            if(!uvm_config_db #(virtual decode_interface)::get(this,"","INTF",DecodeConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive decode interface")
             
-            if(!uvm_config_db #(virtual execute_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",ExecuteConfiguration.vif))
+            if(!uvm_config_db #(virtual execute_interface)::get(this,"","INTF",ExecuteConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive execute interface")
             
-            if(!uvm_config_db #(virtual writeback_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",WritebackConfiguration.vif))
+            if(!uvm_config_db #(virtual writeback_interface)::get(this,"","INTF",WritebackConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive writeback interface")
             
-            if(!uvm_config_db #(virtual mem_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",MemoryConfiguration.vif))
+            if(!uvm_config_db #(virtual mem_interface)::get(this,"","INTF",MemoryConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive memory interface")
 
-            if(!uvm_config_db #(virtual risc_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",intf))
+            if(!uvm_config_db #(virtual risc_interface)::get(this,"","INTF",intf))
                 `uvm_fatal("TEST","Couldn't receive risc interface")
 
-            if(!uvm_config_db #(virtual hazard_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",HazardConfiguration.vif))
+            if(!uvm_config_db #(virtual hazard_interface)::get(this,"","INTF",HazardConfiguration.vif))
                 `uvm_fatal("TEST","Couldn't receive hazard interface")
         
         endfunction
@@ -89,28 +89,28 @@ package risc_test_pkg;
             
             super.build_phase(phase);
             
-            FetchConfiguration = fetch_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("FetchConfiguration",this);
-            DecodeConfiguration = decode_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("DecodeConfiguration",this);
-            MemoryConfiguration = mem_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("MemoryConfiguration",this);
-            ExecuteConfiguration = execute_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("ExecuteConfiguration",this);
-            WritebackConfiguration = writeback_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("WritebackConfiguration",this);
-            HazardConfiguration = hazard_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("HazardConfiguration",this);
+            FetchConfiguration = fetch_config::type_id::create("FetchConfiguration",this);
+            DecodeConfiguration = decode_config::type_id::create("DecodeConfiguration",this);
+            MemoryConfiguration = mem_config::type_id::create("MemoryConfiguration",this);
+            ExecuteConfiguration = execute_config::type_id::create("ExecuteConfiguration",this);
+            WritebackConfiguration = writeback_config::type_id::create("WritebackConfiguration",this);
+            HazardConfiguration = hazard_config::type_id::create("HazardConfiguration",this);
 
             set_config_params();
             
-            uvm_config_db #(mem_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"MemoryEnvironment","CONFG",MemoryConfiguration);
-            uvm_config_db #(fetch_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"FetchEnvironment","CONFG",FetchConfiguration);
-            uvm_config_db #(decode_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"DecodeEnvironment","CONFG",DecodeConfiguration);
-            uvm_config_db #(execute_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"ExecuteEnvironment","CONFG",ExecuteConfiguration);
-            uvm_config_db #(writeback_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"WritebackEnvironment","CONFG",WritebackConfiguration);
-            uvm_config_db #(hazard_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"HazardEnvironment","CONFG",HazardConfiguration);
+            uvm_config_db #(mem_config)::set(this,"MemoryEnvironment","CONFG",MemoryConfiguration);
+            uvm_config_db #(fetch_config)::set(this,"FetchEnvironment","CONFG",FetchConfiguration);
+            uvm_config_db #(decode_config)::set(this,"DecodeEnvironment","CONFG",DecodeConfiguration);
+            uvm_config_db #(execute_config)::set(this,"ExecuteEnvironment","CONFG",ExecuteConfiguration);
+            uvm_config_db #(writeback_config)::set(this,"WritebackEnvironment","CONFG",WritebackConfiguration);
+            uvm_config_db #(hazard_config)::set(this,"HazardEnvironment","CONFG",HazardConfiguration);
 
-            MemoryEnvironment = mem_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("MemoryEnvironment",this);
-            FetchEnvironment = fetch_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("FetchEnvironment",this);
-            DecodeEnvironment = decode_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("DecodeEnvironment",this);
-            ExecuteEnvironment = execute_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("ExecuteEnvironment",this);
-            WritebackEnvironment = writeback_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("WritebackEnvironment",this);
-            HazardEnvironment = hazard_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("HazardEnvironment",this);
+            MemoryEnvironment = mem_env::type_id::create("MemoryEnvironment",this);
+            FetchEnvironment = fetch_env::type_id::create("FetchEnvironment",this);
+            DecodeEnvironment = decode_env::type_id::create("DecodeEnvironment",this);
+            ExecuteEnvironment = execute_env::type_id::create("ExecuteEnvironment",this);
+            WritebackEnvironment = writeback_env::type_id::create("WritebackEnvironment",this);
+            HazardEnvironment = hazard_env::type_id::create("HazardEnvironment",this);
                 
         endfunction:build_phase
 

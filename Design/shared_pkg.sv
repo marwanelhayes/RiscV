@@ -1,7 +1,7 @@
 package shared_pkg;
 
-    parameter int ALU_OP = 4;
-
+    //This package contains all the shared data types, parameters, and constants that are used across the design and verification packages.
+    //This promotes code reusability and maintainability, as any changes to these shared elements can be made in one place and will reflect across all relevant files.
     typedef enum logic [6:0] 
     { 
         R_TYPE       = 7'b011_0011 , 
@@ -254,6 +254,19 @@ package shared_pkg;
         RegToFPU = 2'b01,
         FPUToFPU = 2'b10
     } move_operation_t;
+
+    // Parameter declaration section for clean code and easy modification
+    // You can modify these parameters to change the design specifications
+    // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files 
+    parameter int   ALU_OP                = 4;
+    parameter int   FINAL_DATA_WIDTH      = 32;
+    parameter int   FINAL_ADDR_WIDTH      = 22;
+    parameter flp_t FINAL_PRECISION       = SINGLE;
+    parameter int   FINAL_FLP_WIDTH       = (FINAL_PRECISION == SINGLE) ? 32 : 64;
+    parameter int   FINAL_FLP_EXP_BITS    = (FINAL_PRECISION == SINGLE) ? 8  : 11;
+    parameter int   FINAL_FLP_FRAC_BITS   = (FINAL_PRECISION == SINGLE) ? 23 : 52;
+    parameter int   FINAL_FLP_BIAS        = (FINAL_PRECISION == SINGLE) ? 127: 1023;
+    parameter int   CLK_PERIOD            = 10;
 
 
 endpackage:shared_pkg

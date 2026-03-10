@@ -4,10 +4,10 @@ package mem_item_pkg;
     `include "uvm_macros.svh"
     import shared_pkg::*;
 
-    class mem_item #(parameter int DATA_WIDTH = 32,ADDR_WIDTH = 32) extends uvm_sequence_item;
+    class mem_item extends uvm_sequence_item;
         
         //Register the class in the factory
-        `uvm_object_param_utils(mem_item #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(mem_item)
 
         //Overriding the build in constructor with the child class
         function new (string name = "mem_item");
@@ -15,13 +15,13 @@ package mem_item_pkg;
         endfunction: new
 
         rand logic rst;
-        rand logic signed [DATA_WIDTH-1:0] ALUOutM;
-        rand logic signed [DATA_WIDTH-1:0] WriteDataM;
-        rand logic [ADDR_WIDTH-1:0] PCPlus4M;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
+        rand logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
+        rand logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
         rand gpr_t RdM;
         rand logic [2:0] funct3M;
         rand logic RegWriteM;
-        rand logic [DATA_WIDTH-1:0] CsrOutM;
+        rand logic [FINAL_DATA_WIDTH-1:0] CsrOutM;
         rand selector_t SelectorM;
         rand logic MemWriteM;
         rand fpr_t RdFM;
@@ -31,17 +31,17 @@ package mem_item_pkg;
         rand logic InfM;
         rand logic ZeroM;
         rand logic InvalidDivM;
-        rand logic [DATA_WIDTH-1:0] FPUOutM;
+        rand logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
         rand move_operation_t MoveOperationM;
         rand logic FPURegWriteM;
 
-        logic signed [DATA_WIDTH-1:0] ReadDataW;
+        logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
         gpr_t RdW;
         logic RegWriteW;
         selector_t SelectorW;
-        logic [ADDR_WIDTH-1:0] PCPlus4W;
-        logic [DATA_WIDTH-1:0] CsrOutW;
-        logic signed [DATA_WIDTH-1:0] ALUOutW;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+        logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW;
         fpr_t RdFW;
         logic OverflowW;
         logic UnderflowW;
@@ -49,7 +49,7 @@ package mem_item_pkg;
         logic InfW;    
         logic ZeroW;
         logic InvalidDivW;
-        logic [DATA_WIDTH-1:0] FPUOutW;
+        logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
         move_operation_t MoveOperationW;
         logic FPURegWriteW;
 

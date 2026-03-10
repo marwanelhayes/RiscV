@@ -78,17 +78,54 @@ INSTRUCTION_TO_TYPE = reverse_dict_with_iterable(TYPES_TO_INSTRUCTION)
 TEST_CASES_NUMBER = 0
 
 
+def validate_binary_instruction(binary_instruction):
+    if len(binary_instruction) != 32:
+        raise ValueError(
+            f"Instruction width overflow: expected 32 bits, got {len(binary_instruction)} bits "
+            f"for {binary_instruction}"
+        )
+
+    if set(binary_instruction) - {'0', '1'}:
+        raise ValueError(f"Instruction contains non-binary characters: {binary_instruction}")
+
+    return binary_instruction
+
+
+def choose_aligned_immediate(max_value, excluded=None):
+    max_value -= max_value % 2
+
+    if max_value < 0:
+        raise ValueError(f"Immediate upper bound must be non-negative, got {max_value}")
+
+    slot_count = (max_value // 2) + 1
+    excluded_slot = None
+
+    if excluded is not None and excluded % 2 == 0 and 0 <= excluded <= max_value:
+        excluded_slot = excluded // 2
+        if slot_count == 1:
+            raise ValueError("No encodable aligned immediate is available")
+        slot_count -= 1
+
+    slot = random.randrange(slot_count)
+
+    if excluded_slot is not None and slot >= excluded_slot:
+        slot += 1
+
+    return slot * 2
+
+
 # Converting a 32 bit binary string instruction to a hexadecimal one
 def convert_to_hex(binary_instruction):
-    # return hex(int(binary_instruction[::-1], 2))[2:]
+    binary_instruction = validate_binary_instruction(binary_instruction)
     return format(int(binary_instruction, 2), '08x')
 
 
 # Appending Instruction in corresponding lists
-def add_instructions(binary, assembly, hex):
+def add_instructions(binary, assembly):
+    binary = validate_binary_instruction(binary)
     Instructions_list_binary.append(binary)
     instructions_list_assembly.append(assembly)
-    instructions_list_hex.append(hex)
+    instructions_list_hex.append(convert_to_hex(binary))
 
 
 # Function to generate an R-Type instruction
@@ -116,7 +153,7 @@ def generate_r(name):
     instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", x" + str(rs1_decimal) + ", x" + str(
         rs2_decimal)
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 # Function to generate an I-Type instruction
@@ -156,7 +193,7 @@ def generate_i(name):
         instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", x" + str(rs1_decimal) + ", " + str(
             imm_decimal)
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 # Function to generate an S-Type instruction
@@ -178,7 +215,7 @@ def generate_s(name):
                                                                                          7:] + opcode_instruction
     instruction_assembly = format(name, '10s') + "\tx" + str(rs2_decimal) + ", " + str(imm_decimal) + "(x" \
         + str(rs1_decimal) + ")"
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 # Function to generate an SB-Type instruction
@@ -191,11 +228,8 @@ def generate_sb(name):
     rs2_decimal = random.choice(REGISTERS_TO_USE)
     rs2_binary = "{0:05b}".format(rs2_decimal)
 
-    imm_decimal = INSTRUCTION_CURRENT * 4
-
-    # If immediate address is current one, regenerate another.
-    while imm_decimal == INSTRUCTION_CURRENT * 4:
-        imm_decimal = 2 * np.random.randint(0, Instructions_Number * 2)
+    max_branch_immediate = min(max(2, (Instructions_Number * 4) - 2), 4094)
+    imm_decimal = choose_aligned_immediate(max_branch_immediate, excluded=INSTRUCTION_CURRENT * 4)
 
     imm_binary = "{0:012b}".format(imm_decimal)
     instruction_binary = imm_binary[0] + imm_binary[2:8] + rs2_binary + rs1_binary + func_instruction + \
@@ -203,7 +237,7 @@ def generate_sb(name):
     instruction_assembly = format(name, '10s') + "\tx" + str(rs1_decimal) + ", x" + str(rs2_decimal) + ", " + str(
         imm_decimal)
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 # Function to generate a U-Type instruction
@@ -218,7 +252,7 @@ def generate_u(name):
     instruction_binary = imm_binary + rd_binary + opcode_instruction
     instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", " + str(imm_decimal)
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 # Function to generate an UJ-Type instruction
@@ -227,18 +261,15 @@ def generate_uj(name):
     opcode_instruction = OPCODES[name]
     rd_decimal = random.choice(REGISTERS_TO_USE)
     rd_binary = "{0:05b}".format(rd_decimal)
-    imm_decimal = INSTRUCTION_CURRENT * 4
-
-    # If address is current one, regenerate another.
-    while imm_decimal == INSTRUCTION_CURRENT * 4:
-        imm_decimal = 2 * np.random.randint(0, Instructions_Number * 2)
+    max_jump_immediate = min(max(2, (Instructions_Number * 4) - 2), 1048574)
+    imm_decimal = choose_aligned_immediate(max_jump_immediate, excluded=INSTRUCTION_CURRENT * 4)
 
     imm_binary = "{0:020b}".format(imm_decimal)
 
     instruction_binary = imm_binary[0] + imm_binary[10:] + imm_binary[9] + imm_binary[1:9] + rd_binary + opcode_instruction
     instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", " + str(imm_decimal)
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 def generate_csr(name):
     opcode_instruction = OPCODES[name]
@@ -277,11 +308,7 @@ def generate_csr(name):
         + f"\t# {csr_name}"
     )
 
-    add_instructions(
-        instruction_binary,
-        instruction_assembly,
-        convert_to_hex(instruction_binary)
-    )
+    add_instructions(instruction_binary, instruction_assembly)
 
 
 def generate_f(name):
@@ -352,7 +379,7 @@ def generate_f(name):
     else:
         instruction_assembly = f"{format(name, '10s')}\tf{rd_decimal}, x{rs1_decimal}"
 
-    add_instructions(instruction_binary, instruction_assembly, convert_to_hex(instruction_binary))
+    add_instructions(instruction_binary, instruction_assembly)
 
 # Instruction generation wrapper
 def generate_instruction(name):

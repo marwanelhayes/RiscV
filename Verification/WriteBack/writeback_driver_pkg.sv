@@ -4,13 +4,13 @@ package writeback_driver_pkg;
     `include "uvm_macros.svh"
     import writeback_item_pkg::*;
 
-    class writeback_driver #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH =32) extends uvm_driver #(writeback_item #(DATA_WIDTH,ADDR_WIDTH));
+    class writeback_driver extends uvm_driver #(writeback_item);
         
         //Register the class to the factory
-        `uvm_component_param_utils(writeback_driver #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(writeback_driver)
 
-        virtual writeback_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
-        writeback_item #(DATA_WIDTH,ADDR_WIDTH) drv_item;
+        virtual writeback_interface vif;
+        writeback_item drv_item;
         
         //Overriding the constructor with the child class
         function new (string name = "writeback_driver", uvm_component parent = null);

@@ -8,31 +8,31 @@ package hazard_agent_pkg;
     import hazard_config_pkg::*;
     import hazard_item_pkg::*;
 
-    class hazard_agent #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_agent;
+    class hazard_agent extends uvm_agent;
 
         //Register the class into the factory
-        `uvm_component_param_utils(hazard_agent #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(hazard_agent)
 
         //Override the constructor function
         function new (string name = "hazard_agent", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        hazard_driver #(DATA_WIDTH,ADDR_WIDTH) drv;
-        hazard_monitor #(DATA_WIDTH,ADDR_WIDTH) mon;
-        uvm_sequencer #(hazard_item #(DATA_WIDTH,ADDR_WIDTH)) seq;
-        hazard_config #(DATA_WIDTH,ADDR_WIDTH) configuration;
+        hazard_driver drv;
+        hazard_monitor mon;
+        uvm_sequencer #(hazard_item) seq;
+        hazard_config configuration;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            if(!uvm_config_db #(hazard_config #(DATA_WIDTH,ADDR_WIDTH))::get(this,"","CONFG",configuration))
+            if(!uvm_config_db #(hazard_config)::get(this,"","CONFG",configuration))
                 `uvm_error("AGT","Agent couldn't receive configuration object")
             if(configuration.enable == UVM_ACTIVE)
             begin
-                drv = hazard_driver #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("drv",this);
-                seq = uvm_sequencer #(hazard_item #(DATA_WIDTH,ADDR_WIDTH))::type_id::create("seq",this);
+                drv = hazard_driver::type_id::create("drv",this);
+                seq = uvm_sequencer #(hazard_item)::type_id::create("seq",this);
             end
-            mon = hazard_monitor #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("mon",this);
+            mon = hazard_monitor::type_id::create("mon",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);

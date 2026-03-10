@@ -4,13 +4,13 @@ package decode_subscriber_pkg;
     `include "uvm_macros.svh"
     import decode_item_pkg::*;
 
-    class decode_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(decode_item #(DATA_WIDTH,ADDR_WIDTH));
+    class decode_subscriber extends uvm_subscriber #(decode_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(decode_subscriber #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(decode_subscriber)
 
 
-        decode_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        decode_item sub_item;
 
         covergroup cvr_grp();
             ProgramCounter: coverpoint sub_item.PCPlus4D iff(!sub_item.rst);

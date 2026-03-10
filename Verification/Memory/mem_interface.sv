@@ -1,24 +1,20 @@
 import shared_pkg::*;
 import mem_item_pkg::*;
 interface mem_interface 
-#(
-    parameter int CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
 (
     input bit clk
 );
+
     localparam CLK = (CLK_PERIOD/5.0);
     
     logic rst;
-    logic signed [DATA_WIDTH-1:0] ALUOutM;
-    logic signed [DATA_WIDTH-1:0] WriteDataM;
-    logic [ADDR_WIDTH-1:0] PCPlus4M;
+    logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
+    logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
     gpr_t RdM;
     logic [2:0] funct3M;
     logic RegWriteM;
-    logic [DATA_WIDTH-1:0] CsrOutM;
+    logic [FINAL_DATA_WIDTH-1:0] CsrOutM;
     selector_t SelectorM;
     logic MemWriteM;
     fpr_t RdFM;
@@ -28,17 +24,17 @@ interface mem_interface
     logic InfM;
     logic ZeroM;
     logic InvalidDivM;
-    logic [DATA_WIDTH-1:0] FPUOutM;
+    logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
     move_operation_t MoveOperationM;
     logic FPURegWriteM;
     
-    logic signed [DATA_WIDTH-1:0] ReadDataW;
+    logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
     gpr_t RdW;
     logic RegWriteW;
     selector_t SelectorW;
-    logic [ADDR_WIDTH-1:0] PCPlus4W;
-    logic [DATA_WIDTH-1:0] CsrOutW;
-    logic signed [DATA_WIDTH-1:0] ALUOutW;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+    logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
+    logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW;
     fpr_t RdFW;
     logic OverflowW;
     logic UnderflowW;
@@ -46,7 +42,7 @@ interface mem_interface
     logic InfW;    
     logic ZeroW;
     logic InvalidDivW;
-    logic [DATA_WIDTH-1:0] FPUOutW;
+    logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
     move_operation_t MoveOperationW;
     logic FPURegWriteW;
 
@@ -124,7 +120,7 @@ interface mem_interface
         end
     endtask:initialize
 
-    task drv2intf (mem_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (mem_item drv);
         @(cb);
         rst <= drv.rst;
         ALUOutM <= drv.ALUOutM;
@@ -149,7 +145,7 @@ interface mem_interface
     endtask:drv2intf
 
 
-    task intf2mon (mem_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (mem_item mon);
         @(cb);
         mon.rst = cb.rst;
         mon.ALUOutM = cb.ALUOutM;

@@ -1,24 +1,19 @@
 import shared_pkg::*;
 import fetch_item_pkg::*;
-interface fetch_interface 
-#(
-    parameter int CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
+interface fetch_interface  
 (
     input bit clk
 );
     localparam CLK = (CLK_PERIOD/5.0);
     
     logic rst;
-    logic [ADDR_WIDTH-1:0] PCF;
+    logic [FINAL_ADDR_WIDTH-1:0] PCF;
     logic StallD;
     logic FlushD;
     
-    logic [ADDR_WIDTH-1:0] PCPlus4D;
-    logic [DATA_WIDTH-1:0] InstructionD;
-    logic [ADDR_WIDTH-1:0] PCPlus4F;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D;
+    logic [FINAL_DATA_WIDTH-1:0] InstructionD;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);
@@ -50,7 +45,7 @@ interface fetch_interface
         end
     endtask:initialize
 
-    task drv2intf (fetch_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (fetch_item drv);
         @(cb);
         rst <= drv.rst;
         PCF <= drv.PCF;
@@ -60,7 +55,7 @@ interface fetch_interface
 
 
 
-    task intf2mon (fetch_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (fetch_item mon);
         @(cb);
         
         mon.rst = cb.rst;

@@ -4,13 +4,13 @@ package writeback_subscriber_pkg;
     `include "uvm_macros.svh"
     import writeback_item_pkg::*;
 
-    class writeback_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(writeback_item #(DATA_WIDTH,ADDR_WIDTH));
+    class writeback_subscriber extends uvm_subscriber #(writeback_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(writeback_subscriber #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(writeback_subscriber)
 
 
-        writeback_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        writeback_item sub_item;
 
         covergroup cvr_grp();
             rst_cg: coverpoint sub_item.rst iff(!sub_item.rst);

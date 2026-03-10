@@ -1,10 +1,5 @@
 import shared_pkg::*;
-interface risc_interface 
-#(
-    parameter int CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
+interface risc_interface  
 (
     input bit clk
 );

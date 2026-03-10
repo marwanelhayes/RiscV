@@ -1,5 +1,4 @@
 package writeback_test_pkg;
-    `include "parameters_wb.svh"
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
@@ -17,23 +16,23 @@ package writeback_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        writeback_env #(`DATA_WIDTH,`ADDR_WIDTH) env;
-        writeback_seq #(`DATA_WIDTH,`ADDR_WIDTH) main_sequence;
-        writeback_config #(`DATA_WIDTH,`ADDR_WIDTH) configuration;
+        writeback_env env;
+        writeback_seq main_sequence;
+        writeback_config configuration;
 
         function void set_config_params();
             configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual writeback_interface #(.DATA_WIDTH(`DATA_WIDTH),.ADDR_WIDTH(`ADDR_WIDTH)))::get(this,"","INTF",configuration.vif))
+            if(!uvm_config_db #(virtual writeback_interface)::get(this,"","INTF",configuration.vif))
                 `uvm_fatal("TEST","Couldn't receive interface")
         endfunction
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            configuration = writeback_config #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("configuration",this);
+            configuration = writeback_config::type_id::create("configuration",this);
             set_config_params();
-            uvm_config_db #(writeback_config #(`DATA_WIDTH,`ADDR_WIDTH))::set(this,"env","CONFG",configuration);
-            env = writeback_env #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("env",this);
-            main_sequence = writeback_seq #(`DATA_WIDTH,`ADDR_WIDTH)::type_id::create("main_sequence",this);
+            uvm_config_db #(writeback_config)::set(this,"env","CONFG",configuration);
+            env = writeback_env::type_id::create("env",this);
+            main_sequence = writeback_seq::type_id::create("main_sequence",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);

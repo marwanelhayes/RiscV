@@ -4,24 +4,24 @@ package mem_monitor_pkg;
     `include "uvm_macros.svh"
     import mem_item_pkg::*;
 
-    class mem_monitor #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_monitor;
+    class mem_monitor extends uvm_monitor;
 
         //Register the class into the factory
-        `uvm_component_param_utils(mem_monitor #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(mem_monitor)
 
         //Override the constructor function
         function new (string name = "mem_monitor", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(mem_item #(DATA_WIDTH,ADDR_WIDTH)) mon_port;
-        mem_item #(DATA_WIDTH,  ADDR_WIDTH) mon_item;
-        virtual mem_interface #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) vif;
+        uvm_analysis_port #(mem_item) mon_port;
+        mem_item mon_item;
+        virtual mem_interface vif;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             mon_port = new("mon_port",this);
-            mon_item = mem_item #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("mon_item");
+            mon_item = mem_item::type_id::create("mon_item");
         endfunction:build_phase
         
         virtual task run_phase (uvm_phase phase);

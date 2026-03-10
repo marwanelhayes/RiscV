@@ -4,10 +4,10 @@ package writeback_item_pkg;
     `include "uvm_macros.svh"
     import shared_pkg::*;
 
-    class writeback_item #(parameter int DATA_WIDTH = 32,ADDR_WIDTH = 32) extends uvm_sequence_item;
+    class writeback_item extends uvm_sequence_item;
         
         //Register the class in the factory
-        `uvm_object_param_utils(writeback_item #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(writeback_item)
 
         //Overriding the build in constructor with the child class
         function new (string name = "writeback_item");
@@ -17,18 +17,18 @@ package writeback_item_pkg;
         rand logic rst;
         rand logic PCSrcE;
         rand logic StallF;
-        logic [ADDR_WIDTH-1:0] PCPlus4F = 0;
-        rand logic [ADDR_WIDTH-1:0] PCBranchE;
-        rand logic [DATA_WIDTH-1:0] ALUOutW;
-        rand logic [DATA_WIDTH-1:0] ReadDataW;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F = 0;
+        rand logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
+        rand logic [FINAL_DATA_WIDTH-1:0] ALUOutW;
+        rand logic [FINAL_DATA_WIDTH-1:0] ReadDataW;
         rand selector_t SelectorW;
-        rand logic [DATA_WIDTH-1:0] CsrOutW;
-        rand logic [ADDR_WIDTH-1:0] PCPlus4W;
+        rand logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
+        rand logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
         rand logic TrapIsSet;
-        rand logic [ADDR_WIDTH-1:0] CsrOutPC;
+        rand logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
 
-        logic [DATA_WIDTH-1:0] ResultW;
-        logic [ADDR_WIDTH-1:0] PCF;
+        logic [FINAL_DATA_WIDTH-1:0] ResultW;
+        logic [FINAL_ADDR_WIDTH-1:0] PCF;
         
 
 

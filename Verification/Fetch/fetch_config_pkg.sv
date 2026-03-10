@@ -3,10 +3,10 @@ package fetch_config_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    class fetch_config #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 10) extends uvm_object;
+    class fetch_config extends uvm_object;
 
         //Register the class into the factory
-        `uvm_object_param_utils(fetch_config #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_utils(fetch_config)
 
         //Override the constructor function
         function new (string name = "fetch_config");
@@ -14,7 +14,7 @@ package fetch_config_pkg;
         endfunction:new
 
         uvm_active_passive_enum enable;
-        virtual fetch_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
+        virtual fetch_interface vif;
 
     endclass:fetch_config
 

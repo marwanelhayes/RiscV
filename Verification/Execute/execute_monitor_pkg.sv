@@ -4,24 +4,24 @@ package execute_monitor_pkg;
     `include "uvm_macros.svh"
     import execute_item_pkg::*;
 
-    class execute_monitor #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_monitor;
+    class execute_monitor extends uvm_monitor;
 
         //Register the class into the factory
-        `uvm_component_param_utils(execute_monitor #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(execute_monitor)
 
         //Override the constructor function
         function new (string name = "execute_monitor", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(execute_item #(DATA_WIDTH,ADDR_WIDTH)) mon_port;
-        execute_item #(DATA_WIDTH,  ADDR_WIDTH) mon_item;
-        virtual execute_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
+        uvm_analysis_port #(execute_item) mon_port;
+        execute_item mon_item;
+        virtual execute_interface vif;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             mon_port = new("mon_port",this);
-            mon_item = execute_item #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("mon_item");
+            mon_item = execute_item::type_id::create("mon_item");
         endfunction:build_phase
         
         virtual task run_phase (uvm_phase phase);

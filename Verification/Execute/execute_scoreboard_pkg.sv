@@ -6,21 +6,21 @@ package execute_scoreboard_pkg;
     import shared_pkg::*;
     import execute_item_pkg::*;
 
-    class execute_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class execute_scoreboard extends uvm_scoreboard;
 
-        logic signed [DATA_WIDTH-1:0] ALUOutM;
-        logic signed [DATA_WIDTH-1:0] WriteDataM;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
+        logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
         gpr_t RdM;
         logic PCSrcE;
         logic RegWriteM;
-        logic [ADDR_WIDTH-1:0] PCPlus4M;
+        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
         selector_t SelectorM;
         logic [2:0] funct3M;
-        logic [DATA_WIDTH-1:0] CsrOutM;
+        logic [FINAL_DATA_WIDTH-1:0] CsrOutM;
         logic MemWriteM;
         logic TrapIsSet;
-        logic [ADDR_WIDTH-1:0] CsrOutPC;
-        logic signed [DATA_WIDTH-1:0] ALUOutE;
+        logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutE;
         fpr_t RdFM;
         logic OverflowM;
         logic UnderflowM;
@@ -28,25 +28,25 @@ package execute_scoreboard_pkg;
         logic InfM;
         logic ZeroM;
         logic InvalidDivM;
-        logic [DATA_WIDTH-1:0] FPUOutM;
+        logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
         logic FPURegWriteM;
         move_operation_t MoveOperationM;
 
-        logic signed [2*DATA_WIDTH-1:0] MulOutput;
-        logic signed [DATA_WIDTH-1:0] DivOutput;
-        logic signed [DATA_WIDTH-1:0] RemOutput;
+        logic signed [2*FINAL_DATA_WIDTH-1:0] MulOutput;
+        logic signed [FINAL_DATA_WIDTH-1:0] DivOutput;
+        logic signed [FINAL_DATA_WIDTH-1:0] RemOutput;
 
 
         traps_t Traps;
 
-        logic signed [DATA_WIDTH-1:0] IntermediateB , SrcA,SrcB;
-        logic [DATA_WIDTH-1:0] SrcBU;
+        logic signed [FINAL_DATA_WIDTH-1:0] IntermediateB , SrcA,SrcB;
+        logic [FINAL_DATA_WIDTH-1:0] SrcBU;
 
         logic branch_true;
-        logic [DATA_WIDTH-1:0] CSRFile [4096];
+        logic [FINAL_DATA_WIDTH-1:0] CSRFile [4096];
 
-        logic signed [DATA_WIDTH-1:0] ALUOutM_past;
-        logic [DATA_WIDTH-1:0] FPUOutM_past, FPUInA, FPUInB;
+        logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM_past;
+        logic [FINAL_DATA_WIDTH-1:0] FPUOutM_past, FPUInA, FPUInB;
         shortreal FPUInA_real, FPUInB_real, FPUOut_real;
         real FPUOut_real_double;
         bit threshold_exceeded;
@@ -58,19 +58,18 @@ package execute_scoreboard_pkg;
         logic Subnormal;
         round_mode_t ActualRoundMode;
 
-        localparam int EXP_BITS = (DATA_WIDTH == 32) ? 8 : 11;
-        localparam int FRAC_BITS = (DATA_WIDTH == 32) ? 23 : 52;
+        localparam int LOG_WIDTH = $clog2(FINAL_DATA_WIDTH);
 
         //Register the class to the factory
-        `uvm_component_param_utils(execute_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(execute_scoreboard)
 
         //Override the constructor function
         function new (string name = "execute_scoreboard", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        execute_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(execute_item #(DATA_WIDTH,ADDR_WIDTH) , execute_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        execute_item sc_item;
+        uvm_analysis_imp #(execute_item , execute_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -78,13 +77,13 @@ package execute_scoreboard_pkg;
         endfunction:build_phase
 
         function automatic logic [3:0] classify_value(
-        input logic [EXP_BITS-1:0] exp,
-        input logic [FRAC_BITS-1:0] frac
+        input logic [FINAL_FLP_EXP_BITS-1:0] exp,
+        input logic [FINAL_FLP_FRAC_BITS-1:0] frac
         );
             logic [3:0] classification;
             classification[0] = (exp == 0) && (frac == 0);                              // is_zero
-            classification[1] = (exp == {EXP_BITS{1'b1}}) && (frac == 0);              // is_infinity
-            classification[2] = (exp == {EXP_BITS{1'b1}}) && (frac != 0);              // is_nan
+            classification[1] = (exp == {FINAL_FLP_EXP_BITS{1'b1}}) && (frac == 0);              // is_infinity
+            classification[2] = (exp == {FINAL_FLP_EXP_BITS{1'b1}}) && (frac != 0);              // is_nan
             classification[3] = (exp == 0) && (frac != 0);                             // is_subnormal
             return classification;
         endfunction: classify_value
@@ -244,15 +243,15 @@ package execute_scoreboard_pkg;
             logic is_zero_a, is_zero_b;
             logic is_inf_a, is_inf_b;
             logic is_nan_a, is_nan_b;
-            logic [DATA_WIDTH-1:0] a_bits, b_bits;
+            logic [FINAL_DATA_WIDTH-1:0] a_bits, b_bits;
             a_bits = $shortrealtobits(a);
             b_bits = $shortrealtobits(b);
             is_zero_a = (a_bits[30:0] == 0);
             is_zero_b = (b_bits[30:0] == 0);
-            is_inf_a = (a_bits[30:23] == 8'hFF) && (a_bits[22:0] == 0);
-            is_inf_b = (b_bits[30:23] == 8'hFF) && (b_bits[22:0] == 0);
-            is_nan_a = (a_bits[30:23] == 8'hFF) && (a_bits[22:0] != 0);
-            is_nan_b = (b_bits[30:23] == 8'hFF) && (b_bits[22:0] != 0);
+            is_inf_a = (a_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (a_bits[FINAL_FLP_FRAC_BITS-1:0] == 0);
+            is_inf_b = (b_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (b_bits[FINAL_FLP_FRAC_BITS-1:0] == 0);
+            is_nan_a = (a_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (a_bits[FINAL_FLP_FRAC_BITS-1:0] != 0);
+            is_nan_b = (b_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (b_bits[FINAL_FLP_FRAC_BITS-1:0] != 0);
             diff   = a - b;
             diff   = (diff < 0.0) ? -diff : diff; // abs(diff)
             denom  = (b < 0.0) ? -b : b; // abs(b)
@@ -330,9 +329,9 @@ package execute_scoreboard_pkg;
 
             // Extract IEEE-754 fields
             int bits = $shortrealtobits(rval);
-            bit sign = bits[31];
-            int exp  = bits[30:23];
-            int frac = bits[22:0];
+            bit sign = bits[FINAL_FLP_WIDTH-1];
+            int exp  = bits[FINAL_FLP_WIDTH-2-:FINAL_FLP_EXP_BITS];
+            int frac = bits[FINAL_FLP_FRAC_BITS-1:0];
 
             // Classification result (bitmask)
             int class_bits = 0;
@@ -347,7 +346,7 @@ package execute_scoreboard_pkg;
                 else 
                 begin
                     // NaN: signaling vs quiet
-                    if (frac[22] == 0)
+                    if (frac[FINAL_FLP_FRAC_BITS-1] == 0)
                         class_bits = (1 << 8); // signaling NaN
                     else
                         class_bits = (1 << 9); // quiet NaN
@@ -408,7 +407,7 @@ package execute_scoreboard_pkg;
             end
         endfunction:CheckForTrap 
 
-        function void UpdateCsr(input logic [DATA_WIDTH-1:0] X);
+        function void UpdateCsr(input logic [FINAL_DATA_WIDTH-1:0] X);
             if(sc_item.CsrIndexE == mstatus)
                 CSRFile[sc_item.CsrIndexE] <= X & `mstatus_mask;
             else if(sc_item.CsrIndexE == mtvec)
@@ -538,7 +537,7 @@ package execute_scoreboard_pkg;
                 CsrOutPC = CSRFile[mtvec];
                 CSRFile[mstatus][`MPIE] = CSRFile[mstatus][`MIE];
                 CSRFile[mstatus][`MIE] = 1'b0;
-                CSRFile[mbadaddr] = ALUOutE[ADDR_WIDTH-1:0];
+                CSRFile[mbadaddr] = ALUOutE[FINAL_ADDR_WIDTH-1:0];
                 TrapIsSet = 1'b1;
             end:TrapHandling
             else if(sc_item.MRetE)
@@ -627,13 +626,13 @@ package execute_scoreboard_pkg;
                 XOR : ALUOutE = SrcA ^ SrcB;
                 SLT : ALUOutE = $signed(SrcA) < $signed(SrcB);
                 SLTU : ALUOutE = $unsigned(SrcA) < $unsigned(SrcB);
-                SLL : ALUOutE = SrcA << SrcB;
-                SRL : ALUOutE = SrcA >> SrcB;
-                SRA : ALUOutE = $signed(SrcA) >>> SrcB;
-                MUL : ALUOutE = MulOutput[DATA_WIDTH-1:0];
-                MULH : ALUOutE = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
-                MULHSU : ALUOutE = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
-                MULHU : ALUOutE = $unsigned(MulOutput[2*DATA_WIDTH-1:DATA_WIDTH]);
+                SLL : ALUOutE = SrcA << SrcB[LOG_WIDTH-1:0];
+                SRL : ALUOutE = SrcA >> SrcB[LOG_WIDTH-1:0];
+                SRA : ALUOutE = $signed(SrcA) >>> SrcB[LOG_WIDTH-1:0];
+                MUL : ALUOutE = MulOutput[FINAL_DATA_WIDTH-1:0];
+                MULH : ALUOutE = MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH];
+                MULHSU : ALUOutE = MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH];
+                MULHU : ALUOutE = $unsigned(MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH]);
                 DIV : ALUOutE = DivOutput;
                 REM : ALUOutE = RemOutput;
                 DIVU : ALUOutE = DivOutput;
@@ -770,8 +769,8 @@ package execute_scoreboard_pkg;
                 FPUInA_real = $bitstoshortreal(FPUInA);
                 FPUInB_real = $bitstoshortreal(FPUInB);
 
-                {FPUAIsSubnormal, FPUInAIsNaN, FPUInAIsInf, FPUInAIsZero} = classify_value(FPUInA[30:23], FPUInA[22:0]);
-                {FPUBIsSubnormal, FPUInBIsNaN, FPUInBIsInf, FPUInBIsZero} = classify_value(FPUInB[30:23], FPUInB[22:0]);
+                {FPUAIsSubnormal, FPUInAIsNaN, FPUInAIsInf, FPUInAIsZero} = classify_value(FPUInA[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUInA[FINAL_FLP_FRAC_BITS-1:0]);
+                {FPUBIsSubnormal, FPUInBIsNaN, FPUInBIsInf, FPUInBIsZero} = classify_value(FPUInB[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUInB[FINAL_FLP_FRAC_BITS-1:0]);
                 if(sc_item.RoundModeE == DYN)
                 begin
                     ActualRoundMode = round_mode_t'(CSRFile[fcsr][2:0]);
@@ -786,31 +785,31 @@ package execute_scoreboard_pkg;
                     begin
                         FPUOut_real = FPUInA_real + FPUInB_real;
                         FPUOutM = $shortrealtobits(FPUOut_real);
-                        {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                        {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUOutM[FINAL_FLP_FRAC_BITS-1:0]);
                     end
                     FSUB_S:
                     begin
                         FPUOut_real = FPUInA_real - FPUInB_real;
                         FPUOutM = $shortrealtobits(FPUOut_real);
-                        {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                        {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUOutM[FINAL_FLP_FRAC_BITS-1:0]);
                     end
                     FMUL_S:
                     begin
                         if(FPUInAIsNaN || FPUInBIsNaN || ((FPUInAIsInf || FPUInBIsInf) && (FPUInAIsZero || FPUInBIsZero)))
                         begin
-                            FPUOutM ={1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}};
+                            FPUOutM ={1'b0, {FINAL_FLP_EXP_BITS{1'b1}}, {1'b1, {(FINAL_FLP_FRAC_BITS-1){1'b0}}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             NaNM = 1'b1;
                         end
                         else if ((FPUInAIsInf || FPUInBIsInf))
                         begin
-                            FPUOutM = {FPUInA[31] ^ FPUInB[31], {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
+                            FPUOutM = {FPUInA[FINAL_FLP_WIDTH-1] ^ FPUInB[FINAL_FLP_WIDTH-1], {FINAL_FLP_EXP_BITS{1'b1}}, {FINAL_FLP_FRAC_BITS{1'b0}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             InfM = 1'b1;
                         end
                         else if(FPUInAIsZero || FPUInBIsZero)
                         begin
-                            FPUOutM = {FPUInA[31] ^ FPUInB[31], {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                            FPUOutM = {FPUInA[FINAL_FLP_WIDTH-1] ^ FPUInB[FINAL_FLP_WIDTH-1], {FINAL_FLP_EXP_BITS{1'b0}}, {FINAL_FLP_FRAC_BITS{1'b0}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             ZeroM = 1'b1;
                         end
@@ -818,13 +817,13 @@ package execute_scoreboard_pkg;
                         begin
                             FPUOut_real = shortreal'(real'(real'(FPUInA_real) * real'(FPUInB_real)));
                             FPUOutM = $shortrealtobits(FPUOut_real);
-                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
-                            if((FPUOutM[30:23] == 0) && (FPUOutM[22:0] == 0)) // Check for underflow
+                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUOutM[FINAL_FLP_FRAC_BITS-1:0]);
+                            if((FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 0) && (FPUOutM[FINAL_FLP_FRAC_BITS-1:0] == 0)) // Check for underflow
                             begin
                                 UnderflowM = 1'b1;
                                 ZeroM = 1'b1;
                             end
-                            if((FPUOutM[30:23] == {8{1'b1}}) && (FPUOutM[22:0] == {23{1'b0}})) // Check for overflow
+                            if((FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == {FINAL_FLP_EXP_BITS{1'b1}}) && (FPUOutM[FINAL_FLP_FRAC_BITS-1:0] == {FINAL_FLP_FRAC_BITS{1'b0}})) // Check for overflow
                             begin
                                 OverflowM = 1'b1;
                             end
@@ -834,19 +833,19 @@ package execute_scoreboard_pkg;
                     begin
                         if(FPUInAIsNaN || FPUInBIsNaN)
                         begin
-                            FPUOutM ={1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}};
+                            FPUOutM ={1'b0, {FINAL_FLP_EXP_BITS{1'b1}}, {1'b1, {(FINAL_FLP_FRAC_BITS-1){1'b0}}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             NaNM = 1'b1;
                         end
                         else if ((FPUInAIsInf && FPUInBIsInf) || (FPUInAIsZero && FPUInBIsZero))
                         begin
-                            FPUOutM ={1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}};
+                            FPUOutM ={1'b0, {FINAL_FLP_EXP_BITS{1'b1}}, {1'b1, {(FINAL_FLP_FRAC_BITS-1){1'b0}}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             NaNM = 1'b1;
                         end
                         else if(!FPUInAIsNaN && !FPUInAIsInf && !FPUInAIsZero && FPUInBIsZero)
                         begin
-                            FPUOutM = {FPUInA[31] ^ FPUInB[31], {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
+                            FPUOutM = {FPUInA[FINAL_FLP_WIDTH-1] ^ FPUInB[FINAL_FLP_WIDTH-1], {FINAL_FLP_EXP_BITS{1'b1}}, {FINAL_FLP_FRAC_BITS{1'b0}}};
                             FPUOut_real = $bitstoshortreal(FPUOutM);
                             InfM = 1'b1;
                         end
@@ -854,8 +853,8 @@ package execute_scoreboard_pkg;
                         begin
                             FPUOut_real = FPUInA_real / FPUInB_real;
                             FPUOutM = $shortrealtobits(FPUOut_real);
-                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
-                            if(((FPUOutM[30:23] == 0) && (FPUOutM[22:0] == 0))) // Check for underflow
+                            {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUOutM[FINAL_FLP_FRAC_BITS-1:0]);
+                            if(((FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 0) && (FPUOutM[FINAL_FLP_FRAC_BITS-1:0] == 0))) // Check for underflow
                             begin
                                 if(!FPUInAIsZero)
                                     UnderflowM = 1'b1;
@@ -878,7 +877,7 @@ package execute_scoreboard_pkg;
                         end
                         else
                         begin
-                            if(FPUInA[31] == 1'b1)
+                            if(FPUInA[FINAL_FLP_WIDTH-1] == 1'b1)
                             begin
                                 FPUOutM = 32'h7fc00000;
                                 FPUOut_real = $bitstoshortreal(FPUOutM);
@@ -888,21 +887,21 @@ package execute_scoreboard_pkg;
                             begin
                                 FPUOut_real = $sqrt(FPUInA_real);
                                 FPUOutM = $shortrealtobits(FPUOut_real);
-                                {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[30:23], FPUOutM[22:0]);
+                                {Subnormal, NaNM, InfM, ZeroM} = classify_value(FPUOutM[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS], FPUOutM[FINAL_FLP_FRAC_BITS-1:0]);
                             end
                         end
                     end
                     FSGNJ_S:
                     begin
-                        FPUOutM = {FPUInB[DATA_WIDTH-1], FPUInA[DATA_WIDTH-2:0]};
+                        FPUOutM = {FPUInB[FINAL_DATA_WIDTH-1], FPUInA[FINAL_DATA_WIDTH-2:0]};
                     end
                     FSGNJX_S:
                     begin
-                        FPUOutM = {FPUInB[DATA_WIDTH-1] ^ FPUInA[DATA_WIDTH-1], FPUInA[DATA_WIDTH-2:0]};
+                        FPUOutM = {FPUInB[FINAL_DATA_WIDTH-1] ^ FPUInA[FINAL_DATA_WIDTH-1], FPUInA[FINAL_DATA_WIDTH-2:0]};
                     end
                     FSGNJN_S:
                     begin
-                        FPUOutM = {~FPUInB[DATA_WIDTH-1], FPUInA[DATA_WIDTH-2:0]};
+                        FPUOutM = {~FPUInB[FINAL_DATA_WIDTH-1], FPUInA[FINAL_DATA_WIDTH-2:0]};
                     end
                     FMIN_S:
                     begin
@@ -956,7 +955,7 @@ package execute_scoreboard_pkg;
                         else
                             FPUOut_real = shortreal'(SrcA);
                         FPUOutM = $shortrealtobits(FPUOut_real);
-                        FPUOutM[31] = 1'b0; // Set sign bit to 0 for unsigned input
+                        FPUOutM[FINAL_FLP_WIDTH-1] = 1'b0; // Set sign bit to 0 for unsigned input
                     end
                     FMV_S_X:
                     begin
@@ -986,13 +985,13 @@ package execute_scoreboard_pkg;
                 case(sc_item.ALUControlE)
                     MUL : MulOutput = $signed(SrcA) * $signed(SrcB);
                     MULH : MulOutput = $signed(SrcA) * $signed(SrcB);
-                    MULHSU : MulOutput = {{DATA_WIDTH{SrcA[DATA_WIDTH-1]}},SrcA} * {{DATA_WIDTH{1'b0}},SrcB};
+                    MULHSU : MulOutput = {{FINAL_DATA_WIDTH{SrcA[FINAL_DATA_WIDTH-1]}},SrcA} * {{FINAL_DATA_WIDTH{1'b0}},SrcB};
                     MULHU : MulOutput = $unsigned(SrcA) * $unsigned(SrcB);
                     DIV : 
                     begin
                         if(SrcB == 0)
                             DivOutput = -1;
-                        else if((SrcA == -2**(DATA_WIDTH-1)) && (SrcB == -1))
+                        else if((SrcA == -2**(FINAL_DATA_WIDTH-1)) && (SrcB == -1))
                             DivOutput = SrcA;
                         else
                             DivOutput = ($signed(SrcA) / $signed(SrcB));
@@ -1008,7 +1007,7 @@ package execute_scoreboard_pkg;
                     begin
                         if(SrcB == 0)
                             RemOutput = SrcA;
-                        else if((SrcA == -2**(DATA_WIDTH-1)) && (SrcB == -1))
+                        else if((SrcA == -2**(FINAL_DATA_WIDTH-1)) && (SrcB == -1))
                             RemOutput = 0;
                         else
                             RemOutput = $signed(SrcA) % $signed(SrcB);
@@ -1030,13 +1029,13 @@ package execute_scoreboard_pkg;
                     XOR : ALUOutM = SrcA ^ SrcB;
                     SLT : ALUOutM = $signed(SrcA) < $signed(SrcB);
                     SLTU : ALUOutM = $unsigned(SrcA) < $unsigned(SrcB);
-                    SLL : ALUOutM = SrcA << SrcB;
-                    SRL : ALUOutM = SrcA >> SrcB;
-                    SRA : ALUOutM = $signed(SrcA) >>> SrcB;
-                    MUL : ALUOutM = MulOutput[DATA_WIDTH-1:0];
-                    MULH : ALUOutM = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
-                    MULHSU : ALUOutM = $signed(MulOutput[2*DATA_WIDTH-1:DATA_WIDTH]);
-                    MULHU : ALUOutM = $unsigned(MulOutput[2*DATA_WIDTH-1:DATA_WIDTH]);
+                    SLL : ALUOutM = $unsigned(SrcA) << $unsigned(SrcB[LOG_WIDTH-1:0]);
+                    SRL : ALUOutM = $unsigned(SrcA) >> $unsigned(SrcB[LOG_WIDTH-1:0]);
+                    SRA : ALUOutM = $signed(SrcA) >>> $unsigned(SrcB[LOG_WIDTH-1:0]);
+                    MUL : ALUOutM = MulOutput[FINAL_DATA_WIDTH-1:0];
+                    MULH : ALUOutM = MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH];
+                    MULHSU : ALUOutM = $signed(MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH]);
+                    MULHU : ALUOutM = $unsigned(MulOutput[2*FINAL_DATA_WIDTH-1:FINAL_DATA_WIDTH]);
                     DIV : ALUOutM = DivOutput;
                     REM : ALUOutM = RemOutput;
                     DIVU : ALUOutM = $unsigned(DivOutput);
@@ -1083,7 +1082,7 @@ package execute_scoreboard_pkg;
 
         function void check_output ();
             if (
-                ALUOutM[DATA_WIDTH-1:0] != sc_item.ALUOutM || 
+                ALUOutM[FINAL_DATA_WIDTH-1:0] != sc_item.ALUOutM || 
                 WriteDataM != sc_item.WriteDataM || 
                 RdM != sc_item.RdM || 
                 PCSrcE != sc_item.PCSrcE ||
@@ -1108,9 +1107,9 @@ package execute_scoreboard_pkg;
                 ) 
             begin
                 `uvm_info("SCB",{sc_item.convert2str,$sformatf(" and the past ALUOutM = %0d",ALUOutM_past)},UVM_HIGH)
-                if (ALUOutM[DATA_WIDTH-1:0] != sc_item.ALUOutM) begin
-                    `uvm_info("SCB", $sformatf("Actual output ALUOutM = %0d -- ALUOutM = %0d", sc_item.ALUOutM, ALUOutM[DATA_WIDTH-1:0]), UVM_MEDIUM)
-                    $display("SrcA = %0d , SrcB = %0d , MultiplyOut = %0d",SrcA,SrcB,MulOutput);
+                if (ALUOutM[FINAL_DATA_WIDTH-1:0] != sc_item.ALUOutM) begin
+                    `uvm_info("SCB", $sformatf("Actual output ALUOutM = %0d -- ALUOutM = %0d , SrcA = %0d , SrcB = %0d", sc_item.ALUOutM, ALUOutM[FINAL_DATA_WIDTH-1:0], SrcA, SrcB), UVM_MEDIUM)
+                    $display("SrcA = %0d , SrcB = %0d , MultiplyOut = %0d Operation %s",SrcA,SrcB,MulOutput,sc_item.ALUControlE.name());
                     fail++;
                 end
                 if (WriteDataM != sc_item.WriteDataM) begin
@@ -1216,7 +1215,7 @@ package execute_scoreboard_pkg;
             end
         endfunction
 
-        function void write (execute_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (execute_item item);
             sc_item = item;
             ref_model();
         endfunction

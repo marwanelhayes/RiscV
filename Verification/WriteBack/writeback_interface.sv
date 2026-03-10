@@ -1,11 +1,6 @@
 import shared_pkg::*;
 import writeback_item_pkg::*;
 interface writeback_interface 
-#(
-    parameter CLK_PERIOD = 10,
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
 (
     input bit clk
 );
@@ -14,18 +9,18 @@ interface writeback_interface
     logic rst;
     logic PCSrcE;
     logic StallF;
-    logic [ADDR_WIDTH-1:0] PCPlus4F;
-    logic [ADDR_WIDTH-1:0] PCBranchE;
-    logic [DATA_WIDTH-1:0] ALUOutW;
-    logic signed [DATA_WIDTH-1:0] ReadDataW;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
+    logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
+    logic [FINAL_DATA_WIDTH-1:0] ALUOutW;
+    logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
     selector_t SelectorW;
-    logic [ADDR_WIDTH-1:0] CsrOutPC;
+    logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
     logic TrapIsSet;
-    logic [DATA_WIDTH-1:0] CsrOutW;
-    logic [ADDR_WIDTH-1:0] PCPlus4W;
+    logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
+    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
     
-    logic [DATA_WIDTH-1:0] ResultW;
-    logic [ADDR_WIDTH-1:0] PCF;
+    logic [FINAL_DATA_WIDTH-1:0] ResultW;
+    logic [FINAL_ADDR_WIDTH-1:0] PCF;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);
@@ -67,7 +62,7 @@ interface writeback_interface
         end
     endtask:initialize
 
-    task drv2intf (writeback_item #(DATA_WIDTH,ADDR_WIDTH) drv);
+    task drv2intf (writeback_item drv);
         @(cb);
         rst <= drv.rst;
         PCSrcE <= drv.PCSrcE;
@@ -83,7 +78,7 @@ interface writeback_interface
         CsrOutPC <= drv.CsrOutPC;
     endtask:drv2intf
 
-    task intf2mon (writeback_item #(DATA_WIDTH,ADDR_WIDTH) mon);
+    task intf2mon (writeback_item mon);
         @(cb);
         mon.rst = cb.rst;
         mon.StallF = cb.StallF;    

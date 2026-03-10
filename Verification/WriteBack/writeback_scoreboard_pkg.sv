@@ -5,25 +5,25 @@ package writeback_scoreboard_pkg;
     import shared_pkg::*;
     import writeback_item_pkg::*;
 
-    class writeback_scoreboard #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_scoreboard;
+    class writeback_scoreboard extends uvm_scoreboard;
 
 
-        logic [DATA_WIDTH-1:0] ResultW;
-        logic [ADDR_WIDTH-1:0] PCF;
+        logic [FINAL_DATA_WIDTH-1:0] ResultW;
+        logic [FINAL_ADDR_WIDTH-1:0] PCF;
 
 
         int success,fail;
 
         //Register the class to the factory
-        `uvm_component_param_utils(writeback_scoreboard #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(writeback_scoreboard)
 
         //Override the constructor function
         function new (string name = "writeback_scoreboard", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        writeback_item #(DATA_WIDTH,ADDR_WIDTH) sc_item;
-        uvm_analysis_imp #(writeback_item #(DATA_WIDTH,ADDR_WIDTH) , writeback_scoreboard #(DATA_WIDTH,ADDR_WIDTH)) sc_port;
+        writeback_item sc_item;
+        uvm_analysis_imp #(writeback_item , writeback_scoreboard) sc_port;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -82,7 +82,7 @@ package writeback_scoreboard_pkg;
             end
         endfunction
 
-        function void write (writeback_item #(DATA_WIDTH,ADDR_WIDTH) item);
+        function void write (writeback_item item);
             sc_item = item;
             check_output();
         endfunction

@@ -3,10 +3,10 @@ package decode_config_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
-    class decode_config #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_object;
+    class decode_config extends uvm_object;
 
         //Register the class into the factory
-        `uvm_object_param_utils(decode_config #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_object_param_utils(decode_config)
 
         //Override the constructor function
         function new (string name = "decode_config");
@@ -14,7 +14,7 @@ package decode_config_pkg;
         endfunction:new
 
         uvm_active_passive_enum enable;
-        virtual decode_interface #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) vif;
+        virtual decode_interface vif;
 
     endclass:decode_config
 

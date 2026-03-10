@@ -4,13 +4,13 @@ package execute_subscriber_pkg;
     `include "uvm_macros.svh"
     import execute_item_pkg::*;
 
-    class execute_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(execute_item #(DATA_WIDTH,ADDR_WIDTH));
+    class execute_subscriber extends uvm_subscriber #(execute_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(execute_subscriber#(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_param_utils(execute_subscriber)
 
 
-        execute_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        execute_item sub_item;
 
         covergroup cvr_grp();
             ALUOutM: coverpoint sub_item.ALUOutM iff(!sub_item.rst);

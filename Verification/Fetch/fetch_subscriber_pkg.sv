@@ -4,13 +4,13 @@ package fetch_subscriber_pkg;
     `include "uvm_macros.svh"
     import fetch_item_pkg::*;
 
-    class fetch_subscriber #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_subscriber #(fetch_item #(DATA_WIDTH,ADDR_WIDTH));
+    class fetch_subscriber extends uvm_subscriber #(fetch_item);
 
         //Register the class to the factory
-        `uvm_component_param_utils(fetch_subscriber #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(fetch_subscriber)
 
 
-        fetch_item #(DATA_WIDTH,ADDR_WIDTH) sub_item;
+        fetch_item sub_item;
 
 
         covergroup cvr_grp();

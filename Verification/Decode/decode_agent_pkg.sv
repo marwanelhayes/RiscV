@@ -8,31 +8,31 @@ package decode_agent_pkg;
     import decode_config_pkg::*;
     import decode_item_pkg::*;
 
-    class decode_agent #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_agent;
+    class decode_agent extends uvm_agent;
 
         //Register the class into the factory
-        `uvm_component_param_utils(decode_agent #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_param_utils(decode_agent)
 
         //Override the constructor function
         function new (string name = "decode_agent", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        decode_driver #(DATA_WIDTH,ADDR_WIDTH) drv;
-        decode_monitor #(DATA_WIDTH,ADDR_WIDTH) mon;
-        uvm_sequencer #(decode_item #(DATA_WIDTH,ADDR_WIDTH)) seq;
-        decode_config #(DATA_WIDTH,ADDR_WIDTH) configuration;
+        decode_driver drv;
+        decode_monitor mon;
+        uvm_sequencer #(decode_item) seq;
+        decode_config configuration;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            if(!uvm_config_db #(decode_config #(DATA_WIDTH,ADDR_WIDTH))::get(this,"","CONFG",configuration))
+            if(!uvm_config_db #(decode_config)::get(this,"","CONFG",configuration))
                 `uvm_error("AGT","Agent couldn't receive configuration object")
             if(configuration.enable == UVM_ACTIVE)
             begin
-                drv = decode_driver #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("drv",this);
-                seq = uvm_sequencer #(decode_item #(DATA_WIDTH,ADDR_WIDTH))::type_id::create("seq",this);
+                drv = decode_driver::type_id::create("drv",this);
+                seq = uvm_sequencer #(decode_item)::type_id::create("seq",this);
             end
-            mon = decode_monitor #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("mon",this);
+            mon = decode_monitor::type_id::create("mon",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);

@@ -9,29 +9,29 @@ package mem_env_pkg;
     import mem_subscriber_pkg::*;
     import mem_config_pkg::*;
 
-    class mem_env #(parameter int DATA_WIDTH = 32 , ADDR_WIDTH = 32) extends uvm_env;
+    class mem_env extends uvm_env;
 
         //Register the class into the factory
-        `uvm_component_param_utils(mem_env #(DATA_WIDTH,ADDR_WIDTH))
+        `uvm_component_utils(mem_env)
 
         //Override the constructor function
         function new (string name = "mem_env", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        mem_agent #(DATA_WIDTH,ADDR_WIDTH) agent;
-        mem_scoreboard #(DATA_WIDTH,ADDR_WIDTH) scoreboard;
-        mem_subscriber  #(DATA_WIDTH,ADDR_WIDTH) sub;
-        mem_config #(DATA_WIDTH,ADDR_WIDTH) configuration;
+        mem_agent agent;
+        mem_scoreboard scoreboard;
+        mem_subscriber  sub;
+        mem_config configuration;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            if(! uvm_config_db #(mem_config #(DATA_WIDTH,ADDR_WIDTH))::get(this,"","CONFG",configuration))
+            if(! uvm_config_db #(mem_config)::get(this,"","CONFG",configuration))
                 `uvm_error("ENV","Environment couldn't receive configuration object")
-            uvm_config_db #(mem_config #(DATA_WIDTH,ADDR_WIDTH))::set(this,"agent","CONFG",configuration);
-            agent = mem_agent #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("agent",this);
-            scoreboard = mem_scoreboard #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("scoreboard",this);
-            sub = mem_subscriber  #(DATA_WIDTH,ADDR_WIDTH)::type_id::create("sub",this);
+            uvm_config_db #(mem_config)::set(this,"agent","CONFG",configuration);
+            agent = mem_agent::type_id::create("agent",this);
+            scoreboard = mem_scoreboard::type_id::create("scoreboard",this);
+            sub = mem_subscriber ::type_id::create("sub",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);
