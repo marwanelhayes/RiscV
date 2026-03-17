@@ -186,7 +186,8 @@ package mem_scoreboard_pkg;
                 sc_item.FPURegWriteW != FPURegWriteW
                 )
             begin
-                `uvm_info("SCB",sc_item.convert2str,UVM_HIGH)
+                $display("//////////////////////Error occured in the Memory scoreboard//////////////////////");
+                `uvm_info("SCB",sc_item.convert2str,UVM_MEDIUM)
                 if(sc_item.ReadDataW != ReadDataW)
                 begin
                     `uvm_info("SCB",$sformatf("Actual output ReadDataW = %0h -- ReadDataW = %0h",sc_item.ReadDataW,ReadDataW),UVM_MEDIUM)

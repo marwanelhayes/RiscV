@@ -41,7 +41,7 @@ package fetch_item_pkg;
         
 
         virtual function string convert2str();
-            return $sformatf("The inputs of the transaction are rst = %0d , PCF = %0d , StallD = %0d , FlushD = %0d and the outputs are PCPlus4D = %0d , InstructionD = %0h , PCPlus4F = %0d ",rst,PCF,StallD,FlushD,PCPlus4D,InstructionD,PCPlus4F);
+            return $sformatf("The inputs of the transaction are rst = %0d , PCF = %0d , StallD = %0d , FlushD = %0d",rst,PCF,StallD,FlushD);
         endfunction: convert2str
 
 

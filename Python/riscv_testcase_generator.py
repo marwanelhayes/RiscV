@@ -4,7 +4,6 @@
 #                           Authored by Amr Mohamed                                       #
 
 import random
-import numpy as np
 import re
 
 
@@ -18,7 +17,7 @@ def reverse_dict_with_iterable(dictionary):
 
 
 # Instructions classified into types
-TYPES_TO_INSTRUCTION = dict(U_TYPE={'LUI', 'AUIPC'}, UJ_TYPE={'JAL'},
+TYPES_TO_INSTRUCTION = dict(U_TYPE={'LUI'}, UJ_TYPE={'JAL'},
                             SB_TYPE={'BEQ', 'BNE', 'BLT', 'BGE', 'BLTU', 'BGEU'},
                             I_TYPE={'JALR', 'LB', 'LH', 'LW', 'LBU', 'LHU', 'ADDI', 'SLTI', 'SLTIU', 'XORI', 'ORI',
                                     'ANDI', 'SLLI', 'SRLI',
@@ -71,11 +70,24 @@ SHIFT_IMMEDIATE_INSTRUCTION_NAMES = {'SLLI', 'SRLI', 'SRAI'}
 M_EXTENSION_NAMES = {'MUL', 'MULH', 'MULHSU', 'MULHU', 'DIV', 'DIVU', 'REM', 'REMU'}
 
 CSR_EXTENSION_NAMES = {'CSRRW', 'CSRRS', 'CSRRC', 'CSRRWI', 'CSRRSI', 'CSRRCI'}
+F_GPR_DESTINATION_NAMES = {'FCVT.W.S', 'FCVT.WU.S', 'FMV.X.W', 'FEQ.S', 'FLT.S', 'FLE.S', 'FCLASS.S'}
+INTEGER_DESTINATION_NAMES = (
+    set(TYPES_TO_INSTRUCTION['R_TYPE']) |
+    set(TYPES_TO_INSTRUCTION['U_TYPE']) |
+    set(TYPES_TO_INSTRUCTION['I_TYPE']) |
+    set(TYPES_TO_INSTRUCTION['CSR_TYPE']) |
+    F_GPR_DESTINATION_NAMES
+)
 
 # Reversing the instructions table to correlate each instruction with its type directly
 INSTRUCTION_TO_TYPE = reverse_dict_with_iterable(TYPES_TO_INSTRUCTION)
 
 TEST_CASES_NUMBER = 0
+LINK_REGISTER = 1
+PROGRAM_ADDR_WIDTH = 22
+INSTRUCTION_MEMORY_DEPTH_WORDS = 2 ** (PROGRAM_ADDR_WIDTH - 2)
+PROGRAM_INFO_PATH = "C:/Ain_shams/RiscV/Python/program_info.txt"
+UNSUPPORTED_INSTRUCTION_NAMES = set(TYPES_TO_INSTRUCTION['U_TYPE'])
 
 
 def validate_binary_instruction(binary_instruction):
@@ -128,6 +140,251 @@ def add_instructions(binary, assembly):
     instructions_list_hex.append(convert_to_hex(binary))
 
 
+def encode_signed(value, width):
+    min_value = -(1 << (width - 1))
+    max_value = (1 << (width - 1)) - 1
+
+    if value < min_value or value > max_value:
+        raise ValueError(f"Signed value {value} does not fit in {width} bits")
+
+    return format(value & ((1 << width) - 1), f"0{width}b")
+
+
+def add_encoded_instruction(binary, assembly):
+    add_instructions(binary, assembly)
+
+
+def emit_addi(rd_decimal, rs1_decimal, imm_decimal):
+    opcode_instruction = OPCODES['ADDI']
+    func_instruction = FUNCT_CODES['ADDI']
+    imm_binary = encode_signed(imm_decimal, 12)
+    rs1_binary = f"{rs1_decimal:05b}"
+    rd_binary = f"{rd_decimal:05b}"
+    instruction_binary = imm_binary + rs1_binary + func_instruction + rd_binary + opcode_instruction
+    instruction_assembly = f"{format('ADDI', '10s')}\tx{rd_decimal}, x{rs1_decimal}, {imm_decimal}"
+    add_encoded_instruction(instruction_binary, instruction_assembly)
+
+
+def emit_jal(rd_decimal, imm_decimal):
+    opcode_instruction = OPCODES['JAL']
+    rd_binary = f"{rd_decimal:05b}"
+    imm_binary = encode_signed(imm_decimal, 21)
+    instruction_binary = (
+        imm_binary[0] + imm_binary[10:20] + imm_binary[9] + imm_binary[1:9] + rd_binary + opcode_instruction
+    )
+    instruction_assembly = f"{format('JAL', '10s')}\tx{rd_decimal}, {imm_decimal}"
+    add_encoded_instruction(instruction_binary, instruction_assembly)
+
+
+def emit_jalr(rd_decimal, rs1_decimal, imm_decimal):
+    opcode_instruction = OPCODES['JALR']
+    func_instruction = FUNCT_CODES['JALR']
+    imm_binary = encode_signed(imm_decimal, 12)
+    rs1_binary = f"{rs1_decimal:05b}"
+    rd_binary = f"{rd_decimal:05b}"
+    instruction_binary = imm_binary + rs1_binary + func_instruction + rd_binary + opcode_instruction
+    instruction_assembly = f"{format('JALR', '10s')}\tx{rd_decimal}, x{rs1_decimal}, {imm_decimal}"
+    add_encoded_instruction(instruction_binary, instruction_assembly)
+
+
+def emit_branch(name, rs1_decimal, rs2_decimal, imm_decimal):
+    opcode_instruction = OPCODES[name]
+    func_instruction = FUNCT_CODES[name]
+    imm_binary = encode_signed(imm_decimal, 13)
+    rs1_binary = f"{rs1_decimal:05b}"
+    rs2_binary = f"{rs2_decimal:05b}"
+    instruction_binary = (
+        imm_binary[0] + imm_binary[2:8] + rs2_binary + rs1_binary + func_instruction + imm_binary[8:12] +
+        imm_binary[1] + opcode_instruction
+    )
+    instruction_assembly = f"{format(name, '10s')}\tx{rs1_decimal}, x{rs2_decimal}, {imm_decimal}"
+    add_encoded_instruction(instruction_binary, instruction_assembly)
+
+
+def current_pc_bytes():
+    return len(Instructions_list_binary) * 4
+
+
+def emit_design_jal_to_pc(rd_decimal, target_pc):
+    delta_from_pc_plus_4 = target_pc - (current_pc_bytes() + 4)
+    if delta_from_pc_plus_4 % 8 != 0:
+        raise ValueError(f"JAL target {target_pc} is not reachable from PC {current_pc_bytes()}")
+
+    signimm = delta_from_pc_plus_4 // 4
+    emit_jal(rd_decimal, signimm)
+
+
+def emit_design_jalr_to_pc(rd_decimal, rs1_decimal, target_pc):
+    delta_from_pc_plus_4 = target_pc - (current_pc_bytes() + 4)
+    if delta_from_pc_plus_4 % 4 != 0:
+        raise ValueError(f"JALR target {target_pc} is not word-aligned from PC {current_pc_bytes()}")
+
+    signimm = delta_from_pc_plus_4 // 4
+    emit_jalr(rd_decimal, rs1_decimal, signimm)
+
+
+def emit_design_branch_to_pc(name, rs1_decimal, rs2_decimal, target_pc):
+    delta_from_pc_plus_4 = target_pc - (current_pc_bytes() + 4)
+    if delta_from_pc_plus_4 % 4 != 0:
+        raise ValueError(f"Branch target {target_pc} is not word-aligned from PC {current_pc_bytes()}")
+
+    encoded_branch_immediate = delta_from_pc_plus_4 // 2
+    emit_branch(name, rs1_decimal, rs2_decimal, encoded_branch_immediate)
+
+
+def choose_general_register(excluded=None):
+    excluded = set() if excluded is None else set(excluded)
+    candidates = [reg for reg in REGISTERS_TO_USE if reg not in excluded]
+    candidates = [reg for reg in candidates if reg != 0]
+    if not candidates:
+        candidates = [reg for reg in range(1, 32) if reg not in excluded]
+    return random.choice(candidates)
+
+
+def pick_branch_operands(name):
+    if name == 'BEQ':
+        value_a = random.randint(0, 1023)
+        value_b = value_a
+    elif name == 'BNE':
+        value_a = random.randint(0, 1022)
+        value_b = value_a + 1
+    elif name in {'BLT', 'BLTU'}:
+        value_a = random.randint(0, 1022)
+        value_b = value_a + 1
+    else:
+        value_b = random.randint(0, 1022)
+        value_a = value_b + 1
+    return value_a, value_b
+
+
+def generate_non_pc_instruction_name():
+    excluded_names = {'JAL', 'JALR', *TYPES_TO_INSTRUCTION['SB_TYPE'], *UNSUPPORTED_INSTRUCTION_NAMES}
+    instruction_pool = [name for name in INSTRUCTION_TO_TYPE.keys() if name not in excluded_names]
+    instruction_name = random.choice(instruction_pool)
+
+    while instruction_name in LOAD_INSTRUCTION_NAMES and len(STORED_MEMORY_LOCATIONS) == 0:
+        instruction_name = random.choice(instruction_pool)
+
+    return instruction_name
+
+
+def emit_random_non_pc_instruction():
+    emit_random_non_pc_instruction_with_constraints()
+
+
+def instruction_writes_excluded_gpr(assembly, excluded_registers):
+    if not excluded_registers:
+        return False
+
+    instruction_name = assembly.split()[0]
+    if instruction_name not in INTEGER_DESTINATION_NAMES:
+        return False
+
+    operands = assembly.split('\t', 1)[1].split('#', 1)[0]
+    destination = operands.split(',', 1)[0].strip()
+
+    if not destination.startswith('x'):
+        return False
+
+    return int(destination[1:]) in excluded_registers
+
+
+def emit_random_non_pc_instruction_with_constraints(excluded_gpr_dests=None):
+    excluded_gpr_dests = set() if excluded_gpr_dests is None else set(excluded_gpr_dests)
+
+    while True:
+        stored_locations_before = len(STORED_MEMORY_LOCATIONS)
+        instruction_name = generate_non_pc_instruction_name()
+        generate_instruction(instruction_name)
+
+        if not instruction_writes_excluded_gpr(instructions_list_assembly[-1], excluded_gpr_dests):
+            return
+
+        Instructions_list_binary.pop()
+        instructions_list_assembly.pop()
+        instructions_list_hex.pop()
+        del STORED_MEMORY_LOCATIONS[stored_locations_before:]
+
+
+def emit_random_instruction_sequence(count, excluded_gpr_dests=None):
+    for _ in range(count):
+        emit_random_non_pc_instruction_with_constraints(excluded_gpr_dests)
+
+
+def emit_returning_jump_template(remaining_slots):
+    min_slots = 5
+    if remaining_slots < min_slots:
+        return False
+
+    candidate_lengths = []
+    for continuation_len in range(1, min(3, remaining_slots - 4) + 1):
+        if continuation_len % 2 == 0:
+            continue
+
+        max_callee_len = min(3, remaining_slots - continuation_len - 3)
+        for callee_len in range(1, max_callee_len + 1):
+            candidate_lengths.append((continuation_len, callee_len))
+
+    if not candidate_lengths:
+        return False
+
+    continuation_len, callee_len = random.choice(candidate_lengths)
+    start_pc = current_pc_bytes()
+    continuation_start = start_pc + 4
+    skip_pc = start_pc + (4 * (continuation_len + 1))
+    callee_start = skip_pc + 4
+    return_pc = callee_start + (4 * callee_len)
+    after_callee = return_pc + 4
+
+    emit_design_jal_to_pc(LINK_REGISTER, callee_start)
+    emit_random_instruction_sequence(continuation_len)
+    emit_design_jalr_to_pc(0, 0, after_callee)
+    emit_random_instruction_sequence(callee_len, excluded_gpr_dests={LINK_REGISTER})
+    emit_design_jalr_to_pc(0, LINK_REGISTER, continuation_start)
+    return True
+
+
+def emit_returning_branch_template(remaining_slots):
+    min_slots = 8
+    if remaining_slots < min_slots:
+        return False
+
+    branch_name = random.choice(list(TYPES_TO_INSTRUCTION['SB_TYPE']))
+    rs1_decimal = choose_general_register(excluded={LINK_REGISTER})
+    rs2_decimal = choose_general_register(excluded={LINK_REGISTER, rs1_decimal})
+    value_a, value_b = pick_branch_operands(branch_name)
+
+    candidate_lengths = []
+    for continuation_len in range(1, min(3, remaining_slots - 7) + 1):
+        max_callee_len = min(3, remaining_slots - continuation_len - 6)
+        for callee_len in range(1, max_callee_len + 1):
+            if (continuation_len + callee_len) % 2 == 0:
+                candidate_lengths.append((continuation_len, callee_len))
+
+    if not candidate_lengths:
+        return False
+
+    continuation_len, callee_len = random.choice(candidate_lengths)
+    start_pc = current_pc_bytes()
+    continuation_start = start_pc + 4
+    skip_pc = start_pc + (4 * (continuation_len + 1))
+    callee_start = skip_pc + 4
+    return_pc = callee_start + (4 * callee_len)
+    setup_start = return_pc + 4
+    branch_pc = setup_start + 8
+    after_template = branch_pc + 4
+
+    emit_design_jal_to_pc(LINK_REGISTER, setup_start)
+    emit_random_instruction_sequence(continuation_len)
+    emit_design_jalr_to_pc(0, 0, after_template)
+    emit_random_instruction_sequence(callee_len, excluded_gpr_dests={LINK_REGISTER})
+    emit_design_jalr_to_pc(0, LINK_REGISTER, continuation_start)
+    emit_addi(rs1_decimal, 0, value_a)
+    emit_addi(rs2_decimal, 0, value_b)
+    emit_design_branch_to_pc(branch_name, rs1_decimal, rs2_decimal, callee_start)
+    return True
+
+
 # Function to generate an R-Type instruction
 def generate_r(name):
     # print('Generating R')
@@ -173,7 +430,7 @@ def generate_i(name):
         else:
             imm = '0000000'
 
-        shamt_decimal = np.random.randint(0, 32)
+        shamt_decimal = random.randrange(32)
         shamt_binary = "{0:05b}".format(shamt_decimal)
         instruction_binary = imm + shamt_binary + rs1_binary + func_instruction + rd_binary + opcode_instruction
         instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", x" + str(rs1_decimal) + ", " + str(
@@ -187,7 +444,7 @@ def generate_i(name):
         instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", " + str(imm_decimal) + "(x" \
             + str(rs1_decimal) + ")"
     else:
-        imm_decimal = np.random.randint(0, 4095)
+        imm_decimal = random.randint(0, 4094)
         imm_binary = "{0:012b}".format(imm_decimal)
         instruction_binary = imm_binary + rs1_binary + func_instruction + rd_binary + opcode_instruction
         instruction_assembly = format(name, '10s') + "\tx" + str(rd_decimal) + ", x" + str(rs1_decimal) + ", " + str(
@@ -205,7 +462,8 @@ def generate_s(name):
     rs1_binary = "{0:05b}".format(rs1_decimal)
     rs2_decimal = random.choice(REGISTERS_TO_USE)
     rs2_binary = "{0:05b}".format(rs2_decimal)
-    imm_decimal = 2 * np.random.randint(0, 2047)
+    # Keep all generated data addresses word-aligned so any later load/store selection is trap-free.
+    imm_decimal = 4 * random.randint(0, 1023)
     imm_binary = "{0:012b}".format(imm_decimal)
 
     # Add address to locations to load from list
@@ -246,7 +504,7 @@ def generate_u(name):
     opcode_instruction = OPCODES[name]
     rd_decimal = random.choice(REGISTERS_TO_USE)
     rd_binary = "{0:05b}".format(rd_decimal)
-    imm_decimal = np.random.randint(0, 1048575)
+    imm_decimal = random.randint(0, 1048574)
     imm_binary = "{0:020b}".format(imm_decimal)
 
     instruction_binary = imm_binary + rd_binary + opcode_instruction
@@ -423,19 +681,26 @@ for test_case in range(int(TEST_CASES_NUMBER)):
         REGISTERS_NUMBER = input('Enter Number of Registers to use(1 to 32) : ')
 
     # Random Registers to use
-    REGISTERS_TO_USE = np.random.randint(1, 32, int(REGISTERS_NUMBER))
-    Instructions_Number = int(Instructions_Number)
+    registers_requested = int(REGISTERS_NUMBER)
+    if registers_requested >= 31:
+        REGISTERS_TO_USE = list(range(1, 32))
+    else:
+        REGISTERS_TO_USE = random.sample(range(1, 32), registers_requested)
+    Instructions_Number = min(int(Instructions_Number), INSTRUCTION_MEMORY_DEPTH_WORDS)
 
     # Generating instructions
-    for instruction in range(Instructions_Number):
-        INSTRUCTION_CURRENT = instruction
-        instruction_name = random.choice(list(INSTRUCTION_TO_TYPE.keys()))
+    while len(Instructions_list_binary) < Instructions_Number:
+        INSTRUCTION_CURRENT = len(Instructions_list_binary)
+        remaining_slots = Instructions_Number - len(Instructions_list_binary)
 
-        # Check for load instruction with no prior store
-        while instruction_name in LOAD_INSTRUCTION_NAMES and len(STORED_MEMORY_LOCATIONS) == 0:
-            instruction_name = random.choice(list(INSTRUCTION_TO_TYPE.keys()))
+        emitted_control_flow = False
+        if remaining_slots >= 8 and random.random() < 0.20:
+            emitted_control_flow = emit_returning_branch_template(remaining_slots)
+        elif remaining_slots >= 5 and random.random() < 0.35:
+            emitted_control_flow = emit_returning_jump_template(remaining_slots)
 
-        generate_instruction(instruction_name)
+        if not emitted_control_flow:
+            emit_random_non_pc_instruction()
 
     # Writing and formatting ouput files
     binary_file = open("C:/Ain_shams/RiscV/Python/binary" + str(test_case + 1) + ".txt", "w")
@@ -458,5 +723,10 @@ for test_case in range(int(TEST_CASES_NUMBER)):
     binary_file.close()
     assembly_file.close()
     hex_file.close()
+
+    if test_case == 0:
+        program_info_file = open(PROGRAM_INFO_PATH, "w")
+        program_info_file.write(str(Instructions_Number) + "\n")
+        program_info_file.close()
 
     print("FINISHED TEST CASE " + str(test_case + 1))

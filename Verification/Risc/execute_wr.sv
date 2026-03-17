@@ -38,6 +38,7 @@ interface execute_wr
     input fpu_operation_t FPUControlE,
     input round_mode_t RoundModeE,
     input FPURegWriteE,
+    input FPUValidE,
     input move_operation_t MoveOperationE,
     input logic [FINAL_DATA_WIDTH-1:0] FPUOutW,
     input logic [1:0] ForwardFloatingAE,
@@ -66,7 +67,9 @@ interface execute_wr
     input logic InvalidDivM,
     input logic [FINAL_DATA_WIDTH-1:0] FPUOutM,
     input logic FPURegWriteM,
-    input move_operation_t MoveOperationM
+    input move_operation_t MoveOperationM,
+    input logic FPUBusyM,
+    input logic FPUDoneM
 );
 
     execute_interface execute_intf 
@@ -110,6 +113,7 @@ interface execute_wr
             execute_intf.FPUControlE = FPUControlE;
             execute_intf.RoundModeE = RoundModeE;
             execute_intf.FPURegWriteE = FPURegWriteE;
+            execute_intf.FPUValidE = FPUValidE;
             execute_intf.MoveOperationE = MoveOperationE;
             execute_intf.FPUOutW = FPUOutW;
             execute_intf.ForwardFloatingAE = ForwardFloatingAE;
@@ -139,6 +143,8 @@ interface execute_wr
             execute_intf.FPUOutM = FPUOutM;
             execute_intf.FPURegWriteM = FPURegWriteM;
             execute_intf.MoveOperationM = MoveOperationM;
+            execute_intf.FPUBusyM = FPUBusyM;
+            execute_intf.FPUDoneM = FPUDoneM;
         end
        
     initial

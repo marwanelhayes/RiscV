@@ -49,7 +49,8 @@ interface decode_wr
     input logic FPURegWriteE,
     input move_operation_t MoveOperationE,
     input fpr_t Rs1FE,
-    input fpr_t Rs2FE
+    input fpr_t Rs2FE,
+    input logic FPUValidE
 );
 
     decode_interface decode_intf 
@@ -105,6 +106,7 @@ interface decode_wr
         decode_intf.MoveOperationE = MoveOperationE ; 
         decode_intf.Rs1FE = Rs1FE ; 
         decode_intf.Rs2FE = Rs2FE ; 
+        decode_intf.FPUValidE = FPUValidE ;
     end
     
     initial 

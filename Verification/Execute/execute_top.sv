@@ -2,6 +2,7 @@ module execute_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import uvm_pkg::uvm_cmdline_processor;
     import execute_test_pkg::*;
     import shared_pkg::*;
 
@@ -58,6 +59,7 @@ module execute_top;
         .FPUControlE(intf.FPUControlE),
         .RoundModeE(intf.RoundModeE),
         .FPURegWriteE(intf.FPURegWriteE),
+        .FPUValidE(intf.FPUValidE),
         .MoveOperationE(intf.MoveOperationE),
         .FPUOutW(intf.FPUOutW),
         .ForwardFloatingAE(intf.ForwardFloatingAE),
@@ -73,7 +75,9 @@ module execute_top;
         .InvalidDivM(intf.InvalidDivM),
         .FPUOutM(intf.FPUOutM),
         .FPURegWriteM(intf.FPURegWriteM),
-        .MoveOperationM(intf.MoveOperationM)    
+        .MoveOperationM(intf.MoveOperationM),
+        .FPUBusyM(intf.FPUBusyM),
+        .FPUDoneM(intf.FPUDoneM)
         );
 
     initial 
@@ -87,8 +91,19 @@ module execute_top;
 
     initial
     begin
+        string test_name;
+        uvm_cmdline_processor clp;
+
+        test_name = "execute_test";
+        clp = uvm_cmdline_processor::get_inst();
+        if (clp.get_arg_value("+UVM_TESTNAME=", test_name))
+        begin
+            if (test_name != "execute_test")
+                test_name = "execute_test";
+        end
+
         uvm_config_db #(virtual execute_interface)::set(null,"","INTF",intf);
-        run_test();
+        run_test(test_name);
     end
 
 endmodule

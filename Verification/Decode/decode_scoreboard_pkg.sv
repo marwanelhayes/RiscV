@@ -43,6 +43,7 @@ package decode_scoreboard_pkg;
         fpr_t Rs2FE;
         fpr_t Rs1FD;
         fpr_t Rs2FD;
+        logic FPUValidE;
 
         logic signed [FINAL_DATA_WIDTH-1:0] RegFile [32];
         logic [FINAL_DATA_WIDTH-1:0] FPURegFile [32];
@@ -128,6 +129,7 @@ package decode_scoreboard_pkg;
                 MoveOperationE = FPUToFPU;
                 Rs1FE = f0;
                 Rs2FE = f0;
+                FPUValidE = 1'b0;
             end
             else if(sc_item.FlushE)
             begin
@@ -163,6 +165,7 @@ package decode_scoreboard_pkg;
                 MoveOperationE = FPUToFPU;
                 Rs1FE = f0;
                 Rs2FE = f0;
+                FPUValidE = 1'b0;
             end
             else
             begin
@@ -197,6 +200,7 @@ package decode_scoreboard_pkg;
                 FPUControlE = NOOPERATION;
                 MoveOperationE = FPUToFPU;
                 FPURegWriteE = 1'b0;
+                FPUValidE = 1'b0;
                 case(opcode_t'(sc_item.InstructionD[6:0]))
                     R_TYPE:
                     begin:RType
@@ -468,6 +472,7 @@ package decode_scoreboard_pkg;
                         end
                     end:FloatingPoint
                 endcase
+                FPUValidE = (FPUControlE != NOOPERATION);
                 PCBranchE = sc_item.PCPlus4D + (SignImmE * 4);
             end
         endfunction:ref_model
@@ -500,10 +505,12 @@ package decode_scoreboard_pkg;
                 EbreakE != sc_item.EbreakE ||
                 MRetE != sc_item.MRetE ||
                 IllegaleInstructionE != sc_item.IllegaleInstructionE ||
-                EcallE != sc_item.EcallE
+                EcallE != sc_item.EcallE ||
+                FPUValidE != sc_item.FPUValidE
             )
             begin
-                `uvm_info("SCB",sc_item.convert2str,UVM_HIGH)
+                $display("//////////////////////Error occured in the Decode scoreboard//////////////////////");
+                `uvm_info("SCB",sc_item.convert2str,UVM_MEDIUM)
                 if(sc_item.JumpE != JumpE)
                 begin
                     `uvm_info("SCB",$sformatf("Actual output JumpE = %0h -- JumpE = %0h",sc_item.JumpE,JumpE),UVM_MEDIUM)
@@ -672,6 +679,11 @@ package decode_scoreboard_pkg;
                 if(Rs2FE != sc_item.Rs2FE)
                 begin
                     `uvm_info("SCB",$sformatf("Actual output Rs2FE = %s -- Rs2FE = %s",sc_item.Rs2FE.name(),Rs2FE.name()),UVM_MEDIUM)
+                    fail++;
+                end
+                if(FPUValidE != sc_item.FPUValidE)
+                begin
+                    `uvm_info("SCB",$sformatf("Actual output FPUValidE = %0h -- FPUValidE = %0h",sc_item.FPUValidE,FPUValidE),UVM_MEDIUM)
                     fail++;
                 end
             end

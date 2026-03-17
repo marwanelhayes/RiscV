@@ -15,7 +15,7 @@ Z2 DXx6 sv_std 3 std 0 22 9oUSJO;AeEaW`l:M@^WG92
 Z3 DXx4 work 10 shared_pkg 0 22 L@T`^82z^i3VEGQ[]lgc?1
 DXx4 work 16 risc_fpu_sv_unit 0 22 fV<3;TU;KmDN][`@7G_oh1
 Z4 !s110 1772621841
-VDg1SIo80bB@j0V0VzS_@n1
+Z5 VDg1SIo80bB@j0V0VzS_@n1
 r1
 !s85 0
 !i10b 1
@@ -24,19 +24,19 @@ I`U]TG00[=e[jP`S?GO0oS1
 !s105 risc_fpu_sv_unit
 S1
 R0
-Z5 w1772621832
-Z6 8C:/Ain_shams/RiscV/Design/risc_fpu.sv
-Z7 FC:/Ain_shams/RiscV/Design/risc_fpu.sv
+Z6 w1772621832
+Z7 8C:/Ain_shams/RiscV/Design/risc_fpu.sv
+Z8 FC:/Ain_shams/RiscV/Design/risc_fpu.sv
 !i122 1
 L0 2 520
-Z8 OL;L;2024.1;79
+Z9 OL;L;2024.1;79
 31
-Z9 !s108 1772621841.000000
-!s107 C:/Ain_shams/RiscV/Design/risc_fpu.sv|C:/Ain_shams/RiscV/Design/shared_pkg.sv|
-Z10 !s90 -work|work|-vopt|-sv|-stats=none|C:/Ain_shams/RiscV/Design/shared_pkg.sv|C:/Ain_shams/RiscV/Design/risc_fpu.sv|
+Z10 !s108 1772621841.000000
+Z11 !s107 C:/Ain_shams/RiscV/Design/risc_fpu.sv|C:/Ain_shams/RiscV/Design/shared_pkg.sv|
+Z12 !s90 -work|work|-vopt|-sv|-stats=none|C:/Ain_shams/RiscV/Design/shared_pkg.sv|C:/Ain_shams/RiscV/Design/risc_fpu.sv|
 !i113 0
-Z11 o-work work -sv -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
-Z12 tCvgOpt 0
+Z13 o-work work -sv -L mtiAvm -L mtiRnm -L mtiOvm -L mtiUvm -L mtiUPF -L infact
+Z14 tCvgOpt 0
 Xrisc_fpu_sv_unit
 R1
 R2
@@ -51,19 +51,43 @@ IfV<3;TU;KmDN][`@7G_oh1
 !i103 1
 S1
 R0
-R5
 R6
 R7
-!i122 1
-Z13 L0 1 0
 R8
-31
+!i122 1
+Z15 L0 1 0
 R9
-Z14 !s107 C:/Ain_shams/RiscV/Design/risc_fpu.sv|C:/Ain_shams/RiscV/Design/shared_pkg.sv|
+31
 R10
-!i113 0
 R11
 R12
+!i113 0
+R13
+R14
+vrisc_instruction_memory
+R2
+!s110 1773230380
+!i10b 1
+!s100 gQ;@i0QjfmPGhkI>APOD:3
+I0ZDoneH6^RzY_5DYnTHL52
+S1
+R0
+w1773230279
+8C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv
+FC:/Ain_shams/RiscV/Design/risc_instruction_memory.sv
+!i122 2
+L0 1 25
+R5
+R9
+r1
+!s85 0
+31
+!s108 1773230380.000000
+!s107 C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_deprecated_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_reg_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_callback_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_sequence_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/tlm1/uvm_tlm_imps.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_tlm_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_printer_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_object_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_phase_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_message_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/macros/uvm_version_defines.svh|C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src/uvm_macros.svh|C:/Ain_shams/RiscV/Verification/Risc/risc_top.sv|C:/Ain_shams/RiscV/Verification/Risc/risc_test_pkg.sv|C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv|
+!s90 -work|work|-vopt|-sv|-stats=none|C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv|C:/Ain_shams/RiscV/Verification/Risc/risc_test_pkg.sv|C:/Ain_shams/RiscV/Verification/Risc/risc_top.sv|
+!i113 0
+R13
+R14
 Xshared_pkg
 R1
 R2
@@ -77,15 +101,15 @@ w1769791484
 8C:/Ain_shams/RiscV/Design/shared_pkg.sv
 FC:/Ain_shams/RiscV/Design/shared_pkg.sv
 !i122 1
-R13
+R15
 VL@T`^82z^i3VEGQ[]lgc?1
-R8
+R9
 r1
 !s85 0
 31
-R9
-R14
 R10
-!i113 0
 R11
 R12
+!i113 0
+R13
+R14

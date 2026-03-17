@@ -63,6 +63,7 @@ package decode_item_pkg;
         move_operation_t MoveOperationE;
         fpr_t Rs1FE;
         fpr_t Rs2FE;
+        logic FPUValidE;
         
         opcode_t opcode;
         
@@ -204,7 +205,7 @@ package decode_item_pkg;
 
         virtual function string convert2str();
             opcode = opcode_t'(InstructionD[6:0]);
-            return $sformatf("The inputs of the transaction are rst = %0d , PCPlus4D = %0d , Opcode = %s , rest of instruction = %0h ,RdW = %s , FlushE = %0d , RegWriteW = %0d , ResultW = %0d,RdFW = %s , FPUOutW = %s , MoveOperationW = %s , FPURegWriteW = %0d and the outputs are Rs1E = %s , Rs2E = %s , Rs1D = %s , Rs2D = %s , RdE = %s , ALUControlE = %s , RD1E = %0d , RD2E = %0d , SignImmE = %0d , PCBranchE = %0d , funct3E = %0b , RegWriteE = %0d , SelectorE = %s , MemWriteE = %0d , BranchE = %0d , ALUSrcE = %0d , CsrOperationE = %s , CsrAccess = %0d , CsrIndexE = %s , PCPlus4E = %0d , EcallE = %0d , EbreakE = %0d , MRetE = %0d , IllegaleInstructionE = %0d ,RdFE = %s , RD1FE = %0d , RD2FE = %0d , FPUControlE = %s , RoundModeE = %s , FPURegWriteE = %0d , MoveOperationE = %s , Rs1FE = %s , Rs2FE = %s ",rst,PCPlus4D,opcode.name,InstructionD[FINAL_DATA_WIDTH-1:0],RdW.name,FlushE,RegWriteW,ResultW,RdFW.name,FPUOutW,MoveOperationW.name,FPURegWriteW,Rs1E.name,Rs2E.name,Rs1D.name,Rs2D.name,RdE.name,ALUControlE.name,RD1E,RD2E,SignImmE,PCBranchE,funct3E,RegWriteE,SelectorE.name,MemWriteE,BranchE,ALUSrcE,CsrOperationE.name,CsrAccessE,CsrIndexE.name,PCPlus4E,EcallE,EbreakE,MRetE,IllegaleInstructionE,RdFE.name,RD1FE,RD2FE,FPUControlE.name,RoundModeE.name,FPURegWriteE,MoveOperationE.name,Rs1FE.name,Rs2FE.name);
+            return $sformatf("The inputs of the transaction are rst = %0d , PCPlus4D = %0d , Opcode = %s , rest of instruction = %0h , RdW = %s , FlushE = %0d , RegWriteW = %0d , ResultW = %0d , RdFW = %s , FPUOutW = %0h , MoveOperationW = %s , FPURegWriteW = %0d",rst,PCPlus4D,opcode.name,InstructionD[FINAL_DATA_WIDTH-1:0],RdW.name,FlushE,RegWriteW,ResultW,RdFW.name,FPUOutW,MoveOperationW.name,FPURegWriteW);
         endfunction: convert2str
 
         function void post_randomize;

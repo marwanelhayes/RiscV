@@ -23,6 +23,8 @@ interface hazard_wr
     input   fpr_t Rs2FE,
     input   logic FPURegWriteM,
     input   logic FPURegWriteW,
+    input   logic FPUValidE,
+    input   logic FPUBusyM,
     
     input  logic [2:0] ForwardAE,
     input  logic [2:0] ForwardBE,
@@ -58,6 +60,8 @@ interface hazard_wr
         hazard_intf.Rs2FE = Rs2FE;
         hazard_intf.FPURegWriteM = FPURegWriteM;
         hazard_intf.FPURegWriteW = FPURegWriteW;
+        hazard_intf.FPUValidE = FPUValidE;
+        hazard_intf.FPUBusyM = FPUBusyM;
     
         hazard_intf.ForwardAE = ForwardAE;
         hazard_intf.ForwardBE = ForwardBE;

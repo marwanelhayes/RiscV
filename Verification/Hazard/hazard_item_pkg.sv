@@ -33,6 +33,8 @@ package hazard_item_pkg;
         rand fpr_t Rs2FE;
         rand logic FPURegWriteM;
         rand logic FPURegWriteW;
+        rand logic FPUValidE;
+        rand logic FPUBusyM;
         
 
         logic [2:0] ForwardAE;
@@ -57,11 +59,8 @@ package hazard_item_pkg;
         
 
         virtual function string convert2str();
-
-            return $sformatf("The inputs of the transaction are Rs1E = %s , Rs2E = %s , RdE = %s , Rs1D = %s , Rs2D = %s , RdM = %s , RdW = %s , RegWriteM = %0d , RegWriteW = %0d , SelectorE = %s , PCSrcE = %0d , TrapIsSet = %0d , MoveOperationE = %s , RdFM = %s , RdFW = %s , Rs1FE = %s , Rs2FE = %s , FPURegWriteM = %0d , FPURegWriteW = %0d , and the outputs are ForwardAE = %0d , ForwardBE = %0d , StallD = %0d , StallF = %0d , FlushE = %0d , FlushD = %0d , ForwardFloatingAE = %0d , ForwardFloatingBE = %0d",
-            Rs1E.name(), Rs2E.name(), RdE.name(), Rs1D.name(), Rs2D.name(), RdM.name(), RdW.name(),RegWriteM,RegWriteW,SelectorE.name(),PCSrcE,TrapIsSet, MoveOperationE.name(), RdFM.name(), RdFW.name(), Rs1FE.name(), Rs2FE.name(), FPURegWriteM, FPURegWriteW,
-            ForwardAE,ForwardBE,StallD,StallF,FlushE,FlushD,ForwardFloatingAE,ForwardFloatingBE);
-        
+            return $sformatf("The inputs of the transaction are Rs1E = %s , Rs2E = %s , RdE = %s , Rs1D = %s , Rs2D = %s , RdM = %s , RdW = %s , RegWriteM = %0d , RegWriteW = %0d , SelectorE = %s , PCSrcE = %0d , TrapIsSet = %0d , MoveOperationE = %s , RdFM = %s , RdFW = %s , Rs1FE = %s , Rs2FE = %s , FPURegWriteM = %0d , FPURegWriteW = %0d , FPUValidE = %0d , FPUBusyM = %0d",
+            Rs1E.name(), Rs2E.name(), RdE.name(), Rs1D.name(), Rs2D.name(), RdM.name(), RdW.name(),RegWriteM,RegWriteW,SelectorE.name(),PCSrcE,TrapIsSet, MoveOperationE.name(), RdFM.name(), RdFW.name(), Rs1FE.name(), Rs2FE.name(), FPURegWriteM, FPURegWriteW, FPUValidE, FPUBusyM);
         endfunction: convert2str
 
 

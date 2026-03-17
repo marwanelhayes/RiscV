@@ -31,7 +31,8 @@ module fpu_decoder
     output fpu_operation_t FPUControlD,
     output move_operation_t MoveOperationD,
     output logic FPURegWriteD,
-    output logic Write
+    output logic Write,
+    output logic FPUValidD
 );
 
 
@@ -163,5 +164,10 @@ module fpu_decoder
                             end
             endcase
         end
+    end
+
+    always_comb
+    begin
+        FPUValidD = FPURegWriteD || Write;
     end
 endmodule : fpu_decoder

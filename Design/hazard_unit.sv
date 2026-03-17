@@ -21,6 +21,8 @@ module hazard_unit
     input   fpr_t Rs2FE,
     input   logic FPURegWriteM,
     input   logic FPURegWriteW,
+    input   logic FPUValidE,
+    input   logic FPUBusyM,
     
     output  logic [2:0] ForwardAE,
     output  logic [2:0] ForwardBE,
@@ -31,19 +33,28 @@ module hazard_unit
     output  logic [1:0] ForwardFloatingAE,
     output  logic [1:0] ForwardFloatingBE 
 );
-    logic Stall;
+    logic LWStall,FPUStall;
 
     //Stall
     always_comb 
     begin
-        Stall = 1'b0;
+        LWStall = 1'b0;
         //Load word hazard
         if (SelectorE == MemToReg && ((RdE == Rs1D) || (RdE == Rs2D))) 
         begin
-            Stall = 1'b1;
-        end 
+            LWStall = 1'b1;
+        end
     end
 
+    always_comb
+    begin
+        FPUStall = 1'b0;
+        //FPU hazard
+        if (FPUValidE && FPUBusyM)
+        begin
+            FPUStall = 1'b1;
+        end
+    end
 
     //Forward for source register
     always_comb
@@ -115,8 +126,8 @@ module hazard_unit
         end 
     end
         
-    assign StallD = Stall;
-    assign StallF = Stall;
-    assign FlushE = Stall || PCSrcE || TrapIsSet;
-    assign FlushD = Stall || PCSrcE || TrapIsSet;
+    assign StallD = LWStall || FPUStall;
+    assign StallF = LWStall || FPUStall;
+    assign FlushD = PCSrcE  || TrapIsSet;
+    assign FlushE = LWStall || PCSrcE || TrapIsSet;
 endmodule

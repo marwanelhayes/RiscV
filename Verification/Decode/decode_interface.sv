@@ -52,6 +52,7 @@ interface decode_interface
     move_operation_t MoveOperationE;
     fpr_t Rs1FE;
     fpr_t Rs2FE;
+    logic FPUValidE;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);
@@ -103,6 +104,7 @@ interface decode_interface
         input MoveOperationE;
         input Rs1FE;
         input Rs2FE;
+        input FPUValidE;
 
 
     endclocking:cb
@@ -187,13 +189,14 @@ interface decode_interface
         mon.MoveOperationE = cb.MoveOperationE; 
         mon.Rs1FE = cb.Rs1FE; 
         mon.Rs2FE = cb.Rs2FE; 
+        mon.FPUValidE = cb.FPUValidE;
 
     endtask:intf2mon
 
     modport DUT 
     (
         input clk, rst , PCPlus4D , InstructionD , RdW , FlushE , RegWriteW , ResultW , RdFW , FPUOutW , MoveOperationW , FPURegWriteW , 
-        output Rs1E , Rs2E , Rs1D , Rs2D , RdE , JumpE , ALUControlE , CsrOperationE , RD1E , RD2E , SignImmE , PCBranchE , CsrIndexE , funct3E , PCPlus4E , RegWriteE , SelectorE , MemWriteE , BranchE , CsrAccessE , ALUSrcE , EcallE , EbreakE , MRetE , IllegaleInstructionE, RdFE , RD1FE , RD2FE , FPUControlE , RoundModeE , FPURegWriteE , MoveOperationE , Rs1FE , Rs2FE
+        output Rs1E , Rs2E , Rs1D , Rs2D , RdE , JumpE , ALUControlE , CsrOperationE , RD1E , RD2E , SignImmE , PCBranchE , CsrIndexE , funct3E , PCPlus4E , RegWriteE , SelectorE , MemWriteE , BranchE , CsrAccessE , ALUSrcE , EcallE , EbreakE , MRetE , IllegaleInstructionE, RdFE , RD1FE , RD2FE , FPUControlE , RoundModeE , FPURegWriteE , MoveOperationE , Rs1FE , Rs2FE , FPUValidE
     );
 
     modport TEST (clocking cb); 

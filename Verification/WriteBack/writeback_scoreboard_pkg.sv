@@ -64,7 +64,8 @@ package writeback_scoreboard_pkg;
             ref_model();
             if(sc_item.ResultW != ResultW || sc_item.PCF != PCF)
             begin
-                `uvm_info("SCB",sc_item.convert2str,UVM_HIGH)
+                $display("//////////////////////Error occured in the WriteBack scoreboard//////////////////////");
+                `uvm_info("SCB",sc_item.convert2str,UVM_MEDIUM)
                 if(sc_item.ResultW != ResultW)
                 begin
                     `uvm_info("SCB",$sformatf("Actual output ResultW = %0h -- ResultW = %0h",sc_item.ResultW,ResultW),UVM_MEDIUM)

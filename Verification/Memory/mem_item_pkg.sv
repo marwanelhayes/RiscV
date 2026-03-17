@@ -70,7 +70,7 @@ package mem_item_pkg;
         
 
         virtual function string convert2str();
-            return $sformatf("The inputs of the transaction are rst = %0d , ALUOUTM = %0d , WriteDataM = %0d , RdM = %s , Funct3M = %0d , RegWriteM = %0d , SelectorM = %s , MemWriteM = %0d , PCPlus4M = %0d , CsrOutM = %0d, RdFM = %s , OverflowM = %0d , UnderflowM = %0d , NaNM = %0d , InfM = %0d , ZeroM = %0d , InvalidDivM = %0d , FPUOutM = %0d , MoveOperationM = %s , FPURegWriteM = %0d and the outputs are ReadDataW = %0d , RdW = %s , RegWriteW = %0d  , ALUOutW = %0d , SelectorW = %s , PCPlus4W = %0d , CsrOutW = %0d , RdFW = %s , OverflowW = %0d , UnderflowW = %0d , NaNW = %0d , InfW = %0d , ZeroW = %0d , InvalidDivW = %0d , FPUOutW = %0d , MoveOperationW = %s , FPURegWriteW = %0d",rst,ALUOutM,WriteDataM,RdM,funct3M,RegWriteM,SelectorM.name(),MemWriteM,PCPlus4M,CsrOutM,RdFM.name(),OverflowM,UnderflowM,NaNM,InfM,ZeroM,InvalidDivM,FPUOutM,MoveOperationM.name(),FPURegWriteM,/*Outputs*/ReadDataW,RdW,RegWriteW,ALUOutW,SelectorW.name(),PCPlus4W,CsrOutW,RdFW.name(),OverflowW,UnderflowW,NaNW,InfW,ZeroW,InvalidDivW,FPUOutW,MoveOperationW.name(),FPURegWriteW);
+            return $sformatf("The inputs of the transaction are rst = %0d , ALUOUTM = %0d , WriteDataM = %0d , RdM = %s , Funct3M = %0d , RegWriteM = %0d , SelectorM = %s , MemWriteM = %0d , PCPlus4M = %0d , CsrOutM = %0d , RdFM = %s , OverflowM = %0d , UnderflowM = %0d , NaNM = %0d , InfM = %0d , ZeroM = %0d , InvalidDivM = %0d , FPUOutM = %0d , MoveOperationM = %s , FPURegWriteM = %0d",rst,ALUOutM,WriteDataM,RdM.name(),funct3M,RegWriteM,SelectorM.name(),MemWriteM,PCPlus4M,CsrOutM,RdFM.name(),OverflowM,UnderflowM,NaNM,InfM,ZeroM,InvalidDivM,FPUOutM,MoveOperationM.name(),FPURegWriteM);
         endfunction: convert2str
 
 

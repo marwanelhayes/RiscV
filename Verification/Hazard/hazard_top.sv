@@ -2,6 +2,7 @@ module hazard_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import uvm_pkg::uvm_cmdline_processor;
     import shared_pkg::*;
     import hazard_test_pkg::*;
 
@@ -53,8 +54,19 @@ module hazard_top;
 
     initial
     begin
+        string test_name;
+        uvm_cmdline_processor clp;
+
+        test_name = "hazard_test";
+        clp = uvm_cmdline_processor::get_inst();
+        if (clp.get_arg_value("+UVM_TESTNAME=", test_name))
+        begin
+            if (test_name != "hazard_test")
+                test_name = "hazard_test";
+        end
+
         uvm_config_db #(virtual hazard_interface)::set(null,"","INTF",intf);
-        run_test();
+        run_test(test_name);
     end
 
 endmodule

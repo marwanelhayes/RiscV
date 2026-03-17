@@ -8,7 +8,8 @@ package hazard_scoreboard_pkg;
     class hazard_scoreboard extends uvm_scoreboard;
 
 
-        logic Stall;
+        logic LWStall;
+        logic FPUStall;
         logic [2:0] ForwardAE;
         logic [2:0] ForwardBE;
         logic StallD;
@@ -17,6 +18,7 @@ package hazard_scoreboard_pkg;
         logic FlushD;
         logic [1:0] ForwardFloatingAE;
         logic [1:0] ForwardFloatingBE;
+
 
         int success,fail;
 
@@ -37,7 +39,8 @@ package hazard_scoreboard_pkg;
         endfunction:build_phase
 
         function void ref_model (); 
-            Stall = 1'b0;
+            LWStall = 1'b0;
+            FPUStall = 1'b0;
             ForwardAE = 3'b000;
             ForwardBE = 3'b000;
             StallD = 1'b0;
@@ -48,7 +51,9 @@ package hazard_scoreboard_pkg;
             ForwardFloatingBE = 2'b00; 
 
             if (sc_item.SelectorE == MemToReg && ((sc_item.RdE == sc_item.Rs1D) || (sc_item.RdE == sc_item.Rs2D))) 
-                Stall = 1'b1;
+                LWStall = 1'b1;
+            if(sc_item.FPUValidE && sc_item.FPUBusyM)
+                FPUStall = 1'b1;
             
             if (sc_item.RegWriteW && (sc_item.RdW != zero) && (sc_item.RdW == sc_item.Rs1E) && (sc_item.MoveOperationE != FPUToReg)) 
             begin
@@ -103,10 +108,10 @@ package hazard_scoreboard_pkg;
                 ForwardFloatingBE = 2'b10;
             end
                     
-            StallD = Stall;
-            StallF = Stall;
-            FlushE = Stall || sc_item.PCSrcE || sc_item.TrapIsSet;
-            FlushD = Stall || sc_item.PCSrcE || sc_item.TrapIsSet;
+            StallD = LWStall        || FPUStall;
+            StallF = LWStall        || FPUStall;
+            FlushE = LWStall        || sc_item.PCSrcE || sc_item.TrapIsSet;
+            FlushD = sc_item.PCSrcE || sc_item.TrapIsSet;
 
         endfunction:ref_model
 
@@ -115,7 +120,8 @@ package hazard_scoreboard_pkg;
             if(ForwardAE != sc_item.ForwardAE || ForwardBE != sc_item.ForwardBE || 
                StallD != sc_item.StallD || StallF != sc_item.StallF || FlushE != sc_item.FlushE || FlushD != sc_item.FlushD || ForwardFloatingAE != sc_item.ForwardFloatingAE || ForwardFloatingBE != sc_item.ForwardFloatingBE)
             begin
-                `uvm_info("SCB", sc_item.convert2str, UVM_HIGH)
+                $display("//////////////////////Error occured in the Hazard scoreboard//////////////////////");
+                `uvm_info("SCB", sc_item.convert2str, UVM_MEDIUM)
                 if(ForwardAE != sc_item.ForwardAE)
                 begin
                     `uvm_info("SCB", $sformatf("Expected ForwardAE = %0b, Got ForwardAE = %0b", sc_item.ForwardAE, ForwardAE), UVM_MEDIUM)

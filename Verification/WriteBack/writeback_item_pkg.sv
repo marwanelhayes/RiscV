@@ -42,7 +42,7 @@ package writeback_item_pkg;
         
 
         virtual function string convert2str();
-            return $sformatf("The inputs of the transaction are rst = %0d , PCSrcE = %0d , StallF = %0d , PCPlus4F = %0h , PCBranchE = %0h , ALUOutW = %0h , ReadDataW = %0h , SelectorW = %0d , CsrOutW = %0d , PCPlus4W = %0h and the outputs are ResultW = %0h , PCF = %0h ",rst,PCSrcE,StallF,PCPlus4F,PCBranchE,ALUOutW,ReadDataW,SelectorW.name(),CsrOutW,PCPlus4W,ResultW,PCF);
+            return $sformatf("The inputs of the transaction are rst = %0d , PCSrcE = %0d , StallF = %0d , PCPlus4F = %0h , PCBranchE = %0h , ALUOutW = %0h , ReadDataW = %0h , SelectorW = %s , CsrOutW = %0d , PCPlus4W = %0h , TrapIsSet = %0d , CsrOutPC = %0h",rst,PCSrcE,StallF,PCPlus4F,PCBranchE,ALUOutW,ReadDataW,SelectorW.name(),CsrOutW,PCPlus4W,TrapIsSet,CsrOutPC);
         endfunction: convert2str
 
         function void post_randomize;

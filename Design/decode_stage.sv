@@ -53,7 +53,8 @@ module decode_stage
     output logic FPURegWriteE,
     output move_operation_t MoveOperationE,
     output fpr_t Rs1FE,
-    output fpr_t Rs2FE
+    output fpr_t Rs2FE,
+    output logic FPUValidE
 );
     logic signed [DATA_WIDTH-1:0] RD1D;
     logic signed [DATA_WIDTH-1:0] RD2D;
@@ -113,7 +114,8 @@ module decode_stage
         .IllegaleInstructionD(IllegaleInstructionD),
         .FPUControlD(FPUControlD),
         .MoveOperationD(MoveOperationD),
-        .FPURegWriteD(FPURegWriteD)
+        .FPURegWriteD(FPURegWriteD),
+        .FPUValidD(FPUValidD)
     );
 
     risc_reg_file #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) RF(
@@ -176,6 +178,7 @@ module decode_stage
             FPURegWriteE <= 1'b0;
             Rs1FE <= f0;
             Rs2FE <= f0;
+            FPUValidE <= 1'b0;
         end
         else if(FlushE)
         begin
@@ -211,6 +214,7 @@ module decode_stage
             FPURegWriteE <= 1'b0;
             Rs1FE <= f0;
             Rs2FE <= f0;
+            FPUValidE <= 1'b0;
         end
         else
         begin
@@ -246,6 +250,7 @@ module decode_stage
             FPURegWriteE <= FPURegWriteD;
             Rs1FE <= Rs1FD;
             Rs2FE <= Rs2FD;
+            FPUValidE <= FPUValidD;
         end
     end
     

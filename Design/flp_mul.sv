@@ -6,153 +6,127 @@ module flp_mul
     parameter int   WIDTH       = (PRECISION == SINGLE) ? 32 : 64,
     parameter int   EXP_BITS    = (PRECISION == SINGLE) ? 8  : 11,
     parameter int   FRAC_BITS   = (PRECISION == SINGLE) ? 23 : 52,
-    parameter int   BIAS        = (PRECISION == SINGLE) ? 127: 1023
+    parameter int   BIAS        = (PRECISION == SINGLE) ? 127: 1023,
+    parameter int   STAGES      = 4
 )(
-    input  logic [WIDTH-1:0] a, b,
-    input  round_mode_t round_mode,            
-    output logic Overflow, Underflow, NaN, Inf, Zero,
+    input  logic [WIDTH-1:0] a,
+    input  logic [WIDTH-1:0] b,
+    input  logic clk,
+    input  logic rst,
+    input  logic valid,
+    input  round_mode_t round_mode,
+    output logic busy,
+    output logic done,
+    output logic Overflow,
+    output logic Underflow,
+    output logic NaN,
+    output logic Inf,
+    output logic Zero,
     output logic [WIDTH-1:0] result
 );
 
-    // Extract fields
-    logic SignA, SignB, SignRes;
-    logic [EXP_BITS-1:0] ExpA, ExpB;
-    logic [EXP_BITS+1:0] ExpRes;
-    logic [FRAC_BITS:0] MantA, MantB; // +1 for hidden bit
-    logic [((2*FRAC_BITS)+1):0] MantMult;     // +1 for hidden bit
+    logic [WIDTH-1:0] a_reg, a_next;
+    logic [WIDTH-1:0] b_reg, b_next;
+    round_mode_t round_mode_reg, round_mode_next;
+    flp_mul_state_t state_reg, state_next;
 
-    // Special case flags
-    logic AIsZero, BIsZero; //Zero flags
-    logic AIsInf,  BIsInf;  //Infinity flags
-    logic AIsNan,  BIsNan;  //NaN flags
-    logic AIsSub,  BIsSub;  //Subnormal flags
+    logic SignA_reg, SignA_next;
+    logic SignB_reg, SignB_next;
+    logic SignRes_reg, SignRes_next;
+    logic AIsZero_reg, AIsZero_next;
+    logic BIsZero_reg, BIsZero_next;
+    logic AIsInf_reg, AIsInf_next;
+    logic BIsInf_reg, BIsInf_next;
+    logic AIsNan_reg, AIsNan_next;
+    logic BIsNan_reg, BIsNan_next;
+    logic AIsSub_reg, AIsSub_next;
+    logic BIsSub_reg, BIsSub_next;
+    logic [EXP_BITS-1:0] ExpA_reg, ExpA_next;
+    logic [EXP_BITS-1:0] ExpB_reg, ExpB_next;
+    logic [FRAC_BITS:0] MantA_reg, MantA_next;
+    logic [FRAC_BITS:0] MantB_reg, MantB_next;
+    logic signed [EXP_BITS+1:0] ExpRes_reg, ExpRes_next;
+    logic BoothStart_reg, BoothStart_next;
 
-    logic guard, round, sticky;
+    logic Overflow_reg, Overflow_next;
+    logic Underflow_reg, Underflow_next;
+    logic NaN_reg, NaN_next;
+    logic Inf_reg, Inf_next;
+    logic Zero_reg, Zero_next;
+    logic [WIDTH-1:0] result_reg, result_next;
 
-    logic SubRes;
+    logic BoothBusy, BoothDone;
+    logic signed [((2*FRAC_BITS)+1):0] BoothProduct;
 
-    logic [EXP_BITS:0] shift_amt; // +1 bit to handle shift amounts up to EXP_BITS (for subnormal handling)
-    logic [FRAC_BITS:0] mant_sub;
-
-    // Classification function that returns 4-bit encoded status
-    // Bit 3: is_subnormal, Bit 2: is_nan, Bit 1: is_infinity, Bit 0: is_zero
     function automatic logic [3:0] classify_value(
         input logic [EXP_BITS-1:0] exp,
         input logic [FRAC_BITS-1:0] frac
     );
         logic [3:0] classification;
-        classification[0] = (exp == 0) && (frac == 0);                              // is_zero
-        classification[1] = (exp == {EXP_BITS{1'b1}}) && (frac == 0);              // is_infinity
-        classification[2] = (exp == {EXP_BITS{1'b1}}) && (frac != 0);              // is_nan
-        classification[3] = (exp == 0) && (frac != 0);                             // is_subnormal
-        return classification;
+        classification[0] = (exp == '0) && (frac == '0);
+        classification[1] = (exp == {EXP_BITS{1'b1}}) && (frac == '0);
+        classification[2] = (exp == {EXP_BITS{1'b1}}) && (frac != '0);
+        classification[3] = (exp == '0) && (frac != '0);
+        classify_value = classification;
     endfunction: classify_value
-
-    function automatic logic [((2*FRAC_BITS) + 1):0] BoothMult
-    (
-        input logic [FRAC_BITS:0] mant_a, input logic [FRAC_BITS:0] mant_b
-    );
-
-    logic [(2*FRAC_BITS) + 1:0] accumulator;
-    logic [(2*FRAC_BITS) + 1:0] multiplicand_used;
-    logic [FRAC_BITS + 2:0] multiplier_used;
-    integer i;
-
-    accumulator = '0;
-    multiplicand_used = {{(FRAC_BITS+1){1'b0}}, mant_a[FRAC_BITS:0]};
-    multiplier_used = {1'b0,mant_b[FRAC_BITS:0], 1'b0};
-
-
-    for (i = 0; i < FRAC_BITS+2; i = i + 1) 
-    begin
-        case ({multiplier_used[i+1], multiplier_used[i]})   // take 2 bits at a time starting from bit i and going upwards for a total of 2 bits
-            2'b01: accumulator = accumulator + (multiplicand_used << i);   // +multiplicand shifted
-            2'b10: accumulator = accumulator - (multiplicand_used << i);   // -multiplicand shifted
-            default: accumulator = accumulator; // no operation
-        endcase
-    end
-    BoothMult =  accumulator;
-    endfunction: BoothMult
 
     function automatic logic [2:0] ExtractGRS
     (
-        input logic [FRAC_BITS - 1:0] mantissa
+        input logic [FRAC_BITS-1:0] mantissa
     );
-        logic g , r , s;
-        g = mantissa[FRAC_BITS - 1];
-        r = mantissa[FRAC_BITS - 2];
-        s = |mantissa[FRAC_BITS - 3:0];
+        logic g;
+        logic r;
+        logic s;
+
+        g = mantissa[FRAC_BITS-1];
+        r = mantissa[FRAC_BITS-2];
+        s = |mantissa[FRAC_BITS-3:0];
         ExtractGRS = {g, r, s};
     endfunction: ExtractGRS
 
-    function logic [WIDTH-1:0] Rounding
+    function automatic logic [WIDTH-1:0] Rounding
     (
-        input logic [WIDTH-1:0]      in,
-        input logic g,r,s,
-        input round_mode_t mode
+        input logic [WIDTH-1:0] in,
+        input logic g,
+        input logic r,
+        input logic s,
+        input round_mode_t mode_in
     );
-        logic                   lsb;
-        logic                   tie;         // exactly half-way case
-        logic                   round_up;
-        logic [FRAC_BITS:0]     mantissa_in;
-        logic [FRAC_BITS+1:0]   mantissa_out;
-        logic [EXP_BITS-1:0]    exponent_in;
-        logic [EXP_BITS-1:0]    exponent_out;
-        logic                   sign;
-        logic                   carry_out;
-        logic                   inexact;
+        logic lsb;
+        logic tie;
+        logic round_up;
+        logic [FRAC_BITS:0] mantissa_in;
+        logic [FRAC_BITS+1:0] mantissa_out;
+        logic [EXP_BITS-1:0] exponent_in;
+        logic [EXP_BITS-1:0] exponent_out;
+        logic sign;
+        logic inexact;
 
-        // Unpack
-        sign     = in[WIDTH-1];
-        mantissa_in = {1'b1, in[FRAC_BITS-1:0]}; // include hidden bit
-        exponent_in  = in[WIDTH-2 -: EXP_BITS];
+        sign = in[WIDTH-1];
+        mantissa_in = {1'b1, in[FRAC_BITS-1:0]};
+        exponent_in = in[WIDTH-2 -: EXP_BITS];
         exponent_out = exponent_in;
-
-        // Facts gathered from GRS
-        lsb     = mantissa_in[0];
+        lsb = mantissa_in[0];
+        tie = g && !r && !s;
         inexact = g | r | s;
-        tie     = (g == 1'b1) && (r == 1'b0) && (s == 1'b0);
+        round_up = 1'b0;
 
-        // Decide round_up per mode
-        case (mode)
-            RNE: begin
-                /* Round to nearest, ties to even:
-                   If > half ULP: g && (r || s) -> round up
-                   If tie exactly: g && !r && !s -> round up iff LSB is 1 (to make result even) */
-                round_up = (g && (r || s)) || (tie && lsb);
-            end
-            RTZ: begin
-                /* Toward zero: truncate */
-                round_up = 1'b0;
-            end
-            RDN: begin
-                /* Toward -inf: round up in magnitude only if negative and inexact */
-                round_up = inexact && (sign == 1'b1);
-            end
-            RUP: begin
-                /* Toward +inf: round up only if positive and inexact */
-                round_up = inexact && (sign == 1'b0);
-            end
-            RMM: begin
-                /* Nearest, ties to max magnitude (away from zero on ties):
-                   - If > half ULP: round up
-                   - If tie: round up regardless of LSB
-                   Observed compact rule: round_up = g */
-                round_up = g;
-            end
-            default: begin
-                /* Fallback to RNE if an unsupported code appears */
-                round_up = (g && (r || s)) || (tie && lsb);
-            end
+        case (mode_in)
+            RNE: round_up = (g && (r || s)) || (tie && lsb);
+            RTZ: round_up = 1'b0;
+            RDN: round_up = inexact && sign;
+            RUP: round_up = inexact && !sign;
+            RMM: round_up = g;
+            default: round_up = (g && (r || s)) || (tie && lsb);
         endcase
-        // Perform rounding
+
         if (round_up)
         begin
-            mantissa_out = mantissa_in + 1;
-            if(mantissa_out == (1 << (FRAC_BITS + 1))) // Check for mantissa overflow (e.g., 1.111... + 0.000... = 10.000...)
+            mantissa_out = mantissa_in + 1'b1;
+            if (mantissa_out == (1 << (FRAC_BITS + 1)))
             begin
-                exponent_out = exponent_out + 1;
                 mantissa_out = mantissa_out >> 1;
+                exponent_out = exponent_out + 1'b1;
             end
         end
         else
@@ -160,127 +134,416 @@ module flp_mul
             mantissa_out = mantissa_in;
         end
 
-        Rounding = {sign, exponent_out, mantissa_out[FRAC_BITS-1:0]}; // discard hidden bit and overflow bit
+        Rounding = {sign, exponent_out, mantissa_out[FRAC_BITS-1:0]};
     endfunction: Rounding
 
-    always_comb 
-    begin:comb
-        // Unpack
-        SignA = a[WIDTH-1];
-        SignB = b[WIDTH-1];
-        SignRes = 0;
-        ExpA  = a[WIDTH-2 -: EXP_BITS];
-        ExpB  = b[WIDTH-2 -: EXP_BITS];
-        ExpRes = 0;
+    always_ff @(posedge clk or negedge rst)
+    begin
+        if (!rst)
+        begin
+            a_reg <= '0;
+            b_reg <= '0;
+            round_mode_reg <= RNE;
+            state_reg <= INIT_MUL;
+            SignA_reg <= 1'b0;
+            SignB_reg <= 1'b0;
+            SignRes_reg <= 1'b0;
+            AIsZero_reg <= 1'b0;
+            BIsZero_reg <= 1'b0;
+            AIsInf_reg <= 1'b0;
+            BIsInf_reg <= 1'b0;
+            AIsNan_reg <= 1'b0;
+            BIsNan_reg <= 1'b0;
+            AIsSub_reg <= 1'b0;
+            BIsSub_reg <= 1'b0;
+            ExpA_reg <= '0;
+            ExpB_reg <= '0;
+            MantA_reg <= '0;
+            MantB_reg <= '0;
+            ExpRes_reg <= '0;
+            BoothStart_reg <= 1'b0;
+            Overflow_reg <= 1'b0;
+            Underflow_reg <= 1'b0;
+            NaN_reg <= 1'b0;
+            Inf_reg <= 1'b0;
+            Zero_reg <= 1'b0;
+            result_reg <= '0;
+        end
+        else
+        begin
+            a_reg <= a_next;
+            b_reg <= b_next;
+            round_mode_reg <= round_mode_next;
+            state_reg <= state_next;
+            SignA_reg <= SignA_next;
+            SignB_reg <= SignB_next;
+            SignRes_reg <= SignRes_next;
+            AIsZero_reg <= AIsZero_next;
+            BIsZero_reg <= BIsZero_next;
+            AIsInf_reg <= AIsInf_next;
+            BIsInf_reg <= BIsInf_next;
+            AIsNan_reg <= AIsNan_next;
+            BIsNan_reg <= BIsNan_next;
+            AIsSub_reg <= AIsSub_next;
+            BIsSub_reg <= BIsSub_next;
+            ExpA_reg <= ExpA_next;
+            ExpB_reg <= ExpB_next;
+            MantA_reg <= MantA_next;
+            MantB_reg <= MantB_next;
+            ExpRes_reg <= ExpRes_next;
+            BoothStart_reg <= BoothStart_next;
+            Overflow_reg <= Overflow_next;
+            Underflow_reg <= Underflow_next;
+            NaN_reg <= NaN_next;
+            Inf_reg <= Inf_next;
+            Zero_reg <= Zero_next;
+            result_reg <= result_next;
+        end
+    end
 
-        MantA = '0;
-        MantB = '0;
-        Overflow=0;
-        Underflow=0;
-        NaN=0;
-        Inf=0;
-        Zero=0;
+    always_comb
+    begin: comb
+        logic [3:0] class_a;
+        logic [3:0] class_b;
+        logic [EXP_BITS:0] shift_amt;
+        logic [FRAC_BITS:0] mant_sub;
+        logic signed [((2*FRAC_BITS)+1):0] mant_mult_norm;
+        logic [2:0] grs_bits;
+        logic [WIDTH-1:0] pre_round_result;
+        logic [WIDTH-1:0] rounded_result;
+        logic [3:0] result_class;
 
-        guard = 0;
-        round = 0;
-        sticky = 0;
+        a_next = a_reg;
+        b_next = b_reg;
+        round_mode_next = round_mode_reg;
+        state_next = state_reg;
+        SignA_next = SignA_reg;
+        SignB_next = SignB_reg;
+        SignRes_next = SignRes_reg;
+        AIsZero_next = AIsZero_reg;
+        BIsZero_next = BIsZero_reg;
+        AIsInf_next = AIsInf_reg;
+        BIsInf_next = BIsInf_reg;
+        AIsNan_next = AIsNan_reg;
+        BIsNan_next = BIsNan_reg;
+        AIsSub_next = AIsSub_reg;
+        BIsSub_next = BIsSub_reg;
+        ExpA_next = ExpA_reg;
+        ExpB_next = ExpB_reg;
+        MantA_next = MantA_reg;
+        MantB_next = MantB_reg;
+        ExpRes_next = ExpRes_reg;
+        BoothStart_next = 1'b0;
+        Overflow_next = Overflow_reg;
+        Underflow_next = Underflow_reg;
+        NaN_next = NaN_reg;
+        Inf_next = Inf_reg;
+        Zero_next = Zero_reg;
+        result_next = result_reg;
 
-        SubRes = 0;
-
+        class_a = '0;
+        class_b = '0;
         shift_amt = '0;
+        mant_sub = '0;
+        mant_mult_norm = '0;
+        grs_bits = '0;
+        pre_round_result = '0;
+        rounded_result = '0;
+        result_class = '0;
 
-        // Detect special cases
-        {AIsSub , AIsNan , AIsInf , AIsZero} = classify_value(ExpA, a[FRAC_BITS-1:0]);
-        {BIsSub , BIsNan , BIsInf , BIsZero} = classify_value(ExpB, b[FRAC_BITS-1:0]);
+        busy = (state_reg != IDLE_MUL) && (state_reg != DONE_MUL);
+        done = (state_reg == DONE_MUL);
+        Overflow = Overflow_reg;
+        Underflow = Underflow_reg;
+        NaN = NaN_reg;
+        Inf = Inf_reg;
+        Zero = Zero_reg;
+        result = result_reg;
 
-        // Default result
-        result = '0;
-
-        // Handle NaN first
-        if (AIsNan || BIsNan || ((AIsInf || BIsInf) && (AIsZero || BIsZero)))
-        begin
-            NaN = 1;
-            result = {1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}}; // quiet NaN
-        end
-        // Infinity cases
-        else if (AIsInf || BIsInf) 
-        begin
-            SignRes = SignA ^ SignB;
-            Inf = 1;
-            result = {SignRes, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
-        end
-        // Zero cases
-        else if (AIsZero || BIsZero) 
-        begin
-            SignRes = SignA ^ SignB;
-            Zero = 1;
-            result = {SignRes, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
-        end
-
-
-        // Normal/Subnormal path
-        else 
-        begin
-            // Mantissa setup
-            if (AIsSub) 
-                MantA = {1'b0, a[FRAC_BITS-1:0]};
-            else          
-                MantA = {1'b1, a[FRAC_BITS-1:0]};
-
-            if (BIsSub) 
-                MantB = {1'b0, b[FRAC_BITS-1:0]};
-            else          
-                MantB = {1'b1, b[FRAC_BITS-1:0]};
-            
-            // Multiply mantissas using Booth's algorithm
-            MantMult = BoothMult(MantA, MantB);
-            // Determine sign of the result
-            SignRes = SignA ^ SignB;
-
-            // Determine exponent
-            ExpRes = ExpA - BIAS + ExpB; // Add exponents and remove bias
-
-            // Normalize result
-            if(MantMult[(2*FRAC_BITS)+1] == 1'b1) // if the highest bit is 1
+        case (state_reg)
+            INIT_MUL:
             begin
-                MantMult = MantMult >> 1;
-                ExpRes = ExpRes + 1;  
+                state_next = IDLE_MUL;
+                Overflow_next = 1'b0;
+                Underflow_next = 1'b0;
+                NaN_next = 1'b0;
+                Inf_next = 1'b0;
+                Zero_next = 1'b0;
+                result_next = '0;
+                busy = 1'b0;
+                done = 1'b0;
             end
 
-            
-            if (ExpRes[EXP_BITS + 1]) // Check for underflow (exponent is negative)
+            IDLE_MUL:
             begin
-                Underflow = 0;
-                Zero = 0;
-                // Shift mantissa into subnormal range
-                shift_amt = 1 - ExpRes; 
-                mant_sub = MantMult[((2*FRAC_BITS)-1) -: (FRAC_BITS)] >> shift_amt;
-                if (mant_sub == 0) 
+                Overflow_next = 1'b0;
+                Underflow_next = 1'b0;
+                NaN_next = 1'b0;
+                Inf_next = 1'b0;
+                Zero_next = 1'b0;
+                result_next = '0;
+                if (valid)
                 begin
-                    Zero = 1;
-                    Underflow = 1;
-                    result = {SignRes, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}}; // true zero
-                end 
-                else 
-                begin
-                    result = {SignRes, {EXP_BITS{1'b0}}, mant_sub[FRAC_BITS-1:0]}; // subnormal
+                    a_next = a;
+                    b_next = b;
+                    round_mode_next = round_mode;
+                    state_next = SPLIT_MUL;
                 end
             end
-            else if(ExpRes >= (2**EXP_BITS - 1)) // Check for overflow (exponent exceeds max representable value)
+
+            SPLIT_MUL:
             begin
-                Overflow = 1;
-                Inf = 1;
-                result = {SignRes, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}}; // Infinity
+                SignA_next = a_reg[WIDTH-1];
+                SignB_next = b_reg[WIDTH-1];
+                ExpA_next = a_reg[WIDTH-2 -: EXP_BITS];
+                ExpB_next = b_reg[WIDTH-2 -: EXP_BITS];
+                class_a = classify_value(a_reg[WIDTH-2 -: EXP_BITS], a_reg[FRAC_BITS-1:0]);
+                class_b = classify_value(b_reg[WIDTH-2 -: EXP_BITS], b_reg[FRAC_BITS-1:0]);
+                {AIsSub_next, AIsNan_next, AIsInf_next, AIsZero_next} = class_a;
+                {BIsSub_next, BIsNan_next, BIsInf_next, BIsZero_next} = class_b;
+                SignRes_next = a_reg[WIDTH-1] ^ b_reg[WIDTH-1];
+
+                if (class_a[2] || class_b[2] || ((class_a[1] || class_b[1]) && (class_a[0] || class_b[0])))
+                begin
+                    result_next = {1'b0, {EXP_BITS{1'b1}}, {1'b1, {(FRAC_BITS-1){1'b0}}}};
+                    NaN_next = 1'b1;
+                    Inf_next = 1'b0;
+                    Zero_next = 1'b0;
+                    Overflow_next = 1'b0;
+                    Underflow_next = 1'b0;
+                    state_next = DONE_MUL;
+                end
+                else if (class_a[1] || class_b[1])
+                begin
+                    result_next = {a_reg[WIDTH-1] ^ b_reg[WIDTH-1], {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
+                    NaN_next = 1'b0;
+                    Inf_next = 1'b1;
+                    Zero_next = 1'b0;
+                    Overflow_next = 1'b0;
+                    Underflow_next = 1'b0;
+                    state_next = DONE_MUL;
+                end
+                else if (class_a[0] || class_b[0])
+                begin
+                    result_next = {a_reg[WIDTH-1] ^ b_reg[WIDTH-1], {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                    NaN_next = 1'b0;
+                    Inf_next = 1'b0;
+                    Zero_next = 1'b1;
+                    Overflow_next = 1'b0;
+                    Underflow_next = 1'b0;
+                    state_next = DONE_MUL;
+                end
+                else
+                begin
+                    MantA_next = class_a[3] ? {1'b0, a_reg[FRAC_BITS-1:0]} : {1'b1, a_reg[FRAC_BITS-1:0]};
+                    MantB_next = class_b[3] ? {1'b0, b_reg[FRAC_BITS-1:0]} : {1'b1, b_reg[FRAC_BITS-1:0]};
+                    ExpRes_next = $signed({2'b00, a_reg[WIDTH-2 -: EXP_BITS]}) - BIAS + $signed({2'b00, b_reg[WIDTH-2 -: EXP_BITS]});
+                    BoothStart_next = 1'b1;
+                    state_next = MUL_MUL;
+                end
             end
-            else
+
+            MUL_MUL:
             begin
-            // Rounding bits extraction
-                {guard, round, sticky} = ExtractGRS(MantMult[FRAC_BITS-1:0]);   
-                result = {SignRes, ExpRes[EXP_BITS-1:0], MantMult[((2*FRAC_BITS)-1) -: (FRAC_BITS)]};
-                result = Rounding(result, guard, round, sticky, round_mode);
-                {SubRes , NaN , Inf , Zero} = classify_value(result[WIDTH-2 -: EXP_BITS], result[FRAC_BITS-1:0]);
-                //Underflow = Zero;
+                if (BoothDone)
+                begin
+                    state_next = ROUND_MUL;
+                end
             end
-        end 
-    end:comb
-endmodule
+
+            ROUND_MUL:
+            begin
+                mant_mult_norm = BoothProduct;
+                ExpRes_next = ExpRes_reg;
+
+                if (mant_mult_norm[(2*FRAC_BITS)+1])
+                begin
+                    mant_mult_norm = mant_mult_norm >> 1;
+                    ExpRes_next = ExpRes_reg + 1'b1;
+                end
+
+                if (ExpRes_next[EXP_BITS+1])
+                begin
+                    shift_amt = 1 - ExpRes_next;
+                    mant_sub = mant_mult_norm[((2*FRAC_BITS)-1) -: FRAC_BITS] >> shift_amt;
+                    if (!mant_sub)
+                    begin
+                        result_next = {SignRes_reg, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                        Zero_next = 1'b1;
+                        Underflow_next = 1'b1;
+                    end
+                    else
+                    begin
+                        result_next = {SignRes_reg, {EXP_BITS{1'b0}}, mant_sub[FRAC_BITS-1:0]};
+                        Zero_next = 1'b0;
+                        Underflow_next = 1'b0;
+                    end
+                    Overflow_next = 1'b0;
+                    NaN_next = 1'b0;
+                    Inf_next = 1'b0;
+                end
+                else if (ExpRes_next >= (2**EXP_BITS - 1))
+                begin
+                    result_next = {SignRes_reg, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
+                    Overflow_next = 1'b1;
+                    Inf_next = 1'b1;
+                    Underflow_next = 1'b0;
+                    NaN_next = 1'b0;
+                    Zero_next = 1'b0;
+                end
+                else
+                begin
+                    grs_bits = ExtractGRS(mant_mult_norm[FRAC_BITS-1:0]);
+                    pre_round_result = {SignRes_reg, ExpRes_next[EXP_BITS-1:0], mant_mult_norm[((2*FRAC_BITS)-1) -: FRAC_BITS]};
+                    rounded_result = Rounding(pre_round_result, grs_bits[2], grs_bits[1], grs_bits[0], round_mode_reg);
+                    result_class = classify_value(rounded_result[WIDTH-2 -: EXP_BITS], rounded_result[FRAC_BITS-1:0]);
+                    result_next = rounded_result;
+                    Overflow_next = 1'b0;
+                    Underflow_next = 1'b0;
+                    NaN_next = result_class[2];
+                    Inf_next = result_class[1];
+                    Zero_next = result_class[0];
+                end
+                state_next = DONE_MUL;
+            end
+
+            DONE_MUL:
+            begin
+                state_next = IDLE_MUL;
+            end
+
+            default:
+            begin
+                state_next = IDLE_MUL;
+            end
+        endcase
+    end: comb
+
+    booth_multiplier_seq #(
+        .FRAC_BITS(FRAC_BITS),
+        .STAGES(STAGES)
+    ) booth_multiplier_inst (
+        .clk(clk),
+        .rst(rst),
+        .start(BoothStart_reg),
+        .mant_a(MantA_reg),
+        .mant_b(MantB_reg),
+        .busy(BoothBusy),
+        .done(BoothDone),
+        .product(BoothProduct)
+    );
+
+endmodule: flp_mul
+
+module booth_multiplier_seq
+#(
+    parameter int FRAC_BITS = 23,
+    parameter int STAGES    = 4
+)(
+    input  logic clk,
+    input  logic rst,
+    input  logic start,
+    input  logic [FRAC_BITS:0] mant_a,
+    input  logic [FRAC_BITS:0] mant_b,
+    output logic busy,
+    output logic done,
+    output logic signed [((2*FRAC_BITS)+1):0] product
+);
+
+    localparam int TOTAL_ITERS = FRAC_BITS + 2;
+    localparam int ITER_BITS = (TOTAL_ITERS > 1) ? $clog2(TOTAL_ITERS + 1) : 1;
+    localparam int ITERS_PER_CYCLE = (TOTAL_ITERS + STAGES - 1) / STAGES;
+
+    logic busy_reg, busy_next;
+    logic done_reg, done_next;
+    logic [FRAC_BITS:0] mant_a_reg, mant_a_next;
+    logic [FRAC_BITS:0] mant_b_reg, mant_b_next;
+    logic signed [((2*FRAC_BITS)+1):0] acc_reg, acc_next;
+    logic [ITER_BITS-1:0] iter_reg, iter_next;
+    logic signed [((2*FRAC_BITS)+1):0] product_reg, product_next;
+
+    always_ff @(posedge clk or negedge rst)
+    begin
+        if (!rst)
+        begin
+            busy_reg <= 1'b0;
+            done_reg <= 1'b0;
+            mant_a_reg <= '0;
+            mant_b_reg <= '0;
+            acc_reg <= '0;
+            iter_reg <= '0;
+            product_reg <= '0;
+        end
+        else
+        begin
+            busy_reg <= busy_next;
+            done_reg <= done_next;
+            mant_a_reg <= mant_a_next;
+            mant_b_reg <= mant_b_next;
+            acc_reg <= acc_next;
+            iter_reg <= iter_next;
+            product_reg <= product_next;
+        end
+    end
+
+    always_comb
+    begin: comb
+        logic signed [((2*FRAC_BITS)+1):0] acc_work;
+        logic signed [((2*FRAC_BITS)+1):0] multiplicand_used;
+        logic [FRAC_BITS+2:0] multiplier_used;
+        logic [ITER_BITS-1:0] iter_work;
+
+        busy_next = busy_reg;
+        done_next = 1'b0;
+        mant_a_next = mant_a_reg;
+        mant_b_next = mant_b_reg;
+        acc_next = acc_reg;
+        iter_next = iter_reg;
+        product_next = product_reg;
+
+        acc_work = acc_reg;
+        multiplicand_used = {{(FRAC_BITS+1){1'b0}}, mant_a_reg};
+        multiplier_used = {1'b0, mant_b_reg, 1'b0};
+        iter_work = iter_reg;
+
+        if (start && !busy_reg)
+        begin
+            mant_a_next = mant_a;
+            mant_b_next = mant_b;
+            acc_next = '0;
+            iter_next = '0;
+            product_next = '0;
+            busy_next = 1'b1;
+        end
+        else if (busy_reg)
+        begin
+            for (int i = 0; i < ITERS_PER_CYCLE; i++)
+            begin
+                if (iter_work < TOTAL_ITERS)
+                begin
+                    case ({multiplier_used[iter_work+1], multiplier_used[iter_work]})
+                        2'b01: acc_work = acc_work + (multiplicand_used <<< iter_work);
+                        2'b10: acc_work = acc_work - (multiplicand_used <<< iter_work);
+                        default: acc_work = acc_work;
+                    endcase
+                    iter_work = iter_work + 1'b1;
+                end
+            end
+
+            acc_next = acc_work;
+            iter_next = iter_work;
+
+            if (iter_work >= TOTAL_ITERS)
+            begin
+                product_next = acc_work;
+                busy_next = 1'b0;
+                done_next = 1'b1;
+            end
+        end
+    end: comb
+
+    assign busy = busy_reg;
+    assign done = done_reg;
+    assign product = product_reg;
+
+endmodule: booth_multiplier_seq

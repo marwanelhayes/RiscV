@@ -63,7 +63,8 @@ package fetch_scoreboard_pkg;
             ref_model();
             if(sc_item.PCPlus4D != PCPlus4D || sc_item.InstructionD != InstructionD || sc_item.PCPlus4F != PCPlus4F)
             begin
-                `uvm_info("SCB",sc_item.convert2str,UVM_HIGH)
+                $display("//////////////////////Error occured in the Fetch scoreboard//////////////////////");
+                `uvm_info("SCB",sc_item.convert2str,UVM_MEDIUM)
                 if(sc_item.PCPlus4D != PCPlus4D)
                 begin
                     `uvm_info("SCB",$sformatf("Actual output PCPlus4D = %0h -- PCPlus4D = %0h",sc_item.PCPlus4D,PCPlus4D),UVM_MEDIUM)

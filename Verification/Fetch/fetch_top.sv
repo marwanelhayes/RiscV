@@ -2,6 +2,7 @@ module fetch_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import uvm_pkg::uvm_cmdline_processor;
     import shared_pkg::*;
     import fetch_test_pkg::*;
 
@@ -32,8 +33,19 @@ module fetch_top;
 
     initial
     begin
+        string test_name;
+        uvm_cmdline_processor clp;
+
+        test_name = "fetch_test";
+        clp = uvm_cmdline_processor::get_inst();
+        if (clp.get_arg_value("+UVM_TESTNAME=", test_name))
+        begin
+            if (test_name != "fetch_test")
+                test_name = "fetch_test";
+        end
+
         uvm_config_db #(virtual fetch_interface)::set(null,"","INTF",intf.TEST);
-        run_test();
+        run_test(test_name);
     end
 
 endmodule

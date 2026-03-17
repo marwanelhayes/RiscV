@@ -44,6 +44,7 @@ interface execute_interface
     fpu_operation_t FPUControlE;
     round_mode_t RoundModeE;
     logic FPURegWriteE;
+    logic FPUValidE;
     move_operation_t MoveOperationE;
     logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
     logic [1:0] ForwardFloatingAE;
@@ -74,6 +75,8 @@ interface execute_interface
     logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
     logic FPURegWriteM;
     move_operation_t MoveOperationM;
+    logic FPUBusyM;
+    logic FPUDoneM;
 
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
@@ -114,6 +117,7 @@ interface execute_interface
         input #CLK FPUControlE;
         input #CLK RoundModeE;
         input #CLK FPURegWriteE;
+        input #CLK FPUValidE;
         input #CLK MoveOperationE;
         input #CLK FPUOutW;
         input #CLK ForwardFloatingAE;
@@ -143,6 +147,8 @@ interface execute_interface
         input FPUOutM;
         input FPURegWriteM;
         input MoveOperationM;
+        input FPUBusyM;
+        input FPUDoneM;
 
     endclocking:cb
 
@@ -181,6 +187,7 @@ interface execute_interface
         FPUControlE <= NOOPERATION;
         RoundModeE <= RNE;
         FPURegWriteE <= 'b0;
+        FPUValidE <= 'b0;
         MoveOperationE <= FPUToFPU;
         FPUOutW <= 'b0;
         ForwardFloatingAE <= 'b0;
@@ -221,7 +228,6 @@ interface execute_interface
             EcallE <= drv.EcallE;
             EbreakE <= drv.EbreakE;
             IllegaleInstructionE <= drv.IllegaleInstructionE;
-            rst <= drv.rst;
             TimerInterrupt <= 1'b0; //drv.TimerInterrupt;
             SoftwareInterrupt <= 1'b0; //drv.SoftwareInterrupt;
             ExternalInterrupt <= 1'b0; //drv.ExternalInterrupt;
@@ -231,12 +237,15 @@ interface execute_interface
             FPUControlE <= drv.FPUControlE;
             RoundModeE <= drv.RoundModeE;
             FPURegWriteE <= drv.FPURegWriteE;
+            FPUValidE <= drv.FPUValidE;
             MoveOperationE <= drv.MoveOperationE;
             FPUOutW <= drv.FPUOutW;
             ForwardFloatingAE <= drv.ForwardFloatingAE;
             ForwardFloatingBE <= drv.ForwardFloatingBE;
             Rs1FE <= drv.Rs1FE;
             Rs2FE <= drv.Rs2FE;
+            #CLK rst <= drv.rst;
+
         end
         else
         begin
@@ -264,7 +273,6 @@ interface execute_interface
             EcallE <= 'b0;
             EbreakE <= 'b0;
             IllegaleInstructionE <= 'b0;
-            #CLK rst <= 'b0;
             TimerInterrupt <= 1'b0;
             SoftwareInterrupt <= 1'b0;
             ExternalInterrupt <= 1'b0;
@@ -274,12 +282,14 @@ interface execute_interface
             FPUControlE <= NOOPERATION;
             RoundModeE <= RNE;
             FPURegWriteE <= 0;
+            FPUValidE <= 0;
             MoveOperationE <=FPUToFPU;
             FPUOutW <= 0;
             ForwardFloatingAE <= 0;
             ForwardFloatingBE <= 0;
             Rs1FE <= f0;
             Rs2FE <= f0;
+            #CLK rst <= drv.rst;
         end
     endtask:drv2intf
 
@@ -319,6 +329,7 @@ interface execute_interface
         mon.FPUControlE = cb.FPUControlE;
         mon.RoundModeE = cb.RoundModeE;
         mon.FPURegWriteE = cb.FPURegWriteE;
+        mon.FPUValidE = cb.FPUValidE;
         mon.MoveOperationE = cb.MoveOperationE;
         mon.FPUOutW = cb.FPUOutW;
         mon.ForwardFloatingAE = cb.ForwardFloatingAE;
@@ -348,6 +359,8 @@ interface execute_interface
         mon.FPUOutM = cb.FPUOutM;
         mon.FPURegWriteM = cb.FPURegWriteM;
         mon.MoveOperationM = cb.MoveOperationM;
+        mon.FPUBusyM = cb.FPUBusyM;
+        mon.FPUDoneM = cb.FPUDoneM;
     endtask:intf2mon
 
     modport DUT 
@@ -387,6 +400,7 @@ interface execute_interface
         FPUControlE,
         RoundModeE,
         FPURegWriteE,
+        FPUValidE,
         MoveOperationE,
         FPUOutW,
         ForwardFloatingAE,
@@ -415,7 +429,9 @@ interface execute_interface
         InvalidDivM,
         FPUOutM,
         FPURegWriteM,
-        MoveOperationM
+        MoveOperationM,
+        FPUBusyM,
+        FPUDoneM
     );
 
     modport TEST (clocking cb); 

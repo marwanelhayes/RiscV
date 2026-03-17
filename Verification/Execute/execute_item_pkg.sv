@@ -48,6 +48,7 @@ package execute_item_pkg;
         rand fpu_operation_t FPUControlE;
         rand round_mode_t RoundModeE;
         rand logic FPURegWriteE;
+        rand logic FPUValidE;
         rand move_operation_t MoveOperationE;
         rand logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
         rand logic [1:0] ForwardFloatingAE;
@@ -77,6 +78,8 @@ package execute_item_pkg;
         logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
         logic FPURegWriteM;
         move_operation_t MoveOperationM;
+        logic FPUBusyM;
+        logic FPUDoneM;
 
         branch_t BranchControl;
         
@@ -163,14 +166,10 @@ package execute_item_pkg;
             }
         }
 
-        /*constraint FPUNoDivision
-        {
-            FPUControlE != FDIV_S;
-        }*/
 
         virtual function string convert2str();
             BranchControl = branch_t'(funct3E);
-            return $sformatf("The inputs of the transaction are rst = %0d , RD1E = %0d , RD2E = %0d , JumpE = %0d , SignImmE = %0d, Writeback Result = %0d , ALU control = %s , Branch control = %s , Funct3 = %0d , Branch = %0d , Forward AE = %b , Forward BE = %b , ALUSrcE = %b , MemWriteE = %b , CsrAccess = %0d, CsrOperation = %s, CsrIndex = %s, Selector = %s , PCPlus4E = %0d , Rs1E = %s , MRetE = %b , EcallE = %b , EbreakE = %b , IllegaleInstructionE = %b , TimerInterrupt = %b , SoftwareInterrupt = %b , ExternalInterrupt = %b , RdfE = %s , RD1FE = %0d , RD2FE = %0d , FPUControlE = %s , RoundModeE = %s , FPURegWriteE = %b , MoveOperationE = %s , FPUOutW = %0d , ForwardFloatingAE = %b , ForwardFloatingBE = %b , Rs1FE = %s , Rs2FE = %s and the outputs are ALUOutM = %0d , WriteDataM = %0d , RdM = %0d , PCSrcE = %b , RegWriteM = %b , funct3M = %0d , MemWriteM = %0b , CsrOutM = %0d , PCPlus4M = %0d , SelectorM = %s , TrapIsSet = %b , CsrOutPC = %0d , RdFM = %s , OverflowM = %b , UnderflowM = %b , NaNM = %b , InfM = %b , ZeroM = %b , InvalidDivM = %b , FPUOutM = %0d , FPURegWriteM = %b , MoveOperationM = %s",rst, RD1E, RD2E, JumpE, SignImmE, ResultW, ALUControlE, BranchControl.name(), funct3E, BranchE, ForwardAE, ForwardBE, ALUSrcE, MemWriteE, CsrAccessE, CsrOperationE.name(), CsrIndexE.name(), SelectorE.name(), PCPlus4E, Rs1E.name(), MRetE, EcallE, EbreakE, IllegaleInstructionE, TimerInterrupt, SoftwareInterrupt, ExternalInterrupt,RdFE.name(), RD1FE, RD2FE, FPUControlE.name(), RoundModeE.name(), FPURegWriteE, MoveOperationE.name(), FPUOutW, ForwardFloatingAE, ForwardFloatingBE, Rs1FE.name(), Rs2FE.name(),/*The outputs*/ALUOutM, WriteDataM, RdM, PCSrcE, RegWriteM, funct3M, MemWriteM, CsrOutM, PCPlus4M, SelectorM.name(), TrapIsSet, CsrOutPC , RdFM.name(), OverflowM, UnderflowM, NaNM, InfM, ZeroM, InvalidDivM, FPUOutM, FPURegWriteM, MoveOperationM.name());
+            return $sformatf("The inputs of the transaction are rst = %0d , RD1E = %0d , RD2E = %0d , JumpE = %0d , SignImmE = %0d , Writeback Result = %0d , ALU control = %s , Branch control = %s , Funct3 = %0d , Branch = %0d , Forward AE = %b , Forward BE = %b , ALUSrcE = %b , MemWriteE = %b , CsrAccess = %0d , CsrOperation = %s , CsrIndex = %s , Selector = %s , PCPlus4E = %0d , Rs1E = %s , MRetE = %b , EcallE = %b , EbreakE = %b , IllegaleInstructionE = %b , TimerInterrupt = %b , SoftwareInterrupt = %b , ExternalInterrupt = %b , RdFE = %s , RD1FE = %0d , RD2FE = %0d , FPUControlE = %s , RoundModeE = %s , FPURegWriteE = %b , FPUValidE = %b , MoveOperationE = %s , FPUOutW = %0d , ForwardFloatingAE = %b , ForwardFloatingBE = %b , Rs1FE = %s , Rs2FE = %s",rst, RD1E, RD2E, JumpE, SignImmE, ResultW, ALUControlE.name(), BranchControl.name(), funct3E, BranchE, ForwardAE, ForwardBE, ALUSrcE, MemWriteE, CsrAccessE, CsrOperationE.name(), CsrIndexE.name(), SelectorE.name(), PCPlus4E, Rs1E.name(), MRetE, EcallE, EbreakE, IllegaleInstructionE, TimerInterrupt, SoftwareInterrupt, ExternalInterrupt,RdFE.name(), RD1FE, RD2FE, FPUControlE.name(), RoundModeE.name(), FPURegWriteE, FPUValidE, MoveOperationE.name(), FPUOutW, ForwardFloatingAE, ForwardFloatingBE, Rs1FE.name(), Rs2FE.name());
         endfunction: convert2str
     endclass: execute_item
 endpackage:execute_item_pkg

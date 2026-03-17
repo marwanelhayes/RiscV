@@ -23,7 +23,8 @@ module risc_control_unit
     output IllegaleInstructionD,
     output fpu_operation_t FPUControlD,
     output move_operation_t MoveOperationD,
-    output FPURegWriteD
+    output FPURegWriteD,
+    output FPUValidD
 );
 
 
@@ -71,7 +72,8 @@ module risc_control_unit
         .FPUControlD(FPUControlD),
         .MoveOperationD(MoveOperationD),
         .FPURegWriteD(FPURegWriteD),
-        .Write(WriteFromFPU)
+        .Write(WriteFromFPU),
+        .FPUValidD(FPUValidD)
     );
 
 

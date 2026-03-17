@@ -32,8 +32,11 @@ package risc_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-2);
-        localparam int WAIT = MEM_DEPTH + 10;
+        localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-5);
+        localparam string PROGRAM_INFO_PATH = "C:/Ain_shams/RiscV/Python/program_info.txt";
+        localparam int PROGRAM_EXIT_DRAIN_CYCLES = 4;
+        localparam int PROGRAM_SAFETY_MARGIN_CYCLES = 64;
+        localparam int PROGRAM_MAX_CYCLE_FACTOR = 8;
 
         //Configuration objects for all pipeline stages
         mem_config MemoryConfiguration;
@@ -52,6 +55,41 @@ package risc_test_pkg;
         hazard_env HazardEnvironment;
 
         virtual risc_interface intf;
+        int program_words;
+        int wait_cycles;
+
+        function void load_program_metadata();
+            int file_descriptor;
+            int scan_status;
+
+            program_words = MEM_DEPTH;
+            wait_cycles = (MEM_DEPTH * PROGRAM_MAX_CYCLE_FACTOR) + PROGRAM_SAFETY_MARGIN_CYCLES;
+
+            file_descriptor = $fopen(PROGRAM_INFO_PATH, "r");
+            if (file_descriptor == 0)
+            begin
+                `uvm_warning("TEST", $sformatf("Could not open %s, using full memory depth", PROGRAM_INFO_PATH))
+                return;
+            end
+
+            scan_status = $fscanf(file_descriptor, "%d", program_words);
+            $fclose(file_descriptor);
+
+            if (scan_status != 1 || program_words <= 0)
+            begin
+                program_words = MEM_DEPTH;
+                wait_cycles = (MEM_DEPTH * PROGRAM_MAX_CYCLE_FACTOR) + PROGRAM_SAFETY_MARGIN_CYCLES;
+                `uvm_warning("TEST", "Program metadata is invalid, using full memory depth")
+                return;
+            end
+
+            if (program_words > MEM_DEPTH)
+            begin
+                program_words = MEM_DEPTH;
+            end
+
+            wait_cycles = (program_words * PROGRAM_MAX_CYCLE_FACTOR) + PROGRAM_SAFETY_MARGIN_CYCLES;
+        endfunction
 
         function void set_config_params();
 
@@ -97,6 +135,7 @@ package risc_test_pkg;
             HazardConfiguration = hazard_config::type_id::create("HazardConfiguration",this);
 
             set_config_params();
+            load_program_metadata();
             
             uvm_config_db #(mem_config)::set(this,"MemoryEnvironment","CONFG",MemoryConfiguration);
             uvm_config_db #(fetch_config)::set(this,"FetchEnvironment","CONFG",FetchConfiguration);
@@ -120,14 +159,65 @@ package risc_test_pkg;
         endfunction:end_of_elaboration_phase
         
         virtual task run_phase (uvm_phase phase);
+            int program_end_pc;
+            int cycles_after_program;
+            int elapsed_cycles;
+
             phase.raise_objection(this);
             //Initialize the clocking block
             intf.initialize();
-            `uvm_info("TEST",$sformatf("Starting the test with WAIT = %0d",WAIT),UVM_LOW)
-                repeat(WAIT)
+            program_end_pc = program_words * 4;
+            cycles_after_program = 0;
+            elapsed_cycles = 0;
+            `uvm_info(
+                "TEST",
+                $sformatf(
+                    "Starting the test with program_words = %0d, program_end_pc = %0d and safety_wait_cycles = %0d",
+                    program_words,
+                    program_end_pc,
+                    wait_cycles
+                ),
+                UVM_LOW
+            )
+
+            forever
+            begin
+                @(posedge intf.clk);
+                elapsed_cycles++;
+
+                if (FetchConfiguration.vif.PCF >= program_end_pc)
+                    cycles_after_program++;
+                else
+                    cycles_after_program = 0;
+
+                if (cycles_after_program >= PROGRAM_EXIT_DRAIN_CYCLES)
                 begin
-                    @(posedge intf.clk);
+                    `uvm_info(
+                        "TEST",
+                        $sformatf(
+                            "Stopping after PCF left the program image for %0d consecutive cycles at PCF = %0d after %0d cycles",
+                            cycles_after_program,
+                            FetchConfiguration.vif.PCF,
+                            elapsed_cycles
+                        ),
+                        UVM_LOW
+                    )
+                    break;
                 end
+
+                if (elapsed_cycles >= wait_cycles)
+                begin
+                    `uvm_warning(
+                        "TEST",
+                        $sformatf(
+                            "Reached the safety cycle limit (%0d) before PCF exited the program image; stopping at PCF = %0d",
+                            wait_cycles,
+                            FetchConfiguration.vif.PCF
+                        )
+                    )
+                    break;
+                end
+            end
             phase.drop_objection(this);
         endtask:run_phase
 

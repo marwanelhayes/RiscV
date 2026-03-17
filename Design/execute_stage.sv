@@ -1,9 +1,11 @@
 import shared_pkg::*;
+`define VERIF 1
 module execute_stage
 #(
     parameter int DATA_WIDTH = 32,
     parameter int ADDR_WIDTH = 32,
-    parameter int ALU_SUB_CONTROL_WIDTH = 2
+    parameter int ALU_SUB_CONTROL_WIDTH = 2,
+    parameter int STAGES = 4
 )
 (
     input clk,
@@ -41,6 +43,7 @@ module execute_stage
     input fpu_operation_t FPUControlE,
     input round_mode_t RoundModeE,
     input FPURegWriteE,
+    input FPUValidE,
     input move_operation_t MoveOperationE,
     input logic [DATA_WIDTH-1:0] FPUOutW,
     input logic [1:0] ForwardFloatingAE,
@@ -69,17 +72,17 @@ module execute_stage
     output logic InvalidDivM,
     output logic [DATA_WIDTH-1:0] FPUOutM,
     output logic FPURegWriteM,
-    output move_operation_t MoveOperationM
+    output move_operation_t MoveOperationM,
+    output logic FPUBusyM,
+    output logic FPUDoneM
 );
 
     logic signed [DATA_WIDTH:0] ALUOutE;
     logic signed [DATA_WIDTH-1:0] SrcAE;
     logic signed [DATA_WIDTH-1:0] SrcBE;
     logic signed [DATA_WIDTH-1:0] WriteDataE;
-    logic [DATA_WIDTH-1:0] FPUOutE;
     logic branch_true;
     traps_t TrapsE;
-    logic OverflowE, UnderflowE, NaNE, InfE, ZeroE, InvalidDivE;
     logic [DATA_WIDTH-1:0] FPUInAE,FPUInBE, FPUInAETemp;
     round_mode_t DynRoundMode,ActualRoundMode;
 
@@ -93,19 +96,30 @@ module execute_stage
         .branch_true(branch_true)
     );
 
-    risc_fpu #(.PRECISION(SINGLE)) FPU
+    risc_fpu #(.PRECISION(SINGLE),.STAGES(STAGES)) FPU
     (
+        .clk(clk),
+        .rst(rst),
+        .valid(FPUValidE),
         .InA(FPUInAE),
         .InB(FPUInBE),
         .round_mode(ActualRoundMode),
         .operation(FPUControlE),
-        .Overflow(OverflowE),
-        .Underflow(UnderflowE),
-        .NaN(NaNE),
-        .Inf(InfE),
-        .Zero(ZeroE),
-        .InvalidDiv(InvalidDivE),
-        .Result(FPUOutE)
+        .Overflow(OverflowM),
+        .Underflow(UnderflowM),
+        .RdF(RdFE),
+        .NaN(NaNM),
+        .Inf(InfM),
+        .Zero(ZeroM),
+        .InvalidDiv(InvalidDivM),
+        .Result(FPUOutM),
+        .busy(FPUBusyM),
+        .done(FPUDoneM),
+        .RdFOut(RdFM),
+        .RegWriteOut(FPURegWriteM),
+        .RegWrite(FPURegWriteE),
+        .MoveOperation(MoveOperationE),
+        .MoveOperationOut(MoveOperationM)
     );
 
 
@@ -201,16 +215,6 @@ module execute_stage
             RdM <= zero;
             funct3M <= 0;
             PCPlus4M <= 0;
-            RdFM <= f0;
-            OverflowM <= 0;
-            UnderflowM <= 0;
-            NaNM <= 0;
-            InfM <= 0;
-            ZeroM <= 0;
-            InvalidDivM <= 0;
-            FPUOutM <= 0;
-            FPURegWriteM <= 0;
-            MoveOperationM <= FPUToFPU;
         end
         else
         begin
@@ -222,16 +226,6 @@ module execute_stage
             RdM <= RdE;
             funct3M <= funct3E;
             PCPlus4M <= PCPlus4E;
-            RdFM <= RdFE;
-            OverflowM <= OverflowE;
-            UnderflowM <= UnderflowE;
-            NaNM <= NaNE;
-            InfM <= InfE;
-            ZeroM <= ZeroE;
-            InvalidDivM <= InvalidDivE;
-            FPUOutM <= FPUOutE;
-            FPURegWriteM <= FPURegWriteE;
-            MoveOperationM <= MoveOperationE;
         end
     end
 
@@ -290,4 +284,10 @@ module execute_stage
             ActualRoundMode = DynRoundMode;
         end
     end
+    `ifdef VERIF
+        bind FPU flp_wr FPU_bind
+        (
+            .*
+        );
+    `endif
 endmodule

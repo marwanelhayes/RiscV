@@ -2,6 +2,7 @@ module decode_top;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import uvm_pkg::uvm_cmdline_processor;
     import shared_pkg::*;
     import decode_test_pkg::*;
 
@@ -53,6 +54,7 @@ module decode_top;
         .MoveOperationE(intf.MoveOperationE),
         .Rs1FE(intf.Rs1FE),
         .Rs2FE(intf.Rs2FE),
+        .FPUValidE(intf.FPUValidE),
         .FPUOutW(intf.FPUOutW),
         .FPURegWriteW(intf.FPURegWriteW),
         .MoveOperationW(intf.MoveOperationW),
@@ -70,8 +72,19 @@ module decode_top;
 
     initial
     begin
+        string test_name;
+        uvm_cmdline_processor clp;
+
+        test_name = "decode_test";
+        clp = uvm_cmdline_processor::get_inst();
+        if (clp.get_arg_value("+UVM_TESTNAME=", test_name))
+        begin
+            if (test_name != "decode_test")
+                test_name = "decode_test";
+        end
+
         uvm_config_db #(virtual decode_interface)::set(null,"","INTF",intf);
-        run_test();
+        run_test(test_name);
     end
 
 endmodule

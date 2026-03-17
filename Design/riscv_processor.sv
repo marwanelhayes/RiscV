@@ -4,7 +4,8 @@ module riscv_processor
 #(
     parameter int DATA_WIDTH = 32,
     parameter int ADDR_WIDTH = 8,
-    parameter int ALU_SUB_CONTROL_WIDTH = 2
+    parameter int ALU_SUB_CONTROL_WIDTH = 2,
+    parameter int STAGES = 4
 )
 (
     input clk,
@@ -65,6 +66,7 @@ module riscv_processor
     fpr_t Rs2FE;
     wire [1:0] ForwardFloatingAE;
     wire [1:0] ForwardFloatingBE;
+    wire FPUValidE;
 
 
     //Memory stage wires
@@ -87,6 +89,8 @@ module riscv_processor
     wire [DATA_WIDTH-1:0] FPUOutM;
     wire FPURegWriteM;
     move_operation_t MoveOperationM;
+    wire FPUBusyM;
+    wire FPUDoneM;
 
     //Write back stage wires
     wire signed [DATA_WIDTH-1:0] ReadDataW;
@@ -167,10 +171,11 @@ module riscv_processor
         .FPURegWriteE(FPURegWriteE),
         .MoveOperationE(MoveOperationE),
         .Rs1FE(Rs1FE),
-        .Rs2FE(Rs2FE)
+        .Rs2FE(Rs2FE),
+        .FPUValidE(FPUValidE)
     );
 
-    execute_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.ALU_SUB_CONTROL_WIDTH(ALU_SUB_CONTROL_WIDTH)) 
+    execute_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.ALU_SUB_CONTROL_WIDTH(ALU_SUB_CONTROL_WIDTH),.STAGES(STAGES)) 
     Execute
     (
         .clk(clk),
@@ -235,7 +240,10 @@ module riscv_processor
         .Rs1FE(Rs1FE),
         .Rs2FE(Rs2FE),
         .ForwardFloatingAE(ForwardFloatingAE),
-        .ForwardFloatingBE(ForwardFloatingBE)
+        .ForwardFloatingBE(ForwardFloatingBE),
+        .FPUValidE(FPUValidE),
+        .FPUBusyM(FPUBusyM),
+        .FPUDoneM(FPUDoneM)
     );
 
     memory_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
@@ -329,7 +337,10 @@ module riscv_processor
         .Rs1FE(Rs1FE),
         .Rs2FE(Rs2FE),
         .FPURegWriteM(FPURegWriteM),
-        .FPURegWriteW(FPURegWriteW)
+        .FPURegWriteW(FPURegWriteW),
+        .FPUValidE(FPUValidE),
+        .FPUBusyM(FPUBusyM),
+        .FPUDoneM(FPUDoneM)
     );
 
 endmodule

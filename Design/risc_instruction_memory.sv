@@ -9,9 +9,14 @@ module risc_instruction_memory
 );
     localparam int DEPTH = 2**(ADDR_WIDTH-2);
     logic [DATA_WIDTH-1:0] mem [DEPTH];
+    integer idx;
 
     initial 
     begin
+        for (idx = 0; idx < DEPTH; idx = idx + 1)
+        begin
+            mem[idx] = 32'h00000013;
+        end
         $readmemb("C:/Ain_shams/RiscV/Python/binary1.txt",mem);
     end
 

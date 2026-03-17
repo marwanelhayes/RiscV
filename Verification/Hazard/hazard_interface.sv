@@ -24,7 +24,9 @@ interface hazard_interface
     fpr_t Rs1FE;
     fpr_t Rs2FE;
     logic FPURegWriteM;
-    logic FPURegWriteW; 
+    logic FPURegWriteW;
+    logic FPUValidE;
+    logic FPUBusyM; 
     
     logic [2:0] ForwardAE;
     logic [2:0] ForwardBE;
@@ -40,25 +42,27 @@ interface hazard_interface
         default input #0; 
         default output #CLK;
         
-        output   Rs1E;
-        output   Rs2E;
-        output   RdE;
-        output   Rs1D; 
-        output   Rs2D; 
-        output   RdM;
-        output   RdW;
-        output   RegWriteM;
-        output   RegWriteW;
-        output   SelectorE;
-        output   PCSrcE;
-        output   TrapIsSet;
-        output   MoveOperationE;
-        output   RdFM;
-        output   RdFW;
-        output   Rs1FE;
-        output   Rs2FE;
-        output   FPURegWriteM;
-        output   FPURegWriteW;
+        input   Rs1E;
+        input   Rs2E;
+        input   RdE;
+        input   Rs1D; 
+        input   Rs2D; 
+        input   RdM;
+        input   RdW;
+        input   RegWriteM;
+        input   RegWriteW;
+        input   SelectorE;
+        input   PCSrcE;
+        input   TrapIsSet;
+        input   MoveOperationE;
+        input   RdFM;
+        input   RdFW;
+        input   Rs1FE;
+        input   Rs2FE;
+        input   FPURegWriteM;
+        input   FPURegWriteW;
+        input   FPUValidE;
+        input   FPUBusyM;
 
         input  ForwardAE;
         input  ForwardBE;
@@ -91,6 +95,8 @@ interface hazard_interface
         Rs2FE = f0;
         FPURegWriteM = 0;
         FPURegWriteW = 0;
+        FPUValidE = 0;
+        FPUBusyM = 0;
         repeat(5)
         begin
             @(cb);
@@ -119,6 +125,8 @@ interface hazard_interface
         Rs2FE <= drv.Rs2FE;
         FPURegWriteM <= drv.FPURegWriteM;
         FPURegWriteW <= drv.FPURegWriteW;
+        FPUValidE <= drv.FPUValidE;
+        FPUBusyM <= drv.FPUBusyM;
 
     endtask:drv2intf
 
@@ -153,6 +161,9 @@ interface hazard_interface
         mon.FPURegWriteW = FPURegWriteW;
         mon.ForwardFloatingAE = ForwardFloatingAE;
         mon.ForwardFloatingBE = ForwardFloatingBE;
+        mon.FPUValidE = FPUValidE;
+        mon.FPUBusyM = FPUBusyM;
+
 
     endtask:intf2mon
 
@@ -176,7 +187,9 @@ interface hazard_interface
         Rs1FE,
         Rs2FE,
         FPURegWriteM,
-        FPURegWriteW, 
+        FPURegWriteW,
+        FPUValidE,
+        FPUBusyM, 
         output  ForwardAE, 
         ForwardBE, 
         StallD, 

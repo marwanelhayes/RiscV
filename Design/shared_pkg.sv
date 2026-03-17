@@ -255,6 +255,49 @@ package shared_pkg;
         FPUToFPU = 2'b10
     } move_operation_t;
 
+    typedef enum logic [2:0]
+    {
+        INIT    = 3'b000,
+        IDLE    = 3'b001,
+        SPLIT   = 3'b010,
+        ALIGN   = 3'b011,
+        TRUEADD = 3'b111,
+        TRUESUB = 3'b100,
+        DONE    = 3'b101
+    } flp_add_sub_state_t;
+
+    typedef enum logic [2:0]
+    {
+        INIT_MUL  = 3'b000,
+        IDLE_MUL  = 3'b001,
+        SPLIT_MUL = 3'b010,
+        MUL_MUL   = 3'b011,
+        ROUND_MUL = 3'b100,
+        DONE_MUL  = 3'b101
+    } flp_mul_state_t;
+
+    typedef enum logic [2:0]
+    {
+        INIT_DIV  = 3'b000,
+        IDLE_DIV  = 3'b001,
+        SPLIT_DIV = 3'b010,
+        DIV_DIV   = 3'b011,
+        ROUND_DIV = 3'b100,
+        DONE_DIV  = 3'b101
+    } flp_div_state_t;
+
+    typedef enum logic [2:0]
+    {
+        SQRT_INIT    = 3'b000,
+        SQRT_IDLE    = 3'b001,
+        SQRT_MUL1    = 3'b010,
+        SQRT_MUL2    = 3'b011,
+        SQRT_ADD_SUB = 3'b100,
+        SQRT_MUL3    = 3'b101,
+        SQRT_MUL4    = 3'b110,
+        SQRT_DONE    = 3'b111
+    } flp_sqrt_state_t;
+
     // Parameter declaration section for clean code and easy modification
     // You can modify these parameters to change the design specifications
     // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files 
@@ -267,6 +310,5 @@ package shared_pkg;
     parameter int   FINAL_FLP_FRAC_BITS   = (FINAL_PRECISION == SINGLE) ? 23 : 52;
     parameter int   FINAL_FLP_BIAS        = (FINAL_PRECISION == SINGLE) ? 127: 1023;
     parameter int   CLK_PERIOD            = 10;
-
 
 endpackage:shared_pkg
