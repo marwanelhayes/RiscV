@@ -84,6 +84,7 @@ module execute_stage
     logic branch_true;
     traps_t TrapsE;
     logic [DATA_WIDTH-1:0] FPUInAE,FPUInBE, FPUInAETemp;
+    logic [ADDR_WIDTH-1:0] PCE;
     round_mode_t DynRoundMode,ActualRoundMode;
 
     risc_alu #(.DATA_WIDTH(DATA_WIDTH)) ALU
@@ -189,7 +190,7 @@ module execute_stage
         .Rs(Rs1E),
         .Traps(TrapsE),
         .mret(MRetE),
-        .PC(PCPlus4E),
+        .PC(PCE),
         .Address($unsigned(ALUOutE[ADDR_WIDTH-1:0])),
         .CsrAccess(CsrAccessE),
         .ExternalInterrupt(ExternalInterrupt),
@@ -234,14 +235,28 @@ module execute_stage
         PCSrcE = (BranchE & branch_true) | JumpE;
     end
 
+    always_comb
+    begin
+        PCE = PCPlus4E - 4;
+    end
+
 
     always_comb
     begin
+        TrapsE = NoTraps;
         if(|PCPlus4E[1:0])
         begin
             TrapsE = InstructionAddressMisalignedOrUserSoftwareInterrupt;
         end
-        else if(EbreakE | EcallE | IllegaleInstructionE)
+        else if(EbreakE)
+        begin
+            TrapsE = BreakpointOrMachineSoftwareInterrupt;
+        end
+        else if(EcallE)
+        begin
+            TrapsE = EcallMOrMachineExternalInterrupt;
+        end
+        else if(IllegaleInstructionE)
         begin
             TrapsE = IllegalInstructionOrHypervisorSoftwareInterrupt;
         end
@@ -251,7 +266,7 @@ module execute_stage
             begin
                 TrapsE = LoadAddressMisalignedOrUserSoftwareInterrupt;
             end
-            else if(((load_store_t'(funct3E) == HW) | (load_store_t'(funct3E) == HWU)) && (ALUOutE == 2'b11))
+            else if(((load_store_t'(funct3E) == HW) | (load_store_t'(funct3E) == HWU)) && ALUOutE[0])
             begin
                 TrapsE = LoadAddressMisalignedOrUserSoftwareInterrupt;
             end
@@ -262,7 +277,7 @@ module execute_stage
             begin
                 TrapsE = StoreAddressMisalignedOrHyperVisorTimerInterrupt;
             end
-            else if((ALUOutE == 2'b11) && (load_store_t'(funct3E) == HW))
+            else if(ALUOutE[0] && (load_store_t'(funct3E) == HW))
             begin
                 TrapsE = StoreAddressMisalignedOrHyperVisorTimerInterrupt;
             end
@@ -286,6 +301,11 @@ module execute_stage
     end
     `ifdef VERIF
         bind FPU flp_wr FPU_bind
+        (
+            .*
+        );
+
+        bind CSR csr_wr CSR_bind
         (
             .*
         );

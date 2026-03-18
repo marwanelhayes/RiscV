@@ -1,26 +1,4 @@
-C:/Ain_shams/RiscV/Verification/Memory/mem_scoreboard_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_scoreboard_pkg.sv
-QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
--- Compiling package mem_scoreboard_pkg
--- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Memory/mem_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
--- Importing package shared_pkg
--- Importing package mem_item_pkg
-
-Top level modules:
-	--none--
-
-} {} {}} C:/Ain_shams/RiscV/Verification/Decode/decode_scoreboard_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Decode/decode_scoreboard_pkg.sv
-QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
--- Compiling package decode_scoreboard_pkg
--- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
-** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_scoreboard_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
--- Importing package shared_pkg
--- Importing package decode_item_pkg
-
-Top level modules:
-	--none--
-
-} {} {}} C:/Ain_shams/RiscV/Verification/FPU/flp_test_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/FPU/flp_test_pkg.sv
+C:/Ain_shams/RiscV/Verification/FPU/flp_test_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/FPU/flp_test_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package flp_test_pkg
 -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
@@ -60,6 +38,15 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package decode_config_pkg
 -- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
 ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_config_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_config_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_config_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_config_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
 
 Top level modules:
 	--none--
@@ -234,6 +221,23 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	--none--
 
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_env_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_env_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_env_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_env_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_agent_pkg
+-- Importing package csr_driver_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+-- Importing package csr_monitor_pkg
+-- Importing package csr_config_pkg
+-- Importing package csr_scoreboard_pkg
+-- Importing package csr_subscriber_pkg
+
+Top level modules:
+	--none--
+
 } {} {}} C:/Ain_shams/RiscV/Verification/Memory/mem_env_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_env_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package mem_env_pkg
@@ -395,6 +399,14 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Importing package flp_config_pkg
 -- Importing package flp_scoreboard_pkg
 -- Importing package flp_subscriber_pkg
+-- Importing package csr_env_pkg
+-- Importing package csr_agent_pkg
+-- Importing package csr_driver_pkg
+-- Importing package csr_item_pkg
+-- Importing package csr_monitor_pkg
+-- Importing package csr_config_pkg
+-- Importing package csr_scoreboard_pkg
+-- Importing package csr_subscriber_pkg
 
 Top level modules:
 	--none--
@@ -410,6 +422,9 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	--none--
 
+} {} {}} C:/Ain_shams/RiscV/Design/csr_defs.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/csr_defs.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+
 } {} {}} C:/Ain_shams/RiscV/Design/lzc_wr.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/lzc_wr.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling module lzc_wr
@@ -417,9 +432,6 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 Top level modules:
 	lzc_wr
-
-} {} {}} C:/Ain_shams/RiscV/Design/csr_defs.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/csr_defs.sv
-QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 } {} {}} C:/Ain_shams/RiscV/Design/hazard_unit.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/hazard_unit.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
@@ -447,6 +459,17 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 Top level modules:
 	data_memory
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_driver_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_driver_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_driver_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_driver_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+
+Top level modules:
+	--none--
 
 } {} {}} C:/Ain_shams/RiscV/Verification/Memory/mem_driver_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_driver_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
@@ -557,13 +580,6 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	--none--
 
-} {} {}} C:/Ain_shams/RiscV/Design/pc_adder.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/pc_adder.sv
-QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
--- Compiling module pc_adder
-
-Top level modules:
-	pc_adder
-
 } {} {}} C:/Ain_shams/RiscV/Verification/WriteBack/writeback_top.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_top.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling module writeback_top
@@ -583,6 +599,13 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 Top level modules:
 	writeback_top
+
+} {} {}} C:/Ain_shams/RiscV/Design/pc_adder.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Design/pc_adder.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling module pc_adder
+
+Top level modules:
+	pc_adder
 
 } {} {}} C:/Ain_shams/RiscV/Verification/FPU/flp_config_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/FPU/flp_config_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
@@ -719,6 +742,16 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	opcode_decoder
 
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_item_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_item_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_item_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_item_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package shared_pkg
+
+Top level modules:
+	--none--
+
 } {} {}} C:/Ain_shams/RiscV/Verification/WriteBack/writeback_monitor_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_monitor_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package writeback_monitor_pkg
@@ -761,6 +794,17 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	wallace_tree
 
+} {} {}} C:/Ain_shams/RiscV/Verification/Risc/csr_wr.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Risc/csr_wr.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Risc/csr_wr.sv(2): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Compiling package csr_wr_sv_unit
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+-- Importing package shared_pkg
+-- Compiling interface csr_wr
+
+Top level modules:
+	--none--
+
 } {} {}} C:/Ain_shams/RiscV/Verification/Memory/mem_seq_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/Memory/mem_seq_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package mem_seq_pkg
@@ -779,6 +823,17 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 ** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/Decode/decode_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
 -- Importing package shared_pkg
 -- Importing package decode_item_pkg
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_seq_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_seq_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_seq_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_seq_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package shared_pkg
+-- Importing package csr_item_pkg
 
 Top level modules:
 	--none--
@@ -908,6 +963,26 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 Top level modules:
 	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_top.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_top.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling module csr_top
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_top.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_test_pkg
+-- Importing package csr_env_pkg
+-- Importing package csr_agent_pkg
+-- Importing package csr_driver_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+-- Importing package csr_monitor_pkg
+-- Importing package csr_config_pkg
+-- Importing package csr_scoreboard_pkg
+-- Importing package csr_subscriber_pkg
+-- Importing package csr_seq_pkg
+
+Top level modules:
+	csr_top
 
 } {} {}} C:/Ain_shams/RiscV/Verification/WriteBack/writeback_subscriber_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_subscriber_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
@@ -1060,6 +1135,20 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	--none--
 
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_agent_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_agent_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_agent_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_agent_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_driver_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+-- Importing package csr_monitor_pkg
+-- Importing package csr_config_pkg
+
+Top level modules:
+	--none--
+
 } {} {}} C:/Ain_shams/RiscV/Verification/WriteBack/writeback_test_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/WriteBack/writeback_test_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package writeback_test_pkg
@@ -1170,6 +1259,28 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 
 Top level modules:
 	risc_control_unit
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_interface.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_interface.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_interface_sv_unit
+-- Importing package shared_pkg
+-- Importing package csr_item_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+-- Compiling interface csr_interface
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_monitor_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_monitor_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_monitor_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_monitor_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+
+Top level modules:
+	--none--
 
 } {} {}} C:/Ain_shams/RiscV/Verification/FPU/flp_subscriber_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/FPU/flp_subscriber_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
@@ -1301,6 +1412,17 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 Top level modules:
 	--none--
 
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_subscriber_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_subscriber_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_subscriber_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_subscriber_pkg.sv(4): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+
+Top level modules:
+	--none--
+
 } {} {}} C:/Ain_shams/RiscV/Verification/FPU/flp_monitor_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/FPU/flp_monitor_pkg.sv
 QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Compiling package flp_monitor_pkg
@@ -1423,6 +1545,25 @@ QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
 -- Importing package mem_scoreboard_pkg
 -- Importing package mem_subscriber_pkg
 -- Importing package mem_seq_pkg
+
+Top level modules:
+	--none--
+
+} {} {}} C:/Ain_shams/RiscV/Verification/CSR/csr_test_pkg.sv {1 {vlog -work work -vopt -sv -stats=none C:/Ain_shams/RiscV/Verification/CSR/csr_test_pkg.sv
+QuestaSim-64 vlog 2024.1 Compiler 2024.02 Feb  1 2024
+-- Compiling package csr_test_pkg
+-- Importing package mtiUvm.uvm_pkg (uvm-1.1d Built-in)
+** Note: (vlog-2286) C:/Ain_shams/RiscV/Verification/CSR/csr_test_pkg.sv(3): Using implicit +incdir+C:/questasim64_2024.1/uvm-1.1d/../verilog_src/uvm-1.1d/src from import uvm_pkg
+-- Importing package csr_env_pkg
+-- Importing package csr_agent_pkg
+-- Importing package csr_driver_pkg
+-- Importing package csr_item_pkg
+-- Importing package shared_pkg
+-- Importing package csr_monitor_pkg
+-- Importing package csr_config_pkg
+-- Importing package csr_scoreboard_pkg
+-- Importing package csr_subscriber_pkg
+-- Importing package csr_seq_pkg
 
 Top level modules:
 	--none--

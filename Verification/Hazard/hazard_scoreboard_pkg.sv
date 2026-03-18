@@ -176,9 +176,9 @@ package hazard_scoreboard_pkg;
 
         virtual function void report_phase (uvm_phase phase);
             super.report_phase(phase);
-            `uvm_info("SCB","sc_itemoreboard report",UVM_MEDIUM)
-            `uvm_info("SCB",$sformatf("Scoreboard Success count = %0d",success),UVM_MEDIUM)
-            `uvm_info("SCB",$sformatf("Scoreboard Fail count = %0d",fail),UVM_MEDIUM)
+            `uvm_info("SCB","HAZARD Scoreboard report",UVM_MEDIUM)
+            `uvm_info("SCB",$sformatf("Actual Success count = %0d",success),UVM_MEDIUM)
+            `uvm_info("SCB",$sformatf("Actual Fail count = %0d",fail),UVM_MEDIUM)
         endfunction
             
 

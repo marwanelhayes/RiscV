@@ -10,6 +10,8 @@ package execute_env_pkg;
     import execute_config_pkg::*;
     import flp_env_pkg::*;
     import flp_config_pkg::*;
+    import csr_env_pkg::*;
+    import csr_config_pkg::*;
 
     class execute_env extends uvm_env;
 
@@ -27,6 +29,8 @@ package execute_env_pkg;
         execute_config configuration;
         flp_env flp_environment;
         flp_config flp_configuration;
+        csr_env csr_environment;
+        csr_config csr_configuration;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -42,6 +46,13 @@ package execute_env_pkg;
                     `uvm_error("ENV","FPU Environment couldn't receive configuration object")
             uvm_config_db #(flp_config)::set(this,"flp_environment","CONFG",flp_configuration);
             flp_environment = flp_env::type_id::create("flp_environment",this);
+
+            csr_configuration = csr_config::type_id::create("csr_configuration",this);
+            csr_configuration.enable = UVM_PASSIVE;
+            if(! uvm_config_db #(virtual csr_interface)::get(this,"","CSR_INTF",csr_configuration.vif))
+                    `uvm_error("ENV","CSR Environment couldn't receive configuration object")
+            uvm_config_db #(csr_config)::set(this,"csr_environment","CONFG",csr_configuration);
+            csr_environment = csr_env::type_id::create("csr_environment",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);

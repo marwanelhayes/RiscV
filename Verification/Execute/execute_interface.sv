@@ -228,9 +228,9 @@ interface execute_interface
             EcallE <= drv.EcallE;
             EbreakE <= drv.EbreakE;
             IllegaleInstructionE <= drv.IllegaleInstructionE;
-            TimerInterrupt <= 1'b0; //drv.TimerInterrupt;
-            SoftwareInterrupt <= 1'b0; //drv.SoftwareInterrupt;
-            ExternalInterrupt <= 1'b0; //drv.ExternalInterrupt;
+            TimerInterrupt <= drv.TimerInterrupt;
+            SoftwareInterrupt <=drv.SoftwareInterrupt;
+            ExternalInterrupt <= drv.ExternalInterrupt;
             RdFE <= drv.RdFE;
             RD1FE <= drv.RD1FE;
             RD2FE <= drv.RD2FE;

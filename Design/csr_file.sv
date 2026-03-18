@@ -10,7 +10,7 @@ module csr_file
     input clk,
     input rst,
     input csr_t CsrOperation,
-    input [4:0] Rs,
+    input gpr_t Rs,
     input traps_t Traps,
     input mret,
     input [ADDR_WIDTH-1:0] PC,
@@ -29,15 +29,36 @@ module csr_file
 );
 
     (* ram_style = "block" *) logic [DATA_WIDTH-1:0] CsrFile [4096]; // CSR file with 4096 entries, each 32 bits wide
-    wire PendingInterrupt;
-    wire CurrentInterrupt;
-    wire AllInterrupts;
+    localparam logic [DATA_WIDTH-1:0] AlignMask = `align_mask;
+    wire InterruptSet;
+    wire TimerInterruptPending;
+    wire ExternalInterruptPending;
+    wire SoftwareInterruptPending;
+    wire TimerInterruptEnabled;
+    wire ExternalInterruptEnabled;
+    wire SoftwareInterruptEnabled;
+    wire TimerInterruptSet;
+    wire ExternalInterruptSet;
+    wire SoftwareInterruptSet;
+    wire TrapsNotZero;
+    wire RsNotZero;
 
-    assign PendingInterrupt = (CsrFile[mstatus][`MIE] & CsrFile[mip][`ME_PIE]) || (CsrFile[mstatus][`MIE] & CsrFile[mip][`MT_PIE]) || (CsrFile[mstatus][`MIE] & CsrFile[mip][`MS_PIE]) ; 
+    assign TimerInterruptPending = TimerInterrupt | CsrFile[mip][`MT_I];
+    assign ExternalInterruptPending = ExternalInterrupt | CsrFile[mip][`ME_I];
+    assign SoftwareInterruptPending = SoftwareInterrupt | CsrFile[mip][`MS_I];
 
-    assign CurrentInterrupt = (TimerInterrupt & CsrFile[mstatus][`MIE] & CsrFile[mie][`MT_PIE]) || ( ExternalInterrupt & CsrFile[mstatus][`MIE] & CsrFile[mie][`ME_PIE]) || (SoftwareInterrupt & CsrFile[mstatus][`MIE] & CsrFile[mie][`MS_PIE]) ; 
+    assign TimerInterruptEnabled = CsrFile[mie][`MT_I];
+    assign ExternalInterruptEnabled = CsrFile[mie][`ME_I];
+    assign SoftwareInterruptEnabled = CsrFile[mie][`MS_I];
 
-    assign AllInterrupts = TimerInterrupt | ExternalInterrupt | SoftwareInterrupt;
+    assign TimerInterruptSet = CsrFile[mstatus][`MIE] & TimerInterruptEnabled & TimerInterruptPending;
+    assign ExternalInterruptSet = CsrFile[mstatus][`MIE] & ExternalInterruptEnabled & ExternalInterruptPending;
+    assign SoftwareInterruptSet = CsrFile[mstatus][`MIE] & SoftwareInterruptEnabled & SoftwareInterruptPending;
+
+    assign InterruptSet = ExternalInterruptSet | SoftwareInterruptSet | TimerInterruptSet;
+
+    assign TrapsNotZero = |(Traps);
+    assign RsNotZero = |int'(Rs);
 
     function void ResetCsrFile;
         CsrFile[mstatus] <= 0;
@@ -54,73 +75,112 @@ module csr_file
         CsrFile[mcycle] <= 0;
         CsrFile[mhartid] <= 0;
         CsrFile[mvendorid] <= 32'h48_41_4E_4F;
+        CsrFile[fflags] <= 0;
+        CsrFile[frm] <= 0;
+        CsrFile[fcsr] <= 0;
         CsrOut <= 0;
         CsrOutPC <= 0;
         TrapIsSet <= 1'b0;
     endfunction:ResetCsrFile
 
-    function void HandleInterrupt;
-        CsrFile[mepc] <= PC; // Set mepc to current PC on interrupt
+    function automatic logic [DATA_WIDTH-1:0] TrapCause(input traps_t TrapCode);
+        case(TrapCode)
+            InstructionAddressMisalignedOrUserSoftwareInterrupt: TrapCause = 32'd0;
+            InstructionAccessFaultOrSupervisorSoftwareInterrupt: TrapCause = 32'd1;
+            IllegalInstructionOrHypervisorSoftwareInterrupt: TrapCause = 32'd2;
+            BreakpointOrMachineSoftwareInterrupt: TrapCause = 32'd3;
+            LoadAddressMisalignedOrUserSoftwareInterrupt: TrapCause = 32'd4;
+            LoadAddressFaultOrSupervisorTimerInterrupt: TrapCause = 32'd5;
+            StoreAddressMisalignedOrHyperVisorTimerInterrupt: TrapCause = 32'd6;
+            StoreAddressFaultOrMachineTimerInterrupt: TrapCause = 32'd7;
+            EcallUOrUserExternalInterrupt: TrapCause = 32'd8;
+            EcallSOrSupervisorExternalInterrupt: TrapCause = 32'd9;
+            EcallHOrHypervisorExternalInterrupt: TrapCause = 32'd10;
+            EcallMOrMachineExternalInterrupt: TrapCause = 32'd11;
+            default: TrapCause = 32'd0;
+        endcase
+    endfunction:TrapCause
+
+    function automatic logic [ADDR_WIDTH-1:0] TrapVector(input logic Interrupt, input logic [DATA_WIDTH-1:0] Cause);
+        TrapVector = {CsrFile[mtvec][ADDR_WIDTH-1:2], 2'b00};
+        if(Interrupt && (CsrFile[mtvec][`MTVEC_MODE_END:`MTVEC_MODE_START] == `MTVEC_VECTORED))
+            TrapVector = {CsrFile[mtvec][ADDR_WIDTH-1:2], 2'b00} + (Cause[ADDR_WIDTH-1:0] << 2);
+    endfunction:TrapVector
+
+    function void HandleTrapEntry(input logic [DATA_WIDTH-1:0] Cause, input logic Interrupt);
+        CsrFile[mepc] <= PC & AlignMask;
         TrapIsSet <= 1'b1;
         CsrFile[mstatus][`MPIE] <= CsrFile[mstatus][`MIE];
         CsrFile[mstatus][`MIE] <= 1'b0;
-    endfunction:HandleInterrupt
+        CsrFile[mcause] <= {Interrupt, Cause[DATA_WIDTH-2:0]};
+        CsrOutPC <= TrapVector(Interrupt, Cause);
+    endfunction:HandleTrapEntry
 
     function void HandleException;
-        HandleInterrupt();
-        CsrFile[mcause] <= {20'b0, Traps};
-        CsrOutPC <= CsrFile[mtvec];
+        HandleTrapEntry(TrapCause(Traps), 1'b0);
         CsrFile[mbadaddr] <= Address;
     endfunction:HandleException
 
+    function void HandleExternalInterrupt;
+        HandleTrapEntry(`MACHINE_EXTERNAL_INTERRUPT_CAUSE, 1'b1);
+        CsrFile[mip][`ME_I] <= ExternalInterrupt;
+    endfunction:HandleExternalInterrupt
+
+    function void HandleSoftwareInterrupt;
+        HandleTrapEntry(`MACHINE_SOFTWARE_INTERRUPT_CAUSE, 1'b1);
+        CsrFile[mip][`MS_I] <= SoftwareInterrupt;
+    endfunction:HandleSoftwareInterrupt
+
+    function void HandleTimerInterrupt;
+        HandleTrapEntry(`MACHINE_TIMER_INTERRUPT_CAUSE, 1'b1);
+        CsrFile[mip][`MT_I] <= TimerInterrupt;
+    endfunction:HandleTimerInterrupt
+
     function void HandleReturn;
-        CsrOutPC <= CsrFile[mepc];
+        CsrOutPC <= CsrFile[mepc][ADDR_WIDTH-1:0] & AlignMask;
         CsrFile[mstatus][`MIE] <= CsrFile[mstatus][`MPIE];
         CsrFile[mstatus][`MPIE] <= 1'b1;
         TrapIsSet <= 1'b0;
     endfunction:HandleReturn
 
-    function void UpdateCsr(input logic [DATA_WIDTH-1:0] X);
-        if(CsrIndex == mstatus)
-            CsrFile[CsrIndex] <= X & `mstatus_mask;
-        else if(CsrIndex == mtvec)
-            CsrFile[CsrIndex] <= X & `align_mask;
-        else if(CsrIndex == mepc)
-            CsrFile[CsrIndex] <= X & `align_mask;
-        else if(CsrIndex == mscratch)
-            CsrFile[CsrIndex] <= X & `align_mask;
-        else if(CsrIndex == mie)
-            CsrFile[CsrIndex] <= X & `mie_mask;
-        else if(CsrIndex == mip)
-            CsrFile[CsrIndex] <= X & `mpie_mask;
-        else if(CsrIndex == mcause)
-            CsrFile[CsrIndex] <= CsrFile[CsrIndex];
-        else if (CsrIndex == fflags)
+    function void UpdateCsr(input logic [DATA_WIDTH-1:0] X, input logic [ADDR_WIDTH-1:0] Index);
+        if(Index == mstatus)
+            CsrFile[Index] <= X & `mstatus_mask;
+        else if(Index == mtvec)
+            CsrFile[Index] <= X & `mtvec_mask;
+        else if(Index == mepc)
+            CsrFile[Index] <= X & `align_mask;
+        else if(Index == mscratch)
+            CsrFile[Index] <= X;
+        else if(Index == mie)
+            CsrFile[Index] <= X & `mie_mask;
+        else if(Index == mcause)
+            CsrFile[Index] <= X & `mcause_mask;
+        else if (Index == fflags)
         begin
-            CsrFile[CsrIndex][4:0] <= X;
+            CsrFile[Index][4:0] <= X;
             CsrFile[fcsr][4:0] <= X;
         end
-        else if( CsrIndex == frm)
+        else if( Index == frm)
         begin
-            CsrFile[CsrIndex][2:0] <= X;
+            CsrFile[Index][2:0] <= X;
             CsrFile[fcsr][7:5] <= X;
         end
-        else if( CsrIndex == fcsr)
+        else if( Index == fcsr)
         begin
-            CsrFile[CsrIndex][7:0] <= X;
+            CsrFile[Index][7:0] <= X;
+            CsrFile[fflags][4:0] <= X;
+            CsrFile[frm][2:0] <= X[7:5];
         end
-        else if(CsrIndex != misa || CsrIndex != mvendorid)
-            CsrFile[CsrIndex] <= X;
+        else if(Index != misa && Index != mvendorid && Index != mip)
+            CsrFile[Index] <= X;
     endfunction:UpdateCsr
 
-    function void PutInterruptPending;
-        if(TimerInterrupt)
-            CsrFile[mip][`MT_PIE] <= 1'b1;
-        if(ExternalInterrupt)
-            CsrFile[mip][`ME_PIE] <= 1'b1;
-        if(SoftwareInterrupt)
-            CsrFile[mip][`MS_PIE] <= 1'b1;
-    endfunction:PutInterruptPending
+    function void UpdateInterruptPending;
+        CsrFile[mip][`MT_I] <= TimerInterrupt;
+        CsrFile[mip][`ME_I] <= ExternalInterrupt;
+        CsrFile[mip][`MS_I] <= SoftwareInterrupt;
+    endfunction:UpdateInterruptPending
 
     initial 
     begin
@@ -138,137 +198,78 @@ module csr_file
         end:Reset
         else
         begin 
-            if(AllInterrupts)
-            begin:Interrupts
-                if(CurrentInterrupt)
-                begin:Interrupt_Handling
-                    HandleInterrupt();
-                    PutInterruptPending();
-                    if(TimerInterrupt)
-                    begin:Timer_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `MT_PIE; // Set mcause to timer interrupt
-                        CsrFile[mcause] <= {20'b0, StoreAddressFaultOrMachineTimerInterrupt};
-                    end:Timer_Interrupt
+            UpdateInterruptPending();
+            if (TrapsNotZero)
+            begin:Exception_Handling
+                HandleException();
+            end:Exception_Handling
+            else if(mret)
+            begin:Return_From_Trap
+                HandleReturn();
+            end:Return_From_Trap
+            else if(InterruptSet)
+            begin:Interrupt_Handling
+                if(ExternalInterruptSet)
+                begin:External_Interrupt
+                    HandleExternalInterrupt();
+                end:External_Interrupt
+                else if(SoftwareInterruptSet)
+                begin:Software_Interrupt
+                    HandleSoftwareInterrupt();
+                end:Software_Interrupt
+                else if(TimerInterruptSet)
+                begin:Timer_Interrupt
+                    HandleTimerInterrupt();
+                end:Timer_Interrupt
+            end:Interrupt_Handling
+            else if (CsrAccess) 
+            begin:CSR_Access
+                CsrOut <= CsrFile[CsrIndex];
+                TrapIsSet <= 1'b0;
+                case(CsrOperation)   
+                    csrrw: 
+                    begin:CSR_RW
+                        UpdateCsr((CsrIn), CsrIndex);
+                    end:CSR_RW
                     
-                    else if(ExternalInterrupt)
-                    begin:External_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `ME_PIE; // Set mcause to external interrupt
-                        CsrFile[mcause] <= {20'b0, EcallMOrMachineExternalInterrupt};
-                    end:External_Interrupt
+                    csrrs: 
+                    begin:CSR_Set
+                        if(RsNotZero)
+                            UpdateCsr((CsrIn | CsrFile[CsrIndex]), CsrIndex);
+                    end:CSR_Set
                     
-                    else if(SoftwareInterrupt)
-                    begin:Software_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `MS_PIE; // Set mcause to software interrupt
-                        CsrFile[mcause] <= {20'b0, BreakpointOrMachineSoftwareInterrupt};
-                    end:Software_Interrupt
-                end:Interrupt_Handling
-            end:Interrupts
+                    csrrc: 
+                    begin:CSR_Clear
+                        if(RsNotZero)
+                            UpdateCsr(~CsrIn & CsrFile[CsrIndex], CsrIndex);
+                    end:CSR_Clear
+                    
+                    csrrwi: 
+                    begin:Write_Immediate
+                        UpdateCsr({27'b0, Rs}, CsrIndex);
+                    end:Write_Immediate
+                    
+                    csrrsi: 
+                    begin:Set_Immediate
+                        if(RsNotZero)
+                            UpdateCsr(CsrFile[CsrIndex] | {27'b0, Rs}, CsrIndex);
+                    end:Set_Immediate
+                    
+                    csrrci: 
+                    begin:Clear_Immediate
+                        if(RsNotZero)
+                            UpdateCsr(CsrFile[CsrIndex] & ~{27'b0, Rs}, CsrIndex);
+                    end:Clear_Immediate
+                endcase
+            end:CSR_Access
             else
-            begin:Not_interrupt
-                if(PendingInterrupt)
-                begin:Handle_Pending_Interrupts
-                    HandleInterrupt();
-                    if(CsrFile[mip][`MT_PIE])
-                    begin:Timer_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `MT_PIE; // Set mcause to timer interrupt
-                        CsrFile[mcause] <= {20'b0, StoreAddressFaultOrMachineTimerInterrupt};
-                        CsrFile[mip][`MT_PIE] <= 1'b0;
-                        if(ExternalInterrupt)
-                            CsrFile[mip][`ME_PIE] <= 1'b1;
-                        if(SoftwareInterrupt)
-                            CsrFile[mip][`MS_PIE] <= 1'b1;
-                    end:Timer_Interrupt
-                    else if(CsrFile[mstatus][`MIE] & CsrFile[mip][`ME_PIE])
-                    begin:External_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `ME_PIE; // Set mcause to external interrupt
-                        CsrFile[mcause] <= {20'b0, EcallMOrMachineExternalInterrupt};
-                        CsrFile[mip][`ME_PIE] <= 1'b0;
-                        if(TimerInterrupt)
-                            CsrFile[mip][`MT_PIE] <= 1'b1;
-                        if(SoftwareInterrupt)
-                            CsrFile[mip][`MS_PIE] <= 1'b1;
-                    end:External_Interrupt
-                    else if(CsrFile[mip][`MS_PIE])
-                    begin:Software_Interrupt
-                        CsrOutPC <= CsrFile[mtvec] + 4 * `MS_PIE; // Set mcause to software interrupt
-                        CsrFile[mcause] <= {20'b0, BreakpointOrMachineSoftwareInterrupt};
-                        CsrFile[mip][`MS_PIE] <= 1'b0;
-                        if(TimerInterrupt)
-                            CsrFile[mip][`MT_PIE] <= 1'b1;
-                        if(ExternalInterrupt)
-                            CsrFile[mip][`ME_PIE] <= 1'b1;
-                    end:Software_Interrupt
-                end:Handle_Pending_Interrupts
-                else if (|(int'(Traps)))
-                begin:Exception_Handling
-                    PutInterruptPending();
-                    HandleException();
-                end:Exception_Handling
-                else if(mret)
-                begin:Return_From_Trap
-                    PutInterruptPending();
-                    HandleReturn();
-                    if(CsrFile[mstatus][`MPIE])
-                    begin:Delete_Pending
-                        if(CsrFile[mcause] == {20'b0, EcallMOrMachineExternalInterrupt})
-                        begin
-                            CsrFile[mip][`ME_PIE] <= 1'b0;
-                        end
-                        else if(CsrFile[mcause] == {20'b0, BreakpointOrMachineSoftwareInterrupt})
-                        begin
-                            CsrFile[mip][`MS_PIE] <= 1'b0;
-                        end
-                        else if(CsrFile[mcause] == {20'b0, StoreAddressFaultOrMachineTimerInterrupt})
-                        begin
-                            CsrFile[mip][`MT_PIE] <= 1'b0;
-                        end
-                    end:Delete_Pending
-                end:Return_From_Trap
-                else if (CsrAccess && !Traps) 
-                begin:CSR_Access
-                    PutInterruptPending();
-                    CsrOut <= CsrFile[CsrIndex];
-                    TrapIsSet <= 1'b0;
-                    case(CsrOperation)   
-                        csrrw: 
-                        begin:CSR_RW
-                            UpdateCsr(CsrIn);
-                        end:CSR_RW
-                        
-                        csrrs: 
-                        begin:CSR_Set
-                            UpdateCsr(CsrIn | CsrFile[CsrIndex]);
-                        end:CSR_Set
-                        
-                        csrrc: 
-                        begin:CSR_Clear
-                            UpdateCsr(CsrIn &  ~CsrFile[CsrIndex]);
-                        end:CSR_Clear
-                        
-                        csrrwi: 
-                        begin:Write_Immediate
-                            UpdateCsr({27'b0, Rs});
-                        end:Write_Immediate
-                        
-                        csrrsi: 
-                        begin:Set_Immediate
-                            UpdateCsr(CsrFile[CsrIndex] | {27'b0, Rs});
-                        end:Set_Immediate
-                        
-                        csrrci: 
-                        begin:Clear_Immediate
-                            UpdateCsr(CsrFile[CsrIndex] & ~{27'b0, Rs});
-                        end:Clear_Immediate
-                    endcase
-                end:CSR_Access
-                else
-                begin:No_Operation
-                    PutInterruptPending();
-                    TrapIsSet <= 1'b0;
-                end:No_Operation
-            end:Not_interrupt
+            begin:No_Operation
+                CsrOut <= 'b0;
+                TrapIsSet <= 1'b0;
+            end:No_Operation
         end
     end:CSR_File
+
     assign RoundingMode = round_mode_t'(CsrFile[frm][2:0]);
 
 

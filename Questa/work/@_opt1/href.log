@@ -1,29 +1,23 @@
-BEGIN 3:flp_interface:fast__2:work
-    done :  3:flp_wr:fast__1:work
-    Result :  3:flp_wr:fast__1:work
-    round_mode :  3:flp_wr:fast__1:work
-    NaN :  3:flp_wr:fast__1:work
-    InA :  3:flp_wr:fast__1:work
-    MoveOperationOut :  3:flp_wr:fast__1:work
-    busy :  3:flp_wr:fast__1:work
-    InvalidDiv :  3:flp_wr:fast__1:work
-    RegWrite :  3:flp_wr:fast__1:work
-    Underflow :  3:flp_wr:fast__1:work
-    valid :  3:flp_wr:fast__1:work
-    RegWriteOut :  3:flp_wr:fast__1:work
-    MoveOperation :  3:flp_wr:fast__1:work
-    Zero :  3:flp_wr:fast__1:work
-    RdF :  3:flp_wr:fast__1:work
-    Overflow :  3:flp_wr:fast__1:work
-    rst :  3:flp_wr:fast__1:work
-    RdFOut :  3:flp_wr:fast__1:work
-    operation :  3:flp_wr:fast__1:work
-    Inf :  3:flp_wr:fast__1:work
-    InB :  3:flp_wr:fast__1:work
+BEGIN 3:csr_interface:fast__2:work
+    Address :  3:csr_wr:fast__1:work
+    TrapIsSet :  3:csr_wr:fast__1:work
+    CsrIn :  3:csr_wr:fast__1:work
+    CsrOperation :  3:csr_wr:fast__1:work
+    ExternalInterrupt :  3:csr_wr:fast__1:work
+    Traps :  3:csr_wr:fast__1:work
+    CsrIndex :  3:csr_wr:fast__1:work
+    PC :  3:csr_wr:fast__1:work
+    CsrOut :  3:csr_wr:fast__1:work
+    CsrAccess :  3:csr_wr:fast__1:work
+    rst :  3:csr_wr:fast__1:work
+    RoundingMode :  3:csr_wr:fast__1:work
+    TimerInterrupt :  3:csr_wr:fast__1:work
+    Rs :  3:csr_wr:fast__1:work
+    SoftwareInterrupt :  3:csr_wr:fast__1:work
+    mret :  3:csr_wr:fast__1:work
+    CsrOutPC :  3:csr_wr:fast__1:work
 END 
 BEGIN 3:execute_interface:fast__2:work
-    RdM :  1:execute_top:fast:work
-    PCPlus4E :  1:execute_top:fast:work
     Rs2FE :  1:execute_top:fast:work
     ExternalInterrupt :  1:execute_top:fast:work
     RD2E :  1:execute_top:fast:work
@@ -88,4 +82,29 @@ BEGIN 3:execute_interface:fast__2:work
     PCPlus4M :  1:execute_top:fast:work
     BranchE :  1:execute_top:fast:work
     UnderflowM :  1:execute_top:fast:work
+    RdM :  1:execute_top:fast:work
+    PCPlus4E :  1:execute_top:fast:work
+END 
+BEGIN 3:flp_interface:fast__2:work
+    operation :  3:flp_wr:fast__1:work
+    Inf :  3:flp_wr:fast__1:work
+    InB :  3:flp_wr:fast__1:work
+    done :  3:flp_wr:fast__1:work
+    Result :  3:flp_wr:fast__1:work
+    round_mode :  3:flp_wr:fast__1:work
+    NaN :  3:flp_wr:fast__1:work
+    InA :  3:flp_wr:fast__1:work
+    MoveOperationOut :  3:flp_wr:fast__1:work
+    busy :  3:flp_wr:fast__1:work
+    InvalidDiv :  3:flp_wr:fast__1:work
+    RegWrite :  3:flp_wr:fast__1:work
+    Underflow :  3:flp_wr:fast__1:work
+    valid :  3:flp_wr:fast__1:work
+    RegWriteOut :  3:flp_wr:fast__1:work
+    MoveOperation :  3:flp_wr:fast__1:work
+    Zero :  3:flp_wr:fast__1:work
+    RdF :  3:flp_wr:fast__1:work
+    Overflow :  3:flp_wr:fast__1:work
+    rst :  3:flp_wr:fast__1:work
+    RdFOut :  3:flp_wr:fast__1:work
 END 
