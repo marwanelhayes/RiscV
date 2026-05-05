@@ -2,6 +2,21 @@
 // flp_mul.sv
 // -----------------------------------------------------------------------------
 // Floating-point multiplication unit for RISC-V FPU.
+//
+// Responsibilities:
+//   - Perform IEEE 754 single/double precision multiplication
+//   - Handle special cases (NaN, infinity, zero, denormal)
+//   - Support all rounding modes (RNE, RTZ, RDN, RUP, RMM, DYN)
+//   - Multi-stage pipelined multiplication with configurable latency
+//   - Provide busy/done handshake for flow control
+//
+// Parameters:
+//   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
+//   - WIDTH: Total bit width (32 or 64)
+//   - EXP_BITS: Exponent bits (8 for single, 11 for double)
+//   - FRAC_BITS: Fraction bits (23 for single, 52 for double)
+//   - BIAS: Exponent bias (127 for single, 1023 for double)
+//   - STAGES: Number of pipeline stages (default 4)
 // =============================================================================
 import shared_pkg::*;
 
@@ -14,14 +29,21 @@ module flp_mul
     parameter int   BIAS        = (PRECISION == SINGLE) ? 127: 1023,
     parameter int   STAGES      = 4
 )(
-    input  logic [WIDTH-1:0] a,
-    input  logic [WIDTH-1:0] b,
-    input  logic clk,
-    input  logic rst,
-    input  logic valid,
-    input  round_mode_t round_mode,
-    output logic busy,
-    output logic done,
+    // ─── Operand inputs ───────────────────────────────────────────────────────
+    input  logic [WIDTH-1:0] a,            // First floating-point operand
+    input  logic [WIDTH-1:0] b,            // Second floating-point operand
+
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input  logic clk,                       // Clock signal
+    input  logic rst,                       // Asynchronous reset
+
+    // ─── Control signals ───────────────────────────────────────────────────
+    input  logic valid,                     // Operation valid (start)
+    input  round_mode_t round_mode,          // Rounding mode selection
+
+    // ─── Status outputs ───────────────────────────────────────────────────
+    output logic busy,                       // Operation in progress
+    output logic done,                       // Operation complete
     output logic Overflow,
     output logic Underflow,
     output logic NaN,

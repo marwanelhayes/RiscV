@@ -2,6 +2,20 @@
 // flp_add_sub.sv
 // -----------------------------------------------------------------------------
 // Floating-point addition/subtraction unit for RISC-V FPU.
+//
+// Responsibilities:
+//   - Perform IEEE 754 single/double precision addition
+//   - Perform IEEE 754 single/double precision subtraction
+//   - Handle special cases (NaN, infinity, zero, denormal)
+//   - Support all rounding modes (RNE, RTZ, RDN, RUP, RMM, DYN)
+//   - Multi-cycle pipelined operation with busy/done handshake
+//
+// Parameters:
+//   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
+//   - WIDTH: Total bit width (32 or 64)
+//   - EXP_BITS: Exponent bits (8 for single, 11 for double)
+//   - FRAC_BITS: Fraction bits (23 for single, 52 for double)
+//   - BIAS: Exponent bias (127 for single, 1023 for double)
 // =============================================================================
 import shared_pkg::*;
 
@@ -13,21 +27,30 @@ module flp_add_sub
     parameter int   FRAC_BITS   = (PRECISION == SINGLE) ? 23 : 52,
     parameter int   BIAS        = (PRECISION == SINGLE) ? 127: 1023
 )(
-    input   logic [WIDTH-1:0] a,
-    input   logic [WIDTH-1:0] b,
-    input   logic clk,
-    input   logic rst,
-    input   logic valid,
-    input   mode_t mode,
-    input   round_mode_t round_mode,
-    output  logic busy,
-    output  logic done,
-    output  logic Overflow,
-    output  logic Underflow,
-    output  logic NaN,
-    output  logic Inf,
-    output  logic Zero,
-    output  logic [WIDTH-1:0] result
+    // ─── Operand inputs ───────────────────────────────────────────────────────
+    input   logic [WIDTH-1:0] a,           // First floating-point operand
+    input   logic [WIDTH-1:0] b,           // Second floating-point operand
+
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input   logic clk,                     // Clock signal
+    input   logic rst,                     // Asynchronous reset
+
+    // ─── Control signals ───────────────────────────────────────────────────
+    input   logic valid,                   // Operation valid (start)
+    input   mode_t mode,                   // ADD (0) or SUB (1) mode
+    input   round_mode_t round_mode,       // Rounding mode selection
+
+    // ─── Status outputs ───────────────────────────────────────────────────
+    output  logic busy,                    // Operation in progress
+    output  logic done,                    // Operation complete
+    output  logic Overflow,                // Result overflowed
+    output  logic Underflow,               // Result underflowed
+    output  logic NaN,                     // Result is NaN
+    output  logic Inf,                     // Result is infinity
+    output  logic Zero,                    // Result is zero
+
+    // ─── Result output ─────────────────────────────────────────────────────
+    output  logic [WIDTH-1:0] result        // Floating-point result
 );
 
     logic [WIDTH-1:0] a_reg, a_next;

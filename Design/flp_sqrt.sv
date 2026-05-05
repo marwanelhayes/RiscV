@@ -2,6 +2,22 @@
 // flp_sqrt.sv
 // -----------------------------------------------------------------------------
 // Floating-point square root unit for RISC-V FPU.
+//
+// Responsibilities:
+//   - Perform IEEE 754 single/double precision square root
+//   - Handle special cases (NaN, infinity, zero, negative input)
+//   - Support all rounding modes (RNE, RTZ, RDN, RUP, RMM, DYN)
+//   - Multi-cycle iterative square root using Newton-Raphson method
+//   - Provide busy/done handshake for flow control
+//   - Interface with external multiplier for iterations
+//
+// Parameters:
+//   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
+//   - WIDTH: Total bit width (32 or 64)
+//   - EXP_BITS: Exponent bits (8 for single, 11 for double)
+//   - FRAC_BITS: Fraction bits (23 for single, 52 for double)
+//   - BIAS: Exponent bias (127 for single, 1023 for double)
+//   - STAGES: Number of iteration stages (default 4)
 // =============================================================================
 import shared_pkg::*;
 
@@ -14,15 +30,20 @@ module flp_sqrt
     parameter int   BIAS        = (PRECISION == SINGLE) ? 127: 1023,
     parameter int   STAGES      = 4
 )(
-    input   logic clk,
-    input   logic rst,
-    input   logic valid,
-    input   logic [WIDTH-1:0] a,
-    output  logic [WIDTH-1:0] mul_a,
-    output  logic [WIDTH-1:0] mul_b,
-    output  logic mul_valid,
-    input   logic [WIDTH-1:0] mul_result,
-    input   logic mul_done,
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input   logic clk,                       // Clock signal
+    input   logic rst,                       // Asynchronous reset
+
+    // ─── Control and operand inputs ─────────────────────────────────────────
+    input   logic valid,                     // Operation valid (start)
+    input   logic [WIDTH-1:0] a,             // Input operand (radicand)
+
+    // ─── Multiplier interface (for Newton-Raphson iterations) ──────────────
+    output  logic [WIDTH-1:0] mul_a,         // Multiplier operand A
+    output  logic [WIDTH-1:0] mul_b,         // Multiplier operand B
+    output  logic mul_valid,                 // Multiplier valid signal
+    input   logic [WIDTH-1:0] mul_result,    // Multiplier result
+    input   logic mul_done,                  // Multiplier done signal
     output  logic [WIDTH-1:0] add_sub_a,
     output  logic [WIDTH-1:0] add_sub_b,
     output  logic add_sub_valid,

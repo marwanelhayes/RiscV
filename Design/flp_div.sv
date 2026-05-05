@@ -2,6 +2,22 @@
 // flp_div.sv
 // -----------------------------------------------------------------------------
 // Floating-point division unit for RISC-V FPU.
+//
+// Responsibilities:
+//   - Perform IEEE 754 single/double precision division
+//   - Handle special cases (NaN, infinity, zero, division by zero)
+//   - Support all rounding modes (RNE, RTZ, RDN, RUP, RMM, DYN)
+//   - Multi-cycle iterative division with configurable stages
+//   - Provide busy/done handshake for flow control
+//
+// Parameters:
+//   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
+//   - WIDTH: Total bit width (32 or 64)
+//   - EXP_BITS: Exponent bits (8 for single, 11 for double)
+//   - FRAC_BITS: Fraction bits (23 for single, 52 for double)
+//   - BIAS: Exponent bias (127 for single, 1023 for double)
+//   - EXTRA: Extra bits for precision (3 for single, 6 for double)
+//   - STAGES: Number of division iterations (default 4)
 // =============================================================================
 import shared_pkg::*;
 
@@ -15,13 +31,20 @@ module flp_div
     parameter int   EXTRA       = (PRECISION == SINGLE) ? 3 : 6,
     parameter int   STAGES      = 4
 )(
-    input  logic [WIDTH-1:0] a,
-    input  logic [WIDTH-1:0] b,
-    input  logic clk,
-    input  logic rst,
-    input  logic valid,
-    input  round_mode_t round_mode,
-    output logic [WIDTH-1:0] result,
+    // ─── Operand inputs ───────────────────────────────────────────────────────
+    input  logic [WIDTH-1:0] a,            // Dividend (numerator)
+    input  logic [WIDTH-1:0] b,            // Divisor (denominator)
+
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input  logic clk,                       // Clock signal
+    input  logic rst,                       // Asynchronous reset
+
+    // ─── Control signals ───────────────────────────────────────────────────
+    input  logic valid,                     // Operation valid (start)
+    input  round_mode_t round_mode,          // Rounding mode selection
+
+    // ─── Result output ─────────────────────────────────────────────────────
+    output logic [WIDTH-1:0] result,        // Floating-point quotient
     output logic busy,
     output logic done,
     output logic Overflow,

@@ -2,6 +2,23 @@
 // risc_fpu.sv
 // -----------------------------------------------------------------------------
 // Floating-Point Unit (FPU) for RISC-V processor.
+//
+// Responsibilities:
+//   - Execute all RV32F floating-point instructions
+//   - Dispatch operations to appropriate functional units
+//   - Handle move operations between GPR and FPR
+//   - Manage multi-cycle operations with busy/done handshake
+//   - Generate status flags (overflow, underflow, NaN, infinity, zero)
+//
+// Instantiates:
+//   - flp_add_sub: Addition and subtraction unit
+//   - flp_mul: Multiplication unit
+//   - flp_div: Division unit
+//   - flp_sqrt: Square root unit
+//
+// Parameters:
+//   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
+//   - STAGES: Number of pipeline stages for FPU operations
 // =============================================================================
 import shared_pkg::*;
 
@@ -9,24 +26,35 @@ module risc_fpu #(
     parameter flp_t PRECISION   = SINGLE,
     parameter int   STAGES      = 4
 )(
-    input  logic clk,
-    input  logic rst,
-    input  logic valid,
-    input  logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InA, InB,
-    input  fpr_t RdF,
-    input  logic RegWrite,
-    input  round_mode_t round_mode,
-    input  fpu_operation_t operation,
-    input  move_operation_t MoveOperation,
-    output logic busy,
-    output logic done,
-    output logic Overflow, Underflow, NaN, Inf, Zero,InvalidDiv,
-    output logic [ (PRECISION == SINGLE) ? 31 : 63 :0] Result,
-    output fpr_t RdFOut,
-    output logic RegWriteOut,
-    output move_operation_t MoveOperationOut
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input  logic clk,                       // Clock signal
+    input  logic rst,                       // Asynchronous reset
+
+    // ─── Operand inputs ───────────────────────────────────────────────────────
+    input  logic valid,                      // Operation valid signal
+    input  logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InA,  // Operand A
+    input  logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InB,  // Operand B
+    input  fpr_t RdF,                       // Destination FPR index
+
+    // ─── Control inputs ───────────────────────────────────────────────────────
+    input  logic RegWrite,                  // FPR write enable
+    input  round_mode_t round_mode,         // Rounding mode
+    input  fpu_operation_t operation,       // FPU operation type
+    input  move_operation_t MoveOperation,  // GPR/FPR move type
+
+    // ─── Status outputs ─────────────────────────────────────────────────────
+    output logic busy,                       // FPU busy flag
+    output logic done,                       // FPU done flag
+    output logic Overflow, Underflow, NaN, Inf, Zero, InvalidDiv,  // Status flags
+
+    // ─── Result outputs ─────────────────────────────────────────────────────
+    output logic [ (PRECISION == SINGLE) ? 31 : 63 :0] Result,  // Result
+    output fpr_t RdFOut,                    // Destination FPR index (output)
+    output logic RegWriteOut,               // FPR write enable (output)
+    output move_operation_t MoveOperationOut // Move operation (output)
 );
 
+    // ─── Internal wires – operand routing ──────────────────────────────────
     logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InAddSubA, InAddSubB;
     logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InMulA, InMulB;
     logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InDivA, InDivB;
