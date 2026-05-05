@@ -1,0 +1,1910 @@
+#-----------------------------------------------------------
+# Vivado v2018.2 (64-bit)
+# SW Build 2258646 on Thu Jun 14 20:03:12 MDT 2018
+# IP Build 2256618 on Thu Jun 14 22:10:49 MDT 2018
+# Start of session at: Thu Mar 19 11:45:40 2026
+# Process ID: 15424
+# Current directory: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1
+# Command line: vivado.exe -log riscv_processor.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source riscv_processor.tcl
+# Log file: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1/riscv_processor.vds
+# Journal file: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1\vivado.jou
+#-----------------------------------------------------------
+source riscv_processor.tcl -notrace
+Command: synth_design -top riscv_processor -part xc7vx485tffg1157-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7vx485t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7vx485t'
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 26600 
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 443.410 ; gain = 98.891
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'riscv_processor' [C:/Ain_shams/RiscV/Design/riscv_processor.sv:3]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6157] synthesizing module 'fetch_stage' [C:/Ain_shams/RiscV/Design/fetch_stage.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6157] synthesizing module 'pc_adder' [C:/Ain_shams/RiscV/Design/pc_adder.sv:1]
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'pc_adder' (1#1) [C:/Ain_shams/RiscV/Design/pc_adder.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'risc_instruction_memory' [C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000001000000 
+INFO: [Synth 8-3876] $readmem data file 'C:/Ain_shams/RiscV/Python/binary1.txt' is read successfully [C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv:20]
+INFO: [Synth 8-6155] done synthesizing module 'risc_instruction_memory' (2#1) [C:/Ain_shams/RiscV/Design/risc_instruction_memory.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'fetch_stage' (3#1) [C:/Ain_shams/RiscV/Design/fetch_stage.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'decode_stage' [C:/Ain_shams/RiscV/Design/decode_stage.sv:3]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-6157] synthesizing module 'risc_control_unit' [C:/Ain_shams/RiscV/Design/risc_control_unit.sv:2]
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-6157] synthesizing module 'opcode_decoder' [C:/Ain_shams/RiscV/Design/opcode_decoder.sv:2]
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/opcode_decoder.sv:40]
+INFO: [Synth 8-6155] done synthesizing module 'opcode_decoder' (4#1) [C:/Ain_shams/RiscV/Design/opcode_decoder.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'alu_decoder' [C:/Ain_shams/RiscV/Design/alu_decoder.sv:2]
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/alu_decoder.sv:35]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/alu_decoder.sv:60]
+INFO: [Synth 8-6155] done synthesizing module 'alu_decoder' (5#1) [C:/Ain_shams/RiscV/Design/alu_decoder.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'fpu_decoder' [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:25]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:74]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:91]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:106]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:115]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:130]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:148]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:47]
+INFO: [Synth 8-6155] done synthesizing module 'fpu_decoder' (6#1) [C:/Ain_shams/RiscV/Design/fpu_decoder.sv:25]
+INFO: [Synth 8-6155] done synthesizing module 'risc_control_unit' (7#1) [C:/Ain_shams/RiscV/Design/risc_control_unit.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'risc_reg_file' [C:/Ain_shams/RiscV/Design/risc_reg_file.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter WIDTH_MEM bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6157] synthesizing module 'risc_mem' [C:/Ain_shams/RiscV/Design/risc_mem.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+INFO: [Synth 8-6155] done synthesizing module 'risc_mem' (8#1) [C:/Ain_shams/RiscV/Design/risc_mem.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'risc_reg_file' (9#1) [C:/Ain_shams/RiscV/Design/risc_reg_file.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'fp_reg_file' [C:/Ain_shams/RiscV/Design/fp_reg_file.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter DEPTH bound to: 32'sb00000000000000000000000100000000 
+INFO: [Synth 8-6155] done synthesizing module 'fp_reg_file' (10#1) [C:/Ain_shams/RiscV/Design/fp_reg_file.sv:2]
+WARNING: [Synth 8-3936] Found unconnected internal register 'PCBranchD_reg' and it is trimmed from '32' to '8' bits. [C:/Ain_shams/RiscV/Design/decode_stage.sv:290]
+INFO: [Synth 8-6155] done synthesizing module 'decode_stage' (11#1) [C:/Ain_shams/RiscV/Design/decode_stage.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'execute_stage' [C:/Ain_shams/RiscV/Design/execute_stage.sv:3]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter ALU_SUB_CONTROL_WIDTH bound to: 32'sb00000000000000000000000000000010 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6157] synthesizing module 'risc_alu' [C:/Ain_shams/RiscV/Design/risc_alu.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter LOG_WIDTH bound to: 32'sb00000000000000000000000000000101 
+INFO: [Synth 8-6157] synthesizing module 'wallace_tree' [C:/Ain_shams/RiscV/Design/wallace_tree.sv:2]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+INFO: [Synth 8-6155] done synthesizing module 'wallace_tree' (12#1) [C:/Ain_shams/RiscV/Design/wallace_tree.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'non_restoring_divider' [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:1]
+	Parameter WIDTH bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'non_restoring_divider' (13#1) [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:1]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_alu.sv:64]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_alu.sv:99]
+INFO: [Synth 8-6155] done synthesizing module 'risc_alu' (14#1) [C:/Ain_shams/RiscV/Design/risc_alu.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'risc_fpu' [C:/Ain_shams/RiscV/Design/risc_fpu.sv:2]
+	Parameter PRECISION bound to: 1'b0 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter EXP_BITS bound to: 32'sb00000000000000000000000000001000 
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter BIAS bound to: 32'sb00000000000000000000000001111111 
+	Parameter WIDTHBITS bound to: 32'sb00000000000000000000000000000101 
+WARNING: [Synth 8-324] index 24 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 25 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 26 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 27 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 28 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 29 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 30 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 31 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 32 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 33 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 34 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 35 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 36 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 37 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 38 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 39 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 40 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 41 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 42 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 43 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 44 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 45 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 46 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 47 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 48 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 49 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 50 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 51 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 52 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 53 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 54 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 55 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 56 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 57 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 58 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 59 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 60 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 61 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 62 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 63 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 64 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 65 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 66 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 67 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 68 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 69 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 70 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 71 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 72 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 73 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 74 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 75 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 76 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 77 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 78 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 79 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 80 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 81 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 82 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 83 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 84 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 85 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 86 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 87 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 88 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 89 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 90 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 91 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 92 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 93 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 94 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 95 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 96 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 97 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 98 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 99 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 100 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 101 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 102 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 103 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 104 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 105 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 106 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 107 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 108 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 109 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 110 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 111 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 112 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 113 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 114 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 115 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 116 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 117 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 118 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 119 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 120 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 121 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 122 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+WARNING: [Synth 8-324] index 123 out of range [C:/Ain_shams/RiscV/Design/risc_fpu.sv:178]
+INFO: [Common 17-14] Message 'Synth 8-324' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_fpu.sv:283]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_fpu.sv:283]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_fpu.sv:411]
+INFO: [Synth 8-6157] synthesizing module 'flp_add_sub' [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:3]
+	Parameter PRECISION bound to: 1'b0 
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter EXP_BITS bound to: 32'sb00000000000000000000000000001000 
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter BIAS bound to: 32'sb00000000000000000000000001111111 
+WARNING: [Synth 8-6014] Unused sequential element AIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:203]
+WARNING: [Synth 8-6014] Unused sequential element BIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:204]
+WARNING: [Synth 8-6014] Unused sequential element AIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:205]
+WARNING: [Synth 8-6014] Unused sequential element BIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:206]
+WARNING: [Synth 8-6014] Unused sequential element AIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:207]
+WARNING: [Synth 8-6014] Unused sequential element BIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:208]
+WARNING: [Synth 8-6014] Unused sequential element effective_sub_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:219]
+INFO: [Synth 8-6155] done synthesizing module 'flp_add_sub' (15#1) [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'flp_mul' [C:/Ain_shams/RiscV/Design/flp_mul.sv:3]
+	Parameter PRECISION bound to: 1'b0 
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter EXP_BITS bound to: 32'sb00000000000000000000000000001000 
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter BIAS bound to: 32'sb00000000000000000000000001111111 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6157] synthesizing module 'booth_multiplier_seq' [C:/Ain_shams/RiscV/Design/flp_mul.sv:438]
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+	Parameter TOTAL_ITERS bound to: 32'sb00000000000000000000000000011001 
+	Parameter ITER_BITS bound to: 32'sb00000000000000000000000000000101 
+	Parameter ITERS_PER_CYCLE bound to: 32'sb00000000000000000000000000000111 
+INFO: [Synth 8-6155] done synthesizing module 'booth_multiplier_seq' (16#1) [C:/Ain_shams/RiscV/Design/flp_mul.sv:438]
+WARNING: [Synth 8-6014] Unused sequential element SignA_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:148]
+WARNING: [Synth 8-6014] Unused sequential element SignB_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:149]
+WARNING: [Synth 8-6014] Unused sequential element AIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:151]
+WARNING: [Synth 8-6014] Unused sequential element BIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:152]
+WARNING: [Synth 8-6014] Unused sequential element AIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:153]
+WARNING: [Synth 8-6014] Unused sequential element BIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:154]
+WARNING: [Synth 8-6014] Unused sequential element AIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:155]
+WARNING: [Synth 8-6014] Unused sequential element BIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:156]
+WARNING: [Synth 8-6014] Unused sequential element AIsSub_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:157]
+WARNING: [Synth 8-6014] Unused sequential element BIsSub_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:158]
+WARNING: [Synth 8-6014] Unused sequential element ExpA_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:159]
+WARNING: [Synth 8-6014] Unused sequential element ExpB_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_mul.sv:160]
+INFO: [Synth 8-6155] done synthesizing module 'flp_mul' (17#1) [C:/Ain_shams/RiscV/Design/flp_mul.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'flp_div' [C:/Ain_shams/RiscV/Design/flp_div.sv:3]
+	Parameter PRECISION bound to: 1'b0 
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter EXP_BITS bound to: 32'sb00000000000000000000000000001000 
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter BIAS bound to: 32'sb00000000000000000000000001111111 
+	Parameter EXTRA bound to: 32'sb00000000000000000000000000000011 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6157] synthesizing module 'lzc_wr' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:1]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000011000 
+	Parameter PWR2_W bound to: 32'sb00000000000000000000000000100000 
+INFO: [Synth 8-6157] synthesizing module 'lzc' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter COUNT_WIDTH bound to: 32'sb00000000000000000000000000000101 
+INFO: [Synth 8-6157] synthesizing module 'lzc__parameterized0' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000010000 
+	Parameter COUNT_WIDTH bound to: 32'sb00000000000000000000000000000100 
+INFO: [Synth 8-6157] synthesizing module 'lzc__parameterized1' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter COUNT_WIDTH bound to: 32'sb00000000000000000000000000000011 
+INFO: [Synth 8-6157] synthesizing module 'lzc__parameterized2' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000000100 
+	Parameter COUNT_WIDTH bound to: 32'sb00000000000000000000000000000010 
+INFO: [Synth 8-6157] synthesizing module 'lzc__parameterized3' [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000000010 
+	Parameter COUNT_WIDTH bound to: 32'sb00000000000000000000000000000001 
+INFO: [Synth 8-6155] done synthesizing module 'lzc__parameterized3' (18#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+INFO: [Synth 8-6155] done synthesizing module 'lzc__parameterized2' (18#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+INFO: [Synth 8-6155] done synthesizing module 'lzc__parameterized1' (18#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+INFO: [Synth 8-6155] done synthesizing module 'lzc__parameterized0' (18#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+INFO: [Synth 8-6155] done synthesizing module 'lzc' (18#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:51]
+INFO: [Synth 8-6155] done synthesizing module 'lzc_wr' (19#1) [C:/Ain_shams/RiscV/Design/lzc_wr.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'non_restoring_divider_seq' [C:/Ain_shams/RiscV/Design/flp_div.sv:479]
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter EXTRA bound to: 32'sb00000000000000000000000000000011 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+	Parameter TOTAL_ITERS bound to: 32'sb00000000000000000000000000011011 
+	Parameter ITER_BITS bound to: 32'sb00000000000000000000000000000101 
+	Parameter ITERS_PER_CYCLE bound to: 32'sb00000000000000000000000000000111 
+WARNING: [Synth 8-6014] Unused sequential element dividend_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:521]
+WARNING: [Synth 8-6014] Unused sequential element divisor_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:522]
+INFO: [Synth 8-6155] done synthesizing module 'non_restoring_divider_seq' (20#1) [C:/Ain_shams/RiscV/Design/flp_div.sv:479]
+WARNING: [Synth 8-6014] Unused sequential element SignA_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:153]
+WARNING: [Synth 8-6014] Unused sequential element SignB_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:154]
+WARNING: [Synth 8-6014] Unused sequential element AIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:156]
+WARNING: [Synth 8-6014] Unused sequential element BIsZero_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:157]
+WARNING: [Synth 8-6014] Unused sequential element AIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:158]
+WARNING: [Synth 8-6014] Unused sequential element BIsInf_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:159]
+WARNING: [Synth 8-6014] Unused sequential element AIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:160]
+WARNING: [Synth 8-6014] Unused sequential element BIsNan_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:161]
+WARNING: [Synth 8-6014] Unused sequential element AIsSub_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:162]
+WARNING: [Synth 8-6014] Unused sequential element BIsSub_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:163]
+WARNING: [Synth 8-6014] Unused sequential element ExpA_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:164]
+WARNING: [Synth 8-6014] Unused sequential element ExpB_reg_reg was removed.  [C:/Ain_shams/RiscV/Design/flp_div.sv:165]
+INFO: [Synth 8-6155] done synthesizing module 'flp_div' (21#1) [C:/Ain_shams/RiscV/Design/flp_div.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'flp_sqrt' [C:/Ain_shams/RiscV/Design/flp_sqrt.sv:3]
+	Parameter PRECISION bound to: 1'b0 
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter EXP_BITS bound to: 32'sb00000000000000000000000000001000 
+	Parameter FRAC_BITS bound to: 32'sb00000000000000000000000000010111 
+	Parameter BIAS bound to: 32'sb00000000000000000000000001111111 
+	Parameter STAGES bound to: 32'sb00000000000000000000000000000100 
+	Parameter MAGIC bound to: 32'b01011111001101110101100111011111 
+	Parameter THREE_HALFS bound to: 1069547520 - type: integer 
+INFO: [Synth 8-226] default block is never used [C:/Ain_shams/RiscV/Design/flp_sqrt.sv:142]
+INFO: [Synth 8-6155] done synthesizing module 'flp_sqrt' (22#1) [C:/Ain_shams/RiscV/Design/flp_sqrt.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'risc_fpu' (23#1) [C:/Ain_shams/RiscV/Design/risc_fpu.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'risc_mux4' [C:/Ain_shams/RiscV/Design/risc_mux4.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+INFO: [Synth 8-6155] done synthesizing module 'risc_mux4' (24#1) [C:/Ain_shams/RiscV/Design/risc_mux4.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'risc_mux2' [C:/Ain_shams/RiscV/Design/risc_mux2.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+INFO: [Synth 8-6155] done synthesizing module 'risc_mux2' (25#1) [C:/Ain_shams/RiscV/Design/risc_mux2.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'risc_mux3' [C:/Ain_shams/RiscV/Design/risc_mux3.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+INFO: [Synth 8-6155] done synthesizing module 'risc_mux3' (26#1) [C:/Ain_shams/RiscV/Design/risc_mux3.sv:1]
+INFO: [Synth 8-6157] synthesizing module 'csr_file' [C:/Ain_shams/RiscV/Design/csr_file.sv:4]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter AlignMask bound to: -4 - type: integer 
+INFO: [Synth 8-5534] Detected attribute (* ram_style = "block" *) [C:/Ain_shams/RiscV/Design/csr_file.sv:31]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/csr_file.sv:229]
+WARNING: [Synth 8-5788] Register CsrFile_reg[0] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[4] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[5] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[6] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[7] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[8] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[9] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[10] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[11] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[12] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[13] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[14] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[15] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[16] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[17] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[18] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[19] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[20] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[21] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[22] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[23] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[24] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[25] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[26] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[27] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[28] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[29] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[30] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[31] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[32] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[33] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[34] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[35] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[36] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[37] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[38] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[39] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[40] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[41] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[42] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[43] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[44] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[45] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[46] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[47] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[48] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[49] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[50] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[51] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[52] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[53] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[54] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[55] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[56] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[57] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[58] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[59] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[60] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[61] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[62] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[63] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[64] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[65] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[66] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[67] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[68] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[69] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[70] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[71] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[72] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[73] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[74] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[75] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[76] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[77] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[78] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[79] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[80] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[81] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[82] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[83] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[84] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[85] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[86] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[87] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[88] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[89] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[90] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[91] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[92] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[93] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[94] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[95] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[96] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[97] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[98] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[99] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[100] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[101] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+WARNING: [Synth 8-5788] Register CsrFile_reg[102] in module csr_file is has both Set and reset with same priority. This may cause simulation mismatches. Consider rewriting code  [C:/Ain_shams/RiscV/Design/csr_file.sv:46]
+INFO: [Common 17-14] Message 'Synth 8-5788' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-6155] done synthesizing module 'csr_file' (27#1) [C:/Ain_shams/RiscV/Design/csr_file.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'execute_stage' (28#1) [C:/Ain_shams/RiscV/Design/execute_stage.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'memory_stage' [C:/Ain_shams/RiscV/Design/memory_stage.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6157] synthesizing module 'risc_data_memory' [C:/Ain_shams/RiscV/Design/risc_data_memory.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter MEM_DATA_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6157] synthesizing module 'data_memory' [C:/Ain_shams/RiscV/Design/data_memory.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000001000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000000110 
+	Parameter DEPTH bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'data_memory' (29#1) [C:/Ain_shams/RiscV/Design/data_memory.sv:1]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_data_memory.sv:64]
+INFO: [Synth 8-155] case statement is not full and has no default [C:/Ain_shams/RiscV/Design/risc_data_memory.sv:141]
+INFO: [Synth 8-6155] done synthesizing module 'risc_data_memory' (30#1) [C:/Ain_shams/RiscV/Design/risc_data_memory.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'memory_stage' (31#1) [C:/Ain_shams/RiscV/Design/memory_stage.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'wb_stage' [C:/Ain_shams/RiscV/Design/wb_stage.sv:2]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000100000 
+	Parameter ADDR_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6157] synthesizing module 'risc_mux2__parameterized0' [C:/Ain_shams/RiscV/Design/risc_mux2.sv:1]
+	Parameter DATA_WIDTH bound to: 32'sb00000000000000000000000000001000 
+INFO: [Synth 8-6155] done synthesizing module 'risc_mux2__parameterized0' (31#1) [C:/Ain_shams/RiscV/Design/risc_mux2.sv:1]
+INFO: [Synth 8-6155] done synthesizing module 'wb_stage' (32#1) [C:/Ain_shams/RiscV/Design/wb_stage.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'hazard_unit' [C:/Ain_shams/RiscV/Design/hazard_unit.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'hazard_unit' (33#1) [C:/Ain_shams/RiscV/Design/hazard_unit.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'riscv_processor' (34#1) [C:/Ain_shams/RiscV/Design/riscv_processor.sv:3]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs1FE[4]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs1FE[3]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs1FE[2]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs1FE[1]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs1FE[0]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs2FE[4]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs2FE[3]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs2FE[2]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs2FE[1]
+WARNING: [Synth 8-3331] design execute_stage has unconnected port Rs2FE[0]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:14 ; elapsed = 00:00:16 . Memory (MB): peak = 875.496 ; gain = 530.977
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:15 ; elapsed = 00:00:17 . Memory (MB): peak = 875.496 ; gain = 530.977
+---------------------------------------------------------------------------------
+INFO: [Synth 8-5580] Multithreading enabled for synth_design using a maximum of 2 processes.
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7vx485tffg1157-1
+---------------------------------------------------------------------------------
+INFO: [Device 21-403] Loading part xc7vx485tffg1157-1
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:15 ; elapsed = 00:00:17 . Memory (MB): peak = 875.496 ; gain = 530.977
+---------------------------------------------------------------------------------
+INFO: [Synth 8-5546] ROM "ALUControl" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "Jump" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "Branch" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5587] ROM size for "Immediate" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5546] ROM "MemWrite" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "Selector" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5587] ROM size for "ALUSrc" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5544] ROM "CsrAccess" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "MMode" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "IllegaleInstruction" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "FPU" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "ALUControlD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPUControlD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPUControlD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPUControlD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPUControlD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "FPUControlD" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "FPUControlD" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "MoveOperationD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPURegWriteD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPURegWriteD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPURegWriteD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "FPURegWriteD" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "FPURegWriteD" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "Write" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "mem_reg[0]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[1]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[2]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[3]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[4]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[5]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[6]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[7]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[8]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[9]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[10]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[11]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[12]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[13]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[14]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[15]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[16]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[17]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[18]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[19]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[20]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[21]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[22]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[23]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[24]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[25]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[26]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[27]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[28]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[29]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[30]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[31]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[0]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[1]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[2]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[3]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[4]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[5]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[6]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[7]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[8]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[9]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[10]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[11]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[12]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[13]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[14]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[15]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[16]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[17]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[18]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[19]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[20]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[21]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[22]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[23]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[24]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[25]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[26]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[27]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[28]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[29]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[30]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[31]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-4471] merging register 'RdFE_reg[4:0]' into 'RdE_reg[4:0]' [C:/Ain_shams/RiscV/Design/decode_stage.sv:172]
+INFO: [Synth 8-4471] merging register 'RoundModeE_reg[2:0]' into 'funct3E_reg[2:0]' [C:/Ain_shams/RiscV/Design/decode_stage.sv:176]
+INFO: [Synth 8-4471] merging register 'Rs1FE_reg[4:0]' into 'Rs1E_reg[4:0]' [C:/Ain_shams/RiscV/Design/decode_stage.sv:179]
+INFO: [Synth 8-4471] merging register 'Rs2FE_reg[4:0]' into 'Rs2E_reg[4:0]' [C:/Ain_shams/RiscV/Design/decode_stage.sv:180]
+WARNING: [Synth 8-6014] Unused sequential element RdFE_reg was removed.  [C:/Ain_shams/RiscV/Design/decode_stage.sv:172]
+WARNING: [Synth 8-6014] Unused sequential element RoundModeE_reg was removed.  [C:/Ain_shams/RiscV/Design/decode_stage.sv:176]
+WARNING: [Synth 8-6014] Unused sequential element Rs1FE_reg was removed.  [C:/Ain_shams/RiscV/Design/decode_stage.sv:179]
+WARNING: [Synth 8-6014] Unused sequential element Rs2FE_reg was removed.  [C:/Ain_shams/RiscV/Design/decode_stage.sv:180]
+INFO: [Synth 8-5546] ROM "MRetD" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "p_1_in" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "MRetD" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "p_1_in" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/non_restoring_divider.sv:36]
+INFO: [Synth 8-5545] ROM "quotient" won't be mapped to RAM because address size (32) is larger than maximum supported(25)
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/risc_alu.sv:64]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_add_sub.sv:562]
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg_reg' in module 'flp_add_sub'
+INFO: [Synth 8-5546] ROM "Underflow_next" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "SignA_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "MantA_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Overflow_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_mul.sv:524]
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg_reg' in module 'flp_mul'
+INFO: [Synth 8-5544] ROM "SignRes_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-5818] HDL ADVISOR - The operator resource <adder> is shared. To prevent sharing consider applying a KEEP on the output of the operator [C:/Ain_shams/RiscV/Design/flp_div.sv:598]
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg_reg' in module 'flp_div'
+INFO: [Synth 8-5544] ROM "SignRes_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Overflow_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "SignRes_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "Overflow_next" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-802] inferred FSM for state register 'state_reg_reg' in module 'flp_sqrt'
+INFO: [Synth 8-5544] ROM "mul_valid" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "add_sub_valid" won't be mapped to Block RAM because address size (3) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "state_next" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "UseSqrt" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "UseDiv" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "FloatToInt" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "round_up_down0" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "TrapCause" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "TrapCause" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5544] ROM "CsrFile" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "mem_reg[0]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[1]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[2]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[3]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[4]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[5]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[6]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[7]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[8]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[9]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[10]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[11]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[12]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[13]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[14]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[15]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[16]" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-5546] ROM "mem_reg[17]" won't be mapped to RAM because it is too sparse
+INFO: [Common 17-14] Message 'Synth 8-5546' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-5544] ROM "ForwardFloatingAE" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+INFO: [Synth 8-5544] ROM "ForwardFloatingBE" won't be mapped to Block RAM because address size (1) smaller than threshold (5)
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                    INIT |                              000 |                              000
+                    IDLE |                              001 |                              001
+                   SPLIT |                              010 |                              010
+                   ALIGN |                              011 |                              011
+                 TRUESUB |                              100 |                              100
+                 TRUEADD |                              101 |                              111
+                    DONE |                              110 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg_reg' using encoding 'sequential' in module 'flp_add_sub'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                INIT_MUL |                              000 |                              000
+                IDLE_MUL |                              001 |                              001
+               SPLIT_MUL |                              010 |                              010
+                 MUL_MUL |                              011 |                              011
+               ROUND_MUL |                              100 |                              100
+                DONE_MUL |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg_reg' using encoding 'sequential' in module 'flp_mul'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                INIT_DIV |                              000 |                              000
+                IDLE_DIV |                              001 |                              001
+               SPLIT_DIV |                              010 |                              010
+                 DIV_DIV |                              011 |                              011
+               ROUND_DIV |                              100 |                              100
+                DONE_DIV |                              101 |                              101
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg_reg' using encoding 'sequential' in module 'flp_div'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+               SQRT_INIT |                              000 |                              000
+               SQRT_IDLE |                              001 |                              001
+               SQRT_MUL1 |                              010 |                              010
+               SQRT_MUL2 |                              011 |                              011
+            SQRT_ADD_SUB |                              100 |                              100
+               SQRT_MUL3 |                              101 |                              101
+               SQRT_MUL4 |                              110 |                              110
+               SQRT_DONE |                              111 |                              111
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'state_reg_reg' using encoding 'sequential' in module 'flp_sqrt'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:34 ; elapsed = 00:00:29 . Memory (MB): peak = 934.473 ; gain = 589.953
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+---------------------+------------+----------+
+|      |RTL Partition        |Replication |Instances |
++------+---------------------+------------+----------+
+|1     |execute_stage__GB0   |           1|     28229|
+|2     |execute_stage__GB1   |           1|     18198|
+|3     |execute_stage__GB2   |           1|     25030|
+|4     |riscv_processor__GC0 |           1|     20118|
++------+---------------------+------------+----------+
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     64 Bit       Adders := 2     
+	   3 Input     48 Bit       Adders := 7     
+	   3 Input     33 Bit       Adders := 33    
+	   2 Input     32 Bit       Adders := 14    
+	   3 Input     26 Bit       Adders := 7     
+	   2 Input     26 Bit       Adders := 1     
+	   2 Input     25 Bit       Adders := 5     
+	   3 Input     24 Bit       Adders := 1     
+	   2 Input     24 Bit       Adders := 1     
+	   2 Input     11 Bit       Adders := 1     
+	   2 Input     10 Bit       Adders := 8     
+	   3 Input     10 Bit       Adders := 1     
+	   3 Input      9 Bit       Adders := 2     
+	   2 Input      9 Bit       Adders := 4     
+	   2 Input      8 Bit       Adders := 22    
+	   3 Input      8 Bit       Adders := 11    
+	   2 Input      5 Bit       Adders := 19    
++---XORs : 
+	   3 Input     64 Bit         XORs := 30    
+	   2 Input     33 Bit         XORs := 1     
+	   2 Input      1 Bit         XORs := 5     
++---Registers : 
+	               48 Bit    Registers := 2     
+	               32 Bit    Registers := 335   
+	               27 Bit    Registers := 1     
+	               26 Bit    Registers := 2     
+	               24 Bit    Registers := 9     
+	               12 Bit    Registers := 1     
+	               10 Bit    Registers := 2     
+	                8 Bit    Registers := 394   
+	                5 Bit    Registers := 12    
+	                3 Bit    Registers := 7     
+	                2 Bit    Registers := 6     
+	                1 Bit    Registers := 70    
++---Muxes : 
+	   2 Input     64 Bit        Muxes := 2     
+	   3 Input     64 Bit        Muxes := 1     
+	   3 Input     48 Bit        Muxes := 14    
+	   2 Input     48 Bit        Muxes := 7     
+	   2 Input     46 Bit        Muxes := 1     
+	   2 Input     33 Bit        Muxes := 31    
+	  16 Input     33 Bit        Muxes := 1     
+	   2 Input     32 Bit        Muxes := 112   
+	   7 Input     32 Bit        Muxes := 6     
+	   6 Input     32 Bit        Muxes := 2     
+	   8 Input     32 Bit        Muxes := 3     
+	   5 Input     32 Bit        Muxes := 2     
+	  32 Input     32 Bit        Muxes := 1     
+	  21 Input     32 Bit        Muxes := 5     
+	   4 Input     32 Bit        Muxes := 15    
+	   3 Input     32 Bit        Muxes := 6     
+	   2 Input     27 Bit        Muxes := 12    
+	   2 Input     26 Bit        Muxes := 17    
+	   2 Input     25 Bit        Muxes := 3     
+	   2 Input     24 Bit        Muxes := 38    
+	   2 Input     23 Bit        Muxes := 7     
+	   2 Input     12 Bit        Muxes := 4     
+	   2 Input     10 Bit        Muxes := 7     
+	   6 Input     10 Bit        Muxes := 1     
+	   4 Input      9 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 13    
+	   4 Input      8 Bit        Muxes := 2     
+	   2 Input      7 Bit        Muxes := 1     
+	   5 Input      7 Bit        Muxes := 1     
+	   3 Input      6 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 40    
+	   3 Input      5 Bit        Muxes := 2     
+	  10 Input      5 Bit        Muxes := 1     
+	   4 Input      5 Bit        Muxes := 4     
+	  13 Input      5 Bit        Muxes := 1     
+	   2 Input      4 Bit        Muxes := 5     
+	  19 Input      4 Bit        Muxes := 1     
+	  13 Input      4 Bit        Muxes := 1     
+	   3 Input      4 Bit        Muxes := 1     
+	   8 Input      4 Bit        Muxes := 1     
+	  18 Input      3 Bit        Muxes := 1     
+	   6 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 22    
+	  13 Input      3 Bit        Muxes := 1     
+	   8 Input      3 Bit        Muxes := 1     
+	   7 Input      3 Bit        Muxes := 1     
+	   5 Input      3 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 22    
+	   7 Input      2 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 2     
+	  10 Input      2 Bit        Muxes := 2     
+	  13 Input      2 Bit        Muxes := 1     
+	   3 Input      2 Bit        Muxes := 2     
+	   2 Input      1 Bit        Muxes := 675   
+	   6 Input      1 Bit        Muxes := 38    
+	   7 Input      1 Bit        Muxes := 270   
+	   8 Input      1 Bit        Muxes := 16    
+	  21 Input      1 Bit        Muxes := 9     
+	   4 Input      1 Bit        Muxes := 6     
+	   5 Input      1 Bit        Muxes := 252   
+	  10 Input      1 Bit        Muxes := 10    
+	  13 Input      1 Bit        Muxes := 2     
+	   3 Input      1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+Hierarchical RTL Component report 
+Module flp_add_sub 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     25 Bit       Adders := 3     
+	   3 Input     24 Bit       Adders := 1     
+	   2 Input     10 Bit       Adders := 2     
+	   3 Input      9 Bit       Adders := 2     
+	   2 Input      8 Bit       Adders := 15    
+	   3 Input      8 Bit       Adders := 11    
+	   2 Input      5 Bit       Adders := 4     
++---Registers : 
+	               32 Bit    Registers := 3     
+	               24 Bit    Registers := 2     
+	                8 Bit    Registers := 3     
+	                3 Bit    Registers := 1     
+	                1 Bit    Registers := 13    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 15    
+	   7 Input     32 Bit        Muxes := 3     
+	   2 Input     25 Bit        Muxes := 2     
+	   2 Input     24 Bit        Muxes := 32    
+	   2 Input     23 Bit        Muxes := 4     
+	   2 Input      8 Bit        Muxes := 2     
+	  18 Input      3 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 41    
+	   6 Input      1 Bit        Muxes := 2     
+	   7 Input      1 Bit        Muxes := 13    
+Module booth_multiplier_seq 
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     48 Bit       Adders := 7     
+	   2 Input      5 Bit       Adders := 7     
++---Registers : 
+	               48 Bit    Registers := 2     
+	               24 Bit    Registers := 2     
+	                5 Bit    Registers := 1     
+	                1 Bit    Registers := 2     
++---Muxes : 
+	   3 Input     48 Bit        Muxes := 14    
+	   2 Input     48 Bit        Muxes := 7     
+	   2 Input      5 Bit        Muxes := 9     
+	   2 Input      1 Bit        Muxes := 4     
+Module flp_mul 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     25 Bit       Adders := 1     
+	   2 Input     10 Bit       Adders := 2     
+	   2 Input      9 Bit       Adders := 2     
+	   2 Input      8 Bit       Adders := 1     
++---XORs : 
+	   2 Input      1 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 3     
+	               24 Bit    Registers := 2     
+	               10 Bit    Registers := 1     
+	                3 Bit    Registers := 1     
+	                1 Bit    Registers := 7     
++---Muxes : 
+	   2 Input     46 Bit        Muxes := 1     
+	   2 Input     32 Bit        Muxes := 5     
+	   6 Input     32 Bit        Muxes := 1     
+	   2 Input     24 Bit        Muxes := 2     
+	   2 Input     23 Bit        Muxes := 2     
+	   2 Input     10 Bit        Muxes := 1     
+	   6 Input     10 Bit        Muxes := 1     
+	   6 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 3     
+	   2 Input      1 Bit        Muxes := 9     
+	   6 Input      1 Bit        Muxes := 15    
+Module lzc__parameterized2__15 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__14 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__7 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized2__13 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__12 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__6 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized0__3 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      4 Bit        Muxes := 1     
+Module lzc__parameterized2__11 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__10 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__5 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized2__9 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__8 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__4 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized0__2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      4 Bit        Muxes := 1     
+Module lzc__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      5 Bit        Muxes := 1     
+Module lzc_wr__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      5 Bit        Muxes := 1     
+Module lzc__parameterized2__7 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__6 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__3 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized2__5 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__4 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized0__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      4 Bit        Muxes := 1     
+Module lzc__parameterized2__3 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2__2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized2__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      2 Bit        Muxes := 1     
+Module lzc__parameterized1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      3 Bit        Muxes := 1     
+Module lzc__parameterized0 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      4 Bit        Muxes := 1     
+Module lzc 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      5 Bit        Muxes := 1     
+Module lzc_wr 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      5 Bit        Muxes := 1     
+Module non_restoring_divider_seq 
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     26 Bit       Adders := 7     
+	   2 Input     26 Bit       Adders := 1     
+	   2 Input      5 Bit       Adders := 7     
++---Registers : 
+	               27 Bit    Registers := 1     
+	               26 Bit    Registers := 2     
+	               24 Bit    Registers := 1     
+	                5 Bit    Registers := 1     
+	                1 Bit    Registers := 5     
++---Muxes : 
+	   2 Input     27 Bit        Muxes := 12    
+	   2 Input     26 Bit        Muxes := 17    
+	   2 Input     24 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 9     
+	   2 Input      1 Bit        Muxes := 4     
+Module flp_div 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     25 Bit       Adders := 1     
+	   2 Input     11 Bit       Adders := 1     
+	   2 Input     10 Bit       Adders := 4     
+	   3 Input     10 Bit       Adders := 1     
++---XORs : 
+	   2 Input      1 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 3     
+	               24 Bit    Registers := 2     
+	               10 Bit    Registers := 1     
+	                3 Bit    Registers := 1     
+	                1 Bit    Registers := 8     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 2     
+	   6 Input     32 Bit        Muxes := 1     
+	   2 Input     25 Bit        Muxes := 1     
+	   2 Input     24 Bit        Muxes := 3     
+	   2 Input     23 Bit        Muxes := 1     
+	   2 Input     10 Bit        Muxes := 6     
+	  13 Input      3 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 10    
+	   6 Input      1 Bit        Muxes := 21    
+Module flp_sqrt 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 1     
+	   2 Input      8 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 8     
+	                1 Bit    Registers := 3     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 3     
+	   8 Input     32 Bit        Muxes := 3     
+	   8 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 6     
+	   2 Input      1 Bit        Muxes := 4     
+	   8 Input      1 Bit        Muxes := 16    
+Module risc_fpu 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     32 Bit       Adders := 6     
+	   2 Input     24 Bit       Adders := 1     
+	   2 Input      9 Bit       Adders := 2     
+	   2 Input      8 Bit       Adders := 2     
+	   2 Input      5 Bit       Adders := 1     
++---XORs : 
+	   2 Input      1 Bit         XORs := 1     
++---Registers : 
+	               32 Bit    Registers := 3     
+	                5 Bit    Registers := 2     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 9     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 15    
+	   5 Input     32 Bit        Muxes := 2     
+	  32 Input     32 Bit        Muxes := 1     
+	  21 Input     32 Bit        Muxes := 5     
+	   2 Input      8 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 3     
+	   2 Input      3 Bit        Muxes := 1     
+	   7 Input      2 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 2     
+	   2 Input      1 Bit        Muxes := 38    
+	  21 Input      1 Bit        Muxes := 9     
+Module risc_mux3__1 
+Detailed RTL Component Info : 
++---Muxes : 
+	   4 Input     32 Bit        Muxes := 1     
+Module risc_mux3 
+Detailed RTL Component Info : 
++---Muxes : 
+	   4 Input     32 Bit        Muxes := 1     
+Module risc_mux2 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+Module wallace_tree 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input     64 Bit       Adders := 2     
+	   2 Input     32 Bit       Adders := 2     
++---XORs : 
+	   3 Input     64 Bit         XORs := 30    
+	   2 Input      1 Bit         XORs := 1     
++---Muxes : 
+	   2 Input     64 Bit        Muxes := 2     
+	   3 Input     64 Bit        Muxes := 1     
+	   4 Input     32 Bit        Muxes := 2     
+	   2 Input     32 Bit        Muxes := 2     
+Module non_restoring_divider 
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     33 Bit       Adders := 32    
+	   2 Input     32 Bit       Adders := 5     
++---XORs : 
+	   2 Input      1 Bit         XORs := 1     
++---Muxes : 
+	   2 Input     33 Bit        Muxes := 31    
+	   2 Input     32 Bit        Muxes := 13    
+Module risc_alu 
+Detailed RTL Component Info : 
++---Adders : 
+	   3 Input     33 Bit       Adders := 1     
++---XORs : 
+	   2 Input     33 Bit         XORs := 1     
++---Muxes : 
+	  16 Input     33 Bit        Muxes := 1     
+	  19 Input      4 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 1     
+Module csr_file 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      8 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 271   
+	                8 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 46    
+	   7 Input     32 Bit        Muxes := 3     
+	   4 Input     32 Bit        Muxes := 9     
+	   3 Input     32 Bit        Muxes := 6     
+	   2 Input      8 Bit        Muxes := 6     
+	   4 Input      8 Bit        Muxes := 2     
+	   3 Input      6 Bit        Muxes := 1     
+	   3 Input      5 Bit        Muxes := 1     
+	   2 Input      4 Bit        Muxes := 1     
+	  13 Input      4 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 136   
+	   7 Input      1 Bit        Muxes := 253   
+	   4 Input      1 Bit        Muxes := 1     
+	   5 Input      1 Bit        Muxes := 252   
+Module execute_stage 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      8 Bit       Adders := 1     
++---Registers : 
+	               32 Bit    Registers := 2     
+	                8 Bit    Registers := 1     
+	                5 Bit    Registers := 1     
+	                3 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 2     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+	   2 Input     12 Bit        Muxes := 3     
+	   2 Input      7 Bit        Muxes := 1     
+	   5 Input      7 Bit        Muxes := 1     
+	   3 Input      5 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 1     
+Module pc_adder 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      8 Bit       Adders := 1     
+Module fetch_stage 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 1     
+	                8 Bit    Registers := 1     
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 1     
+Module opcode_decoder 
+Detailed RTL Component Info : 
++---Muxes : 
+	  10 Input      2 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 1     
+	  10 Input      1 Bit        Muxes := 10    
+	   2 Input      1 Bit        Muxes := 2     
+Module alu_decoder 
+Detailed RTL Component Info : 
++---Muxes : 
+	  10 Input      5 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 1     
+	   4 Input      5 Bit        Muxes := 1     
+	   3 Input      4 Bit        Muxes := 1     
+	   8 Input      4 Bit        Muxes := 1     
+	   7 Input      3 Bit        Muxes := 1     
+	   2 Input      3 Bit        Muxes := 1     
+Module fpu_decoder 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      5 Bit        Muxes := 9     
+	   4 Input      5 Bit        Muxes := 3     
+	  13 Input      5 Bit        Muxes := 1     
+	   4 Input      2 Bit        Muxes := 1     
+	  13 Input      2 Bit        Muxes := 1     
+	   2 Input      2 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 6     
+	   4 Input      1 Bit        Muxes := 4     
+	  13 Input      1 Bit        Muxes := 2     
+Module risc_mem__1 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 32    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 32    
+Module risc_mem__2 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 32    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 32    
+Module risc_mem__3 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 32    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 32    
+Module risc_mem 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 32    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 32    
+Module fp_reg_file 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 32    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 32    
+Module decode_stage 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 5     
+	               12 Bit    Registers := 1     
+	                8 Bit    Registers := 2     
+	                5 Bit    Registers := 5     
+	                3 Bit    Registers := 2     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 12    
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 6     
+	   2 Input     12 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 1     
+	   2 Input      5 Bit        Muxes := 5     
+	   2 Input      3 Bit        Muxes := 2     
+	   2 Input      2 Bit        Muxes := 2     
+	   3 Input      1 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 3     
+	   4 Input      1 Bit        Muxes := 1     
+Module data_memory__1 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 64    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 64    
+Module data_memory__2 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 64    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 64    
+Module data_memory__3 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 64    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 64    
+Module data_memory 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 64    
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 64    
+Module risc_data_memory 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input     32 Bit        Muxes := 2     
+	   4 Input     32 Bit        Muxes := 1     
+	   4 Input      9 Bit        Muxes := 1     
+	   7 Input      1 Bit        Muxes := 4     
+Module memory_stage 
+Detailed RTL Component Info : 
++---Registers : 
+	               32 Bit    Registers := 4     
+	                8 Bit    Registers := 1     
+	                5 Bit    Registers := 2     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 8     
+Module risc_mux2__parameterized0 
+Detailed RTL Component Info : 
++---Muxes : 
+	   2 Input      8 Bit        Muxes := 1     
+Module wb_stage 
+Detailed RTL Component Info : 
++---Registers : 
+	                8 Bit    Registers := 1     
++---Muxes : 
+	   4 Input     32 Bit        Muxes := 1     
+	   2 Input      8 Bit        Muxes := 1     
+	   2 Input      1 Bit        Muxes := 1     
+Module hazard_unit 
+Detailed RTL Component Info : 
++---Muxes : 
+	   5 Input      3 Bit        Muxes := 2     
+	   3 Input      2 Bit        Muxes := 2     
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 2800 (col length:140)
+BRAMs: 2060 (col length: RAMB18 140 RAMB36 70)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+Warning: Parallel synthesis criteria is not met 
+INFO: [Synth 8-5545] ROM "quotient" won't be mapped to RAM because address size (32) is larger than maximum supported(25)
+WARNING: [Synth 8-6014] Unused sequential element Memory/OverflowW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:75]
+WARNING: [Synth 8-6014] Unused sequential element Memory/UnderflowW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:76]
+WARNING: [Synth 8-6014] Unused sequential element Memory/NaNW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:77]
+WARNING: [Synth 8-6014] Unused sequential element Memory/InfW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:78]
+WARNING: [Synth 8-6014] Unused sequential element Memory/ZeroW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:79]
+WARNING: [Synth 8-6014] Unused sequential element Memory/InvalidDivW_reg was removed.  [C:/Ain_shams/RiscV/Design/memory_stage.sv:80]
+INFO: [Synth 8-5587] ROM size for "Decode/CU/opdec/Immediate" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-5587] ROM size for "Decode/CU/opdec/ALUSrc" is below threshold of ROM address width. It will be mapped to LUTs
+INFO: [Synth 8-3886] merging instance 'Executei_1/FPU/div_unit/divider_inst/m_reg_reg[24]' (FDCE) to 'Executei_1/FPU/div_unit/divider_inst/m_reg_reg[25]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (FPU/div_unit/\divider_inst/m_reg_reg[25] )
+WARNING: [Synth 8-3332] Sequential element (divider_inst/m_reg_reg[25]) is unused and will be removed from module flp_div.
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][0]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][1]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][0] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][0]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[768][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][0] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][0]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[771][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][0] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][0] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][1]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][1] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][1]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][1] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][1]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][1] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][2] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][2]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][2] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][2]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][2] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][3] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][3] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][4]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][4] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][4]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][4] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][4]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3857][4] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][4] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][5]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][5] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][5]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][5] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][5]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3857][5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][5] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][6]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][6] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][6]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][6] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][6]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][6] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][7]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3857][7] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][7] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][8]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][9]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][8]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][8]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][8]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][9]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][8] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][8]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][8] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][8]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[773][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3857][8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][8] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][9]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][10]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][9]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][9]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][9]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][10]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][9] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][9]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][9] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][9]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[773][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][9] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][9] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][10]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][11]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][10]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][10]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][10]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][11]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][10] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][10]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[771][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[770][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[769][10] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][10]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[773][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[772][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[2][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[1][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3860][10] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[3072][10] )
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][11]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][12]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][11]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][11]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][11]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][12]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (CSR/\CsrFile_reg[832][11] )
+INFO: [Common 17-14] Message 'Synth 8-3333' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][11]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][12]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][13]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][12]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][12]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][12]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][13]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][12]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][12]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][13]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][14]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][13]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][13]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][13]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][14]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][13]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][13]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][14]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][15]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][14]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][14]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][14]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][15]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][14]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][14]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][15]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][16]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][15]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][15]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][15]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][16]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][15]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][15]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][16]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][17]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][16]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][16]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][16]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][17]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][16]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][16]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][17]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][18]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][17]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][17]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][17]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][18]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][17]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][17]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][18]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][19]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][18]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][18]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][18]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][19]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][18]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][18]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][19]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][20]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][19]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][19]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][19]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][20]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][19]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][19]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][20]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][21]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][20]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][20]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][20]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][21]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][20]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][20]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][21]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][22]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][21]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][21]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][21]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][22]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][21]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][21]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][22]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][23]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][22]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][22]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][22]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][23]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][22]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][22]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][23]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][24]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][23]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][23]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[833][23]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][24]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[836][23]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[768][23]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[3860][0]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[835][24]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[835][25]'
+INFO: [Synth 8-3886] merging instance 'Executei_3/CSR/CsrFile_reg[834][24]' (FDCE) to 'Executei_3/CSR/CsrFile_reg[833][24]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-3332] Sequential element (CsrOutPC_reg[1]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][30]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][29]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][28]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][27]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][26]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][25]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][24]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][23]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][22]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][21]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][20]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][19]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][18]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][17]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][16]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][15]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][14]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][13]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][12]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][11]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][10]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][9]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][8]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][7]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][6]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][5]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][4]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[2][3]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][30]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][29]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][28]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][27]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][26]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][25]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][24]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][23]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][22]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][21]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][20]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][19]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][18]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][17]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][16]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][15]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][14]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][13]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][12]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][11]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][10]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][9]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][8]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][7]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][6]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[1][5]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][30]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][29]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][28]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][27]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][26]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][25]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][24]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][23]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][22]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][21]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][20]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][19]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][18]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][17]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][16]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][15]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][14]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][13]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][12]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][11]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][10]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][9]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3][8]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[834][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[835][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[3860][0]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (CsrFile_reg[833][31]) is unused and will be removed from module csr_file.
+WARNING: [Synth 8-3332] Sequential element (Overflow_reg_reg) is unused and will be removed from module flp_add_sub.
+WARNING: [Synth 8-3332] Sequential element (Underflow_reg_reg) is unused and will be removed from module flp_add_sub.
+WARNING: [Synth 8-3332] Sequential element (Inf_reg_reg) is unused and will be removed from module flp_add_sub.
+WARNING: [Synth 8-3332] Sequential element (Overflow_reg_reg) is unused and will be removed from module flp_mul.
+WARNING: [Synth 8-3332] Sequential element (Underflow_reg_reg) is unused and will be removed from module flp_mul.
+WARNING: [Synth 8-3332] Sequential element (NaN_reg_reg) is unused and will be removed from module flp_mul.
+WARNING: [Synth 8-3332] Sequential element (Inf_reg_reg) is unused and will be removed from module flp_mul.
+WARNING: [Synth 8-3332] Sequential element (Zero_reg_reg) is unused and will be removed from module flp_mul.
+WARNING: [Synth 8-3332] Sequential element (Overflow_reg_reg) is unused and will be removed from module flp_div.
+WARNING: [Synth 8-3332] Sequential element (Underflow_reg_reg) is unused and will be removed from module flp_div.
+WARNING: [Synth 8-3332] Sequential element (NaN_reg_reg) is unused and will be removed from module flp_div.
+WARNING: [Synth 8-3332] Sequential element (Inf_reg_reg) is unused and will be removed from module flp_div.
+WARNING: [Synth 8-3332] Sequential element (Zero_reg_reg) is unused and will be removed from module flp_div.
+WARNING: [Synth 8-3332] Sequential element (Invalid_reg_reg) is unused and will be removed from module flp_div.
+INFO: [Common 17-14] Message 'Synth 8-3332' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:01:37 ; elapsed = 00:01:45 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP and Shift Register Reporting
+---------------------------------------------------------------------------------
+
+ROM:
++------------------------+-----------------+---------------+----------------+
+|Module Name             | RTL Object      | Depth x Width | Implemented As | 
++------------------------+-----------------+---------------+----------------+
+|risc_instruction_memory | p_0_out         | 64x32         | LUT            | 
+|risc_fpu                | req_uses_module | 32x1          | LUT            | 
+|risc_fpu                | req_uses_module | 32x1          | LUT            | 
+|riscv_processor         | p_0_out         | 64x32         | LUT            | 
++------------------------+-----------------+---------------+----------------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP and Shift Register Reporting
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+---------------------+------------+----------+
+|      |RTL Partition        |Replication |Instances |
++------+---------------------+------------+----------+
+|1     |execute_stage__GB0   |           1|     14790|
+|2     |execute_stage__GB1   |           1|     13754|
+|3     |execute_stage__GB2   |           1|     19821|
+|4     |riscv_processor__GC0 |           1|     13368|
++------+---------------------+------------+----------+
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:37 ; elapsed = 00:01:45 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++------+---------------------+------------+----------+
+|      |RTL Partition        |Replication |Instances |
++------+---------------------+------------+----------+
+|1     |execute_stage__GB0   |           1|     14790|
+|2     |execute_stage__GB1   |           1|     13754|
+|3     |execute_stage__GB2   |           1|     19821|
+|4     |riscv_processor__GC0 |           1|     13368|
++------+---------------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:42 ; elapsed = 00:01:50 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:44 ; elapsed = 00:01:52 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:44 ; elapsed = 00:01:52 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:45 ; elapsed = 00:01:53 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:45 ; elapsed = 00:01:53 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:45 ; elapsed = 00:01:54 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:45 ; elapsed = 00:01:54 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-------+------+
+|      |Cell   |Count |
++------+-------+------+
+|1     |BUFG   |     1|
+|2     |CARRY4 |   637|
+|3     |LUT1   |   338|
+|4     |LUT2   |   690|
+|5     |LUT3   |  2025|
+|6     |LUT4   |   774|
+|7     |LUT5   |  3051|
+|8     |LUT6   |  8311|
+|9     |MUXF7  |  1895|
+|10    |MUXF8  |   785|
+|11    |FDCE   |  5903|
+|12    |FDPE   |    28|
+|13    |FDRE   |  8096|
+|14    |IBUF   |     5|
++------+-------+------+
+
+Report Instance Areas: 
++------+------------------------------+--------------------------+------+
+|      |Instance                      |Module                    |Cells |
++------+------------------------------+--------------------------+------+
+|1     |top                           |                          | 32539|
+|2     |  Decode                      |decode_stage              |  7934|
+|3     |    FPRF                      |fp_reg_file               |  1920|
+|4     |    RF                        |risc_reg_file             |  1921|
+|5     |      M1                      |risc_mem                  |   480|
+|6     |      M2                      |risc_mem_3                |   480|
+|7     |      M3                      |risc_mem_4                |   480|
+|8     |      M4                      |risc_mem_5                |   481|
+|9     |  Execute                     |execute_stage             | 18955|
+|10    |    ALU                       |risc_alu                  |    59|
+|11    |      div                     |non_restoring_divider     |    42|
+|12    |    CSR                       |csr_file                  | 11927|
+|13    |    FPU                       |risc_fpu                  |  6510|
+|14    |      add_sub_unit            |flp_add_sub               |  1428|
+|15    |      div_unit                |flp_div                   |  1516|
+|16    |        divider_inst          |non_restoring_divider_seq |   989|
+|17    |      mul_unit                |flp_mul                   |  2076|
+|18    |        booth_multiplier_inst |booth_multiplier_seq      |  1802|
+|19    |      sqrt_unit               |flp_sqrt                  |   653|
+|20    |  Fetch                       |fetch_stage               |   427|
+|21    |  Memory                      |memory_stage              |  3721|
+|22    |    M1                        |risc_data_memory          |  2991|
+|23    |      DM1                     |data_memory               |   752|
+|24    |      DM2                     |data_memory_0             |   744|
+|25    |      DM3                     |data_memory_1             |   744|
+|26    |      DM4                     |data_memory_2             |   751|
+|27    |  WriteBack                   |wb_stage                  |    93|
++------+------------------------------+--------------------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:45 ; elapsed = 00:01:54 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 1392 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:45 ; elapsed = 00:01:54 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+Synthesis Optimization Complete : Time (s): cpu = 00:01:45 ; elapsed = 00:01:54 . Memory (MB): peak = 1443.613 ; gain = 1099.094
+INFO: [Project 1-571] Translating synthesized netlist
+INFO: [Netlist 29-17] Analyzing 3322 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Common 17-83] Releasing license: Synthesis
+518 Infos, 354 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:50 ; elapsed = 00:02:01 . Memory (MB): peak = 1443.613 ; gain = 1110.984
+WARNING: [Constraints 18-5210] No constraint will be written out.
+INFO: [Common 17-1381] The checkpoint 'C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1/riscv_processor.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file riscv_processor_utilization_synth.rpt -pb riscv_processor_utilization_synth.pb
+report_utilization: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.234 . Memory (MB): peak = 1443.613 ; gain = 0.000
+INFO: [Common 17-206] Exiting Vivado at Thu Mar 19 11:47:48 2026...

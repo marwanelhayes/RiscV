@@ -1,3 +1,8 @@
+// =============================================================================
+// flp_sqrt.sv
+// -----------------------------------------------------------------------------
+// Floating-point square root unit for RISC-V FPU.
+// =============================================================================
 import shared_pkg::*;
 
 module flp_sqrt
@@ -128,9 +133,9 @@ module flp_sqrt
         Sign = a_reg[WIDTH-1];
         Exp = a_reg[WIDTH-2 -: EXP_BITS];
         Mant = a_reg[FRAC_BITS-1:0];
-        //class_in = classify_value(Exp, Mant);
         ExpHalf = 0;
         class_out = classify_value(result_reg[WIDTH-2 -: EXP_BITS], result_reg[FRAC_BITS-1:0]);
+        class_in  = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0]);
 
         busy = (state_reg != SQRT_IDLE) && (state_reg != SQRT_DONE);
         done = (state_reg == SQRT_DONE);
@@ -158,19 +163,19 @@ module flp_sqrt
                         NaN_next = 1'b1;
                         state_next = SQRT_DONE;
                     end
-                    else if (classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[2] ||
-                             classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[1] ||
-                             classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[0])
+                    else if (class_in[2] ||
+                             class_in[1] ||
+                             class_in[0])
                     begin
-                        NaN_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[2];
-                        Inf_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[1];
-                        Zero_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[0];
+                        NaN_next = class_in[2];
+                        Inf_next = class_in[1];
+                        Zero_next = class_in[0];
                         result_next = a;
                         state_next = SQRT_DONE;
                     end
                     else
                     begin
-                        if (classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[3])
+                        if (class_in[3])
                         begin
                             InHalf_next = a;
                         end
@@ -199,19 +204,19 @@ module flp_sqrt
                         NaN_next = 1'b1;
                         state_next = SQRT_DONE;
                     end
-                    else if (classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[2] ||
-                             classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[1] ||
-                             classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[0])
+                    else if (class_in[2] ||
+                             class_in[1] ||
+                             class_in[0])
                     begin
                         result_next = a;
-                        NaN_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[2];
-                        Inf_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[1];
-                        Zero_next = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[0];
+                        NaN_next = class_in[2];
+                        Inf_next = class_in[1];
+                        Zero_next = class_in[0];
                         state_next = SQRT_DONE;
                     end
                     else
                     begin
-                        if (classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0])[3])
+                        if (class_in[3])
                         begin
                             InHalf_next = a;
                         end

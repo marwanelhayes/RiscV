@@ -1,3 +1,15 @@
+// =============================================================================
+// csr_file.sv
+// -----------------------------------------------------------------------------
+// Control and Status Register (CSR) file for RISC-V processor.
+//
+// Responsibilities:
+//   - Manage machine-mode CSRs (mstatus, mie, mtvec, mepc, mcause, etc.)
+//   - Handle trap entry and return (MRET)
+//   - Process CSR read/write operations (CSRRW, CSRRS, CSRRC, etc.)
+//   - Manage interrupt detection and pending flags
+//   - Provide rounding mode for FPU operations
+// =============================================================================
 import shared_pkg::*;
 `include "csr_defs.sv"
 
@@ -7,25 +19,33 @@ module csr_file
     parameter int ADDR_WIDTH = 32
 ) 
 (
+    // ─── Clock and reset ───────────────────────────────────────────────────────
     input clk,
     input rst,
-    input csr_t CsrOperation,
-    input gpr_t Rs,
-    input traps_t Traps,
-    input mret,
-    input [ADDR_WIDTH-1:0] PC,
-    input [ADDR_WIDTH-1:0] Address,
-    input CsrAccess,
-    input [DATA_WIDTH-1:0] CsrIn,
-    input TimerInterrupt,
-    input ExternalInterrupt,
-    input SoftwareInterrupt,
-    input csr_index_t CsrIndex,
+
+    // ─── CSR operation interface ─────────────────────────────────────────────
+    input csr_t CsrOperation,             // CSR operation type
+    input gpr_t Rs,                       // Source register for CSR ops
+    input traps_t Traps,                  // Trap cause code
+    input mret,                           // MRET instruction flag
+    input [ADDR_WIDTH-1:0] PC,            // Current PC (for mepc)
+    input [ADDR_WIDTH-1:0] Address,       // Fault address (for mbadaddr)
+    input CsrAccess,                      // CSR access enable
+    input [DATA_WIDTH-1:0] CsrIn,        // CSR write data
+
+    // ─── Interrupt inputs ─────────────────────────────────────────────────────
+    input TimerInterrupt,                 // Timer interrupt
+    input ExternalInterrupt,              // External hardware interrupt
+    input SoftwareInterrupt,              // Software interrupt
+
+    // ─── CSR register index ───────────────────────────────────────────────────
+    input csr_index_t CsrIndex,           // CSR address
     
-    output logic [ADDR_WIDTH-1:0] CsrOutPC,
-    output logic [DATA_WIDTH-1:0] CsrOut,
-    output logic TrapIsSet,
-    output round_mode_t RoundingMode
+    // ─── Outputs ───────────────────────────────────────────────────────────────
+    output logic [ADDR_WIDTH-1:0] CsrOutPC,   // Trap return vector
+    output logic [DATA_WIDTH-1:0] CsrOut,     // CSR read data
+    output logic TrapIsSet,                   // Trap pending flag
+    output round_mode_t RoundingMode          // FPU rounding mode
 );
 
     (* ram_style = "block" *) logic [DATA_WIDTH-1:0] CsrFile [4096]; // CSR file with 4096 entries, each 32 bits wide

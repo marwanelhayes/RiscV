@@ -1,3 +1,23 @@
+// =============================================================================
+// riscv_processor.sv
+// -----------------------------------------------------------------------------
+// Top-level RISC-V 5-stage pipeline processor module.
+//
+// Responsibilities:
+//   - Instantiate all five pipeline stages (Fetch, Decode, Execute, Memory, WB)
+//   - Connect pipeline inter-stage signals
+//   - Instantiate hazard detection and forwarding unit
+//   - Manage external interrupt inputs
+//   - Provide complete processor interface
+//
+// Instantiates:
+//   - fetch_stage: instruction fetch
+//   - decode_stage: instruction decode
+//   - execute_stage: ALU and FPU execution
+//   - memory_stage: data memory access
+//   - wb_stage: write-back and PC update
+//   - hazard_unit: hazard detection and forwarding
+// =============================================================================
 import shared_pkg::*;
 
 module riscv_processor
@@ -8,108 +28,111 @@ module riscv_processor
     parameter int STAGES = 4
 )
 (
+    // ─── Clock and reset ───────────────────────────────────────────────────────
     input clk,
     input rst,
-    input ExternalInterrupt,
-    input TimerInterrupt,
-    input SoftwareInterrupt
+
+    // ─── External interrupt inputs ─────────────────────────────────────────────
+    input ExternalInterrupt,    // External hardware interrupt
+    input TimerInterrupt,       // Timer interrupt
+    input SoftwareInterrupt    // Software interrupt
 );
 
-    //Fetch stage wires
-    wire [ADDR_WIDTH-1:0] PCF;
-    wire [ADDR_WIDTH-1:0] PCPlus4F;
+    // ─── IF stage interconnects ───────────────────────────────────────────────
+    wire [ADDR_WIDTH-1:0] PCF;             // Program counter (fetch)
+    wire [ADDR_WIDTH-1:0] PCPlus4F;        // PC + 4 (next sequential)
 
-    //Decode stage wires
-    wire [ADDR_WIDTH-1:0] PCPlus4D;
-    wire [DATA_WIDTH-1:0] InstructionD;
-    wire StallD;
-    wire FlushD;
-    gpr_t Rs1D;
-    gpr_t Rs2D;
+    // ─── ID stage interconnects ───────────────────────────────────────────────
+    wire [ADDR_WIDTH-1:0] PCPlus4D;        // PC+4 to decode
+    wire [DATA_WIDTH-1:0] InstructionD;  // Fetched instruction
+    wire StallD;                            // Stall decode stage
+    wire FlushD;                            // Flush decode stage
+    gpr_t Rs1D;                             // Source register 1 (decode)
+    gpr_t Rs2D;                             // Source register 2 (decode)
 
-    //Execute stage wires
-    wire signed [DATA_WIDTH-1:0] RD1E;
-    wire signed [DATA_WIDTH-1:0] RD2E;
-    wire signed [DATA_WIDTH-1:0] SignImmE;
-    wire [ADDR_WIDTH-1:0] PCBranchE;
-    wire [ADDR_WIDTH-1:0] PCPlus4E;
-    wire JumpE;
-    wire ALUSrcE;
-    wire [2:0] ForwardAE;
-    wire [2:0] ForwardBE;
-    wire FlushE;
-    wire RegWriteE;
-    selector_t SelectorE;
-    wire MemWriteE;
-    gpr_t Rs1E;
-    gpr_t Rs2E;
-    gpr_t RdE;
-    alu_operation_t ALUControlE;
-    wire BranchE;
-    wire [2:0] funct3E;
-    wire PCSrcE;
-    wire CsrAccessE;
-    csr_t CsrOperationE;
-    csr_index_t CsrIndexE;
-    wire IllegaleInstructionE;
-    wire MRetE;
-    wire EcallE;
-    wire EbreakE;
-    fpr_t RdFE;
-    wire [DATA_WIDTH-1:0] RD1FE;
-    wire [DATA_WIDTH-1:0] RD2FE;
-    fpu_operation_t FPUControlE;
-    round_mode_t RoundModeE;
-    wire FPURegWriteE;
-    move_operation_t MoveOperationE;
-    fpr_t Rs1FE;
-    fpr_t Rs2FE;
-    wire [1:0] ForwardFloatingAE;
-    wire [1:0] ForwardFloatingBE;
-    wire FPUValidE;
+    // ─── EX stage interconnects ───────────────────────────────────────────────
+    wire signed [DATA_WIDTH-1:0] RD1E;     // GPR rs1 value
+    wire signed [DATA_WIDTH-1:0] RD2E;     // GPR rs2 value
+    wire signed [DATA_WIDTH-1:0] SignImmE; // Sign-extended immediate
+    wire [ADDR_WIDTH-1:0] PCBranchE;      // Branch target address
+    wire [ADDR_WIDTH-1:0] PCPlus4E;        // PC+4 to execute
+    wire JumpE;                             // Jump instruction flag
+    wire ALUSrcE;                           // ALU operand B select
+    wire [2:0] ForwardAE;                  // Forwarding select A
+    wire [2:0] ForwardBE;                  // Forwarding select B
+    wire FlushE;                            // Flush execute stage
+    wire RegWriteE;                        // Register write enable
+    selector_t SelectorE;                  // Write-back select
+    wire MemWriteE;                        // Memory write enable
+    gpr_t Rs1E;                             // Source register 1 (execute)
+    gpr_t Rs2E;                             // Source register 2 (execute)
+    gpr_t RdE;                              // Destination register
+    alu_operation_t ALUControlE;            // ALU operation select
+    wire BranchE;                           // Branch instruction flag
+    wire [2:0] funct3E;                     // funct3 field
+    wire PCSrcE;                           // Branch/jump taken
+    wire CsrAccessE;                       // CSR access enable
+    csr_t CsrOperationE;                   // CSR operation type
+    csr_index_t CsrIndexE;                 // CSR register index
+    wire IllegaleInstructionE;              // Illegal instruction flag
+    wire MRetE;                            // MRET instruction flag
+    wire EcallE;                            // ECALL instruction flag
+    wire EbreakE;                           // EBREAK instruction flag
+    fpr_t RdFE;                             // FPR destination index
+    wire [DATA_WIDTH-1:0] RD1FE;          // FPR rs1 value
+    wire [DATA_WIDTH-1:0] RD2FE;          // FPR rs2 value
+    fpu_operation_t FPUControlE;           // FPU operation type
+    round_mode_t RoundModeE;               // Rounding mode
+    wire FPURegWriteE;                     // FPR write enable
+    move_operation_t MoveOperationE;        // FPU move operation
+    fpr_t Rs1FE;                            // FPR source 1 index
+    fpr_t Rs2FE;                            // FPR source 2 index
+    wire [1:0] ForwardFloatingAE;          // FPU forwarding select A
+    wire [1:0] ForwardFloatingBE;          // FPU forwarding select B
+    wire FPUValidE;                        // Valid FPU operation
 
+    // ─── MEM stage interconnects ──────────────────────────────────────────────
+    wire signed [DATA_WIDTH-1:0] ALUOutM;    // ALU result
+    wire signed [DATA_WIDTH-1:0] WriteDataM; // Data to store
+    wire [2:0] funct3M;                        // funct3 field
+    gpr_t RdM;                                // Destination register
+    wire RegWriteM;                           // Register write enable
+    wire [DATA_WIDTH-1:0] CsrOutM;           // CSR read data
+    selector_t SelectorM;                     // Write-back select
+    wire MemWriteE;                           // Memory write enable
+    wire [ADDR_WIDTH-1:0] PCPlus4M;           // PC+4 to memory
+    fpr_t RdFM;                               // FPR destination
+    wire OverflowM;                           // FPU overflow flag
+    wire UnderflowM;                          // FPU underflow flag
+    wire NaNM;                               // FPU NaN flag
+    wire InfM;                               // FPU infinity flag
+    wire ZeroM;                              // FPU zero flag
+    wire InvalidDivM;                         // Invalid division flag
+    wire [DATA_WIDTH-1:0] FPUOutM;           // FPU result
+    wire FPURegWriteM;                        // FPR write enable
+    move_operation_t MoveOperationM;          // FPU move operation
+    wire FPUBusyM;                            // FPU busy flag
+    wire FPUDoneM;                            // FPU done flag
 
-    //Memory stage wires
-    wire signed [DATA_WIDTH-1:0] ALUOutM;
-    wire signed [DATA_WIDTH-1:0] WriteDataM;
-    wire [2:0] funct3M;
-    gpr_t RdM;
-    wire RegWriteM;
-    wire [DATA_WIDTH-1:0] CsrOutM;
-    selector_t SelectorM;
-    wire MemWriteM;
-    wire [ADDR_WIDTH-1:0] PCPlus4M;
-    fpr_t RdFM;
-    wire OverflowM;
-    wire UnderflowM;
-    wire NaNM;
-    wire InfM;
-    wire ZeroM;
-    wire InvalidDivM;
-    wire [DATA_WIDTH-1:0] FPUOutM;
-    wire FPURegWriteM;
-    move_operation_t MoveOperationM;
-    wire FPUBusyM;
-    wire FPUDoneM;
+    // ─── WB stage interconnects ───────────────────────────────────────────────
+    wire signed [DATA_WIDTH-1:0] ReadDataW;    // Loaded data from memory
+    wire signed [DATA_WIDTH-1:0] ALUOutW;     // ALU result to WB
+    wire signed [DATA_WIDTH-1:0] ResultW;     // Final write-back result
+    wire [DATA_WIDTH-1:0] CsrOutW;            // CSR data to WB
+    gpr_t RdW;                                // Destination register
+    selector_t SelectorW;                     // Write-back select
+    wire RegWriteW;                           // Register write enable
+    wire [ADDR_WIDTH-1:0] PCPlus4W;           // PC+4 to WB
+    fpr_t RdFW;                               // FPR destination
+    wire [DATA_WIDTH-1:0] FPUOutW;            // FPU result to WB
+    move_operation_t MoveOperationW;          // FPU move operation
+    wire FPURegWriteW;                        // FPR write enable
 
-    //Write back stage wires
-    wire signed [DATA_WIDTH-1:0] ReadDataW;
-    wire signed [DATA_WIDTH-1:0] ALUOutW;
-    wire signed [DATA_WIDTH-1:0] ResultW;
-    wire [DATA_WIDTH-1:0] CsrOutW;
-    gpr_t RdW;
-    selector_t SelectorW;
-    wire RegWriteW;
-    wire [ADDR_WIDTH-1:0] PCPlus4W;
-    fpr_t RdFW;
-    wire [DATA_WIDTH-1:0] FPUOutW;
-    move_operation_t MoveOperationW;
-    wire FPURegWriteW;
+    // ─── Trap and control interconnects ──────────────────────────────────────
+    wire TrapIsSet;                           // Trap pending flag
+    wire [ADDR_WIDTH-1:0] CsrOutPC;           // Trap vector address
 
-    //Traps
-    wire TrapIsSet;
-    wire [ADDR_WIDTH-1:0] CsrOutPC;
-
+    // ─── riscv_processor: fetch_stage ─────────────────────────────────────────
     fetch_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
     Fetch
     (
@@ -123,6 +146,7 @@ module riscv_processor
         .PCPlus4F(PCPlus4F)
     );
 
+    // ─── riscv_processor: decode_stage ─────────────────────────────────────────
     decode_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.ALU_SUB_CONTROL_WIDTH(ALU_SUB_CONTROL_WIDTH)) 
     Decode
     (
@@ -175,6 +199,7 @@ module riscv_processor
         .FPUValidE(FPUValidE)
     );
 
+    // ─── riscv_processor: execute_stage ───────────────────────────────────────
     execute_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH),.ALU_SUB_CONTROL_WIDTH(ALU_SUB_CONTROL_WIDTH),.STAGES(STAGES)) 
     Execute
     (
@@ -246,6 +271,7 @@ module riscv_processor
         .FPUDoneM(FPUDoneM)
     );
 
+    // ─── riscv_processor: memory_stage ─────────────────────────────────────────
     memory_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
     Memory
     (
@@ -339,8 +365,7 @@ module riscv_processor
         .FPURegWriteM(FPURegWriteM),
         .FPURegWriteW(FPURegWriteW),
         .FPUValidE(FPUValidE),
-        .FPUBusyM(FPUBusyM),
-        .FPUDoneM(FPUDoneM)
+        .FPUBusyM(FPUBusyM)
     );
 
 endmodule

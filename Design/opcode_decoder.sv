@@ -1,116 +1,141 @@
+// =============================================================================
+// opcode_decoder.sv
+// -----------------------------------------------------------------------------
+// Opcode decoder for RISC-V processor.
+//
+// Responsibilities:
+//   - Decode opcode field to generate control signals
+//   - Identify instruction type (R, I, S, B, U, J)
+//   - Generate ALU sub-operation code
+//   - Handle special instructions (CSR, FPU, jumps, branches)
+// =============================================================================
 import shared_pkg::*;
+
 module opcode_decoder 
-#
-(
+#(
     parameter int ALU_SUB_CONTROL_WIDTH = 2
 )
 (
-    input opcode_t opcode,
-    input csr_t CsrOperation,
-    output logic [ALU_SUB_CONTROL_WIDTH-1:0] ALUControl,
-    output logic Jump,
-    output logic Branch,
-    output logic Immediate,
-    output logic MemWrite,
-    output selector_t Selector,
-    output logic ALUSrc,
-    output logic CsrAccess,
-    output logic RegWrite,
-    output logic Store ,
-    output logic MMode , 
-    output logic IllegaleInstruction,
-    output logic FPU
+    // ─── Instruction input ───────────────────────────────────────────────────
+    input opcode_t opcode,           // Opcode field
+    input csr_t CsrOperation,        // CSR operation type
+
+    // ─── Control signal outputs ───────────────────────────────────────────────
+    output logic [ALU_SUB_CONTROL_WIDTH-1:0] ALUControl,  // ALU operation
+    output logic Jump,              // Jump instruction flag
+    output logic Branch,            // Branch instruction flag
+    output logic Immediate,         // Immediate present flag
+    output logic MemWrite,          // Memory write enable
+    output selector_t Selector,     // Write-back data select
+    output logic ALUSrc,            // ALU operand B select
+    output logic CsrAccess,         // CSR access enable
+    output logic RegWrite,          // Register write enable
+    output logic Store,             // Store instruction flag
+    output logic MMode,             // Machine mode flag
+    output logic IllegaleInstruction,  // Illegal instruction flag
+    output logic FPU                // FPU instruction flag
 );
 
+    // ─── Main opcode decoding logic ──────────────────────────────────────────
     always_comb
     begin
-        ALUControl = 'b11; //2'b11 is the default value for the add instruction
-        Jump = 0;
-        Branch = 0;
-        Immediate = 0;
-        MemWrite = 0;
+        // Default values (NOP-like state)
+        ALUControl = 2'b11;    // Default to ADD operation
+        Jump = 1'b0;
+        Branch = 1'b0;
+        Immediate = 1'b0;
+        MemWrite = 1'b0;
         Selector = ALUToReg;
-        ALUSrc = 0;
-        RegWrite = 0;
-        Store = 0;
-        CsrAccess = 0;
-        MMode = 0;
-        FPU = 0;
-        IllegaleInstruction = 1;
+        ALUSrc = 1'b0;
+        RegWrite = 1'b0;
+        Store = 1'b0;
+        CsrAccess = 1'b0;
+        MMode = 1'b0;
+        FPU = 1'b0;
+        IllegaleInstruction = 1'b1;    // Assume illegal until proven valid
+
         case(opcode)
+            // ── R-type: Register-register operations ─────────────────────────
             R_TYPE: 
-            begin  //R-type
+            begin
                 ALUControl = 2'b10;
-                RegWrite = 1;
+                RegWrite = 1'b1;
                 Selector = ALUToReg;
-                IllegaleInstruction = 0;
+                IllegaleInstruction = 1'b0;
             end
+            // ── Load: Load from memory ────────────────────────────────────────
             LOAD: 
-            begin //Load Word
+            begin
                 Selector = MemToReg;
-                Immediate = 1;
-                ALUSrc = 1;
-                RegWrite = 1;
-                IllegaleInstruction = 0;
+                Immediate = 1'b1;
+                ALUSrc = 1'b1;
+                RegWrite = 1'b1;
+                IllegaleInstruction = 1'b0;
             end
+            // ── S-type: Store to memory ───────────────────────────────────────
             S_TYPE: 
-            begin  //Store Word
-                MemWrite = 1;
-                ALUSrc = 1;
-                Store = 1;
-                IllegaleInstruction = 0;
+            begin
+                MemWrite = 1'b1;
+                ALUSrc = 1'b1;
+                Store = 1'b1;
+                IllegaleInstruction = 1'b0;
             end
+            // ── B-type: Branch operations ─────────────────────────────────────
             B_TYPE: 
-            begin //Branch
+            begin
                 ALUControl = 2'b00;
-                Branch = 1;
-                IllegaleInstruction = 0;
+                Branch = 1'b1;
+                IllegaleInstruction = 1'b0;
             end
+            // ── I-type: Immediate operations ──────────────────────────────────
             I_TYPE: 
-            begin  //Immediate
+            begin
                 ALUControl = 2'b01;
                 Immediate = 1'b1;
-                ALUSrc = 1;
-                RegWrite = 1;
-                IllegaleInstruction = 0;
+                ALUSrc = 1'b1;
+                RegWrite = 1'b1;
+                IllegaleInstruction = 1'b0;
             end
+            // ── JAL: Jump and Link ────────────────────────────────────────────
             JAL: 
-            begin //Jump
-                Jump = 1;
-                ALUSrc = 1;
-                RegWrite = 1;
+            begin
+                Jump = 1'b1;
+                ALUSrc = 1'b1;
+                RegWrite = 1'b1;
                 Selector = PCToReg;
-                IllegaleInstruction = 0;
+                IllegaleInstruction = 1'b0;
             end
+            // ── JALR: Jump and Link Register ──────────────────────────────────
             JALR: 
-            begin //Jump and Link Register
-                Jump = 1;
-                ALUSrc = 1;
+            begin
+                Jump = 1'b1;
+                ALUSrc = 1'b1;
                 Immediate = 1'b1;
-                RegWrite = 1;
+                RegWrite = 1'b1;
                 Selector = PCToReg;
-                IllegaleInstruction = 0;
+                IllegaleInstruction = 1'b0;
             end
+            // ── CSR: Control and Status Registers ─────────────────────────────
             CSR: 
-            begin //Control and Status Register
-                IllegaleInstruction = 0;
-                if(CsrOperation == system) //system instructions are not supported except for ecall, ebreak and mret
+            begin
+                IllegaleInstruction = 1'b0;
+                if(CsrOperation == system) 
                 begin
-                    MMode = 1;
+                    MMode = 1'b1;    // ECALL, EBREAK, MRET
                 end
                 else
                 begin
-                    CsrAccess = 1;
-                    RegWrite = 1;
-                    Selector = CSRToReg; //CSR operations use a different selector
+                    CsrAccess = 1'b1;
+                    RegWrite = 1'b1;
+                    Selector = CSRToReg;
                 end
             end
+            // ── Floating-Point operations ──────────────────────────────────────
             FLOATING_PT:
-            begin //Floating Point operations
-                IllegaleInstruction = 0;
-                FPU = 1;
+            begin
+                IllegaleInstruction = 1'b0;
+                FPU = 1'b1;
             end
         endcase
-        
     end
 endmodule

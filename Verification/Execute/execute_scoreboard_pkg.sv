@@ -2,7 +2,6 @@ package execute_scoreboard_pkg;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    `include "C:/Ain_shams/RiscV/Design/csr_defs.sv"
     import shared_pkg::*;
     import execute_item_pkg::*;
 

@@ -1,16 +1,29 @@
+// =============================================================================
+// risc_mux4.sv
+// -----------------------------------------------------------------------------
+// 8-to-1 Multiplexer for RISC-V processor.
+//
+// Responsibilities:
+//   - Select between eight inputs based on 3-bit select signal
+//   - Used for GPR operand forwarding (WB, MEM, FPU WB, FPU MEM)
+// =============================================================================
 module risc_mux4
 #(
     parameter int DATA_WIDTH = 32
 ) 
 (
-    input [DATA_WIDTH-1:0] IN_1,IN_2,IN_3,IN_4,IN_5,IN_6,IN_7,IN_8,
-    input [2:0] sel,
-    output logic [DATA_WIDTH-1:0] Y
+    // ─── Input data ───────────────────────────────────────────────────────────
+    input [DATA_WIDTH-1:0] IN_1,IN_2,IN_3,IN_4,IN_5,IN_6,IN_7,IN_8,    // Eight inputs
+    input [2:0] sel,                                                   // 3-bit select
+
+    // ─── Output ───────────────────────────────────────────────────────────────
+    output logic [DATA_WIDTH-1:0] Y                                    // Selected output
 );
 
+    // ─── 8-to-1 mux implementation ───────────────────────────────────────────
     always_comb 
     begin
-        Y = 0;
+        Y = '0;
         case(sel)
             3'b000   : Y = IN_1;
             3'b001   : Y = IN_2;

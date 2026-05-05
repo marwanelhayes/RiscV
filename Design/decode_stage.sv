@@ -1,3 +1,20 @@
+// =============================================================================
+// decode_stage.sv
+// -----------------------------------------------------------------------------
+// Instruction Decode stage of the RISC-V 5-stage pipeline.
+//
+// Responsibilities:
+//   - Decode instruction fields (opcode, funct3, funct7, registers, immediates)
+//   - Generate control signals for execution stage
+//   - Read from integer and floating-point register files
+//   - Forward write-back data from later pipeline stages
+//   - Handle special instructions: CSR, ECALL, EBREAK, MRET
+//
+// Instantiates:
+//   - risc_control_unit: generates control signals based on instruction
+//   - risc_reg_file: integer register file
+//   - fp_reg_file: floating-point register file
+// =============================================================================
 import shared_pkg::*;
 
 module decode_stage
@@ -7,63 +24,90 @@ module decode_stage
     parameter int ALU_SUB_CONTROL_WIDTH = 2
 )
 (
+    // ─── Clock and reset ───────────────────────────────────────────────────────
     input clk,
     input rst,
-    input [ADDR_WIDTH-1:0] PCPlus4D,
-    input [DATA_WIDTH-1:0] InstructionD,
-    input gpr_t RdW,
-    input FlushE,
-    input RegWriteW,
-    input signed [DATA_WIDTH-1:0] ResultW,
-    input fpr_t RdFW,
-    input [DATA_WIDTH-1:0] FPUOutW,
-    input move_operation_t MoveOperationW,
-    input FPURegWriteW,
-    
-    output gpr_t Rs1E,
-    output gpr_t Rs2E,
-    output gpr_t Rs1D,
-    output gpr_t Rs2D,
-    output gpr_t RdE,
-    output logic JumpE,
-    output alu_operation_t ALUControlE,
-    output csr_t CsrOperationE,
-    output logic signed [DATA_WIDTH-1:0] RD1E,
-    output logic signed [DATA_WIDTH-1:0] RD2E,
-    output logic signed [DATA_WIDTH-1:0] SignImmE,
-    output logic [ADDR_WIDTH-1:0] PCBranchE,
-    output csr_index_t CsrIndexE,
-    output logic [2:0] funct3E,
-    output logic [ADDR_WIDTH-1:0] PCPlus4E,
-    output logic RegWriteE , 
-    output selector_t SelectorE,
-    output logic MemWriteE,
-    output logic BranchE,
-    output logic CsrAccessE,
-    output logic ALUSrcE,
-    output logic EcallE,
-    output logic EbreakE,
-    output logic MRetE,
-    output logic IllegaleInstructionE,
-    output fpr_t RdFE,
-    output logic [DATA_WIDTH-1:0] RD1FE,
-    output logic [DATA_WIDTH-1:0] RD2FE,
-    output fpu_operation_t FPUControlE,
-    output round_mode_t RoundModeE,
-    output logic FPURegWriteE,
-    output move_operation_t MoveOperationE,
-    output fpr_t Rs1FE,
-    output fpr_t Rs2FE,
-    output logic FPUValidE
+
+    // ── ID/EX register inputs ─────────────────────────────────────────────────
+    input [ADDR_WIDTH-1:0] PCPlus4D,        // PC+4 from fetch stage
+    input [DATA_WIDTH-1:0] InstructionD,   // Fetched instruction
+
+    // ── Write-back data from WB stage ────────────────────────────────────────
+    input gpr_t RdW,                        // Destination register (GPR)
+    input RegWriteW,                        // GPR write enable
+    input signed [DATA_WIDTH-1:0] ResultW, // GPR write-back data
+    input fpr_t RdFW,                       // Destination register (FPR)
+    input [DATA_WIDTH-1:0] FPUOutW,        // FPR write-back data
+    input move_operation_t MoveOperationW, // Move operation type
+    input FPURegWriteW,                     // FPR write enable
+
+    // ── Pipeline control ─────────────────────────────────────────────────────
+    input FlushE,                           // Flush decode stage
+
+    // ── GPR outputs to execute stage ─────────────────────────────────────────
+    output gpr_t Rs1E,                      // Source register 1 index
+    output gpr_t Rs2E,                      // Source register 2 index
+    output gpr_t Rs1D,                      // Current instruction rs1
+    output gpr_t Rs2D,                      // Current instruction rs2
+    output gpr_t RdE,                       // Destination register index
+    output logic signed [DATA_WIDTH-1:0] RD1E,  // GPR rs1 value
+    output logic signed [DATA_WIDTH-1:0] RD2E,  // GPR rs2 value
+
+    // ── Control signals to execute stage ────────────────────────────────────
+    output logic JumpE,                     // Jump instruction flag
+    output alu_operation_t ALUControlE,     // ALU operation select
+    output logic signed [DATA_WIDTH-1:0] SignImmE,  // Sign-extended immediate
+    output logic [ADDR_WIDTH-1:0] PCBranchE,        // Branch target address
+    output logic RegWriteE,                 // Register write enable
+    output selector_t SelectorE,             // Write-back data select
+    output logic MemWriteE,                 // Memory write enable
+    output logic BranchE,                   // Branch instruction flag
+    output logic ALUSrcE,                   // ALU second operand select
+
+    // ── CSR interface ─────────────────────────────────────────────────────────
+    output csr_t CsrOperationE,             // CSR operation type
+    output csr_index_t CsrIndexE,          // CSR register address
+    output logic CsrAccessE,               // CSR access enable
+
+    // ── Special instruction flags ────────────────────────────────────────────
+    output logic EcallE,                    // ECALL instruction flag
+    output logic EbreakE,                   // EBREAK instruction flag
+    output logic MRetE,                     // MRET instruction flag
+    output logic IllegaleInstructionE,      // Illegal instruction flag
+
+    // ── Function field passthrough ───────────────────────────────────────────
+    output logic [2:0] funct3E,             // funct3 field
+    output logic [ADDR_WIDTH-1:0] PCPlus4E,   // PC+4 to next stage
+
+    // ── FPR outputs to execute stage ─────────────────────────────────────────
+    output fpr_t RdFE,                      // FPR destination index
+    output logic [DATA_WIDTH-1:0] RD1FE,  // FPR rs1 value
+    output logic [DATA_WIDTH-1:0] RD2FE,  // FPR rs2 value
+    output fpu_operation_t FPUControlE,   // FPU operation type
+    output round_mode_t RoundModeE,        // Floating-point rounding mode
+    output logic FPURegWriteE,             // FPR write enable
+    output move_operation_t MoveOperationE,  // FPU move operation type
+    output fpr_t Rs1FE,                    // FPR source register 1 index
+    output fpr_t Rs2FE,                    // FPR source register 2 index
+    output logic FPUValidE                 // Valid FPU operation flag
 );
+
+    // ─── Internal wires and registers – ID stage ─────────────────────────────
+    // GPR read data (combinational)
     logic signed [DATA_WIDTH-1:0] RD1D;
     logic signed [DATA_WIDTH-1:0] RD2D;
+
+    // FPR read data (combinational)
     logic [DATA_WIDTH-1:0] RD1FD;
     logic [DATA_WIDTH-1:0] RD2FD;
-    logic signed [DATA_WIDTH-1:0] SignImmD;
-    logic signed [DATA_WIDTH-1:0] SignImmDShift;
-    logic [DATA_WIDTH-1:0] PCBranchD;
-    logic RegWriteD; 
+
+    // Immediate and branch computation
+    logic signed [DATA_WIDTH-1:0] SignImmD;        // Sign-extended immediate
+    logic signed [DATA_WIDTH-1:0] SignImmDShift;  // Immediate shifted left by 2
+    logic [DATA_WIDTH-1:0] PCBranchD;             // Branch target address
+
+    // Control signals from control unit
+    logic RegWriteD;
     selector_t SelectorD;
     logic MemWriteD;
     logic BranchD;

@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2018.2 (64-bit)
+# SW Build 2258646 on Thu Jun 14 20:03:12 MDT 2018
+# IP Build 2256618 on Thu Jun 14 22:10:49 MDT 2018
+# Start of session at: Thu Mar 19 11:45:40 2026
+# Process ID: 15424
+# Current directory: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1
+# Command line: vivado.exe -log riscv_processor.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source riscv_processor.tcl
+# Log file: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1/riscv_processor.vds
+# Journal file: C:/Ain_shams/RiscV/Syn/Risc/Risc.runs/synth_1\vivado.jou
+#-----------------------------------------------------------
+source riscv_processor.tcl -notrace

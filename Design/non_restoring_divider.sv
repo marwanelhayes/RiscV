@@ -1,3 +1,8 @@
+// =============================================================================
+// non_restoring_divider.sv
+// -----------------------------------------------------------------------------
+// Non-restoring divider for integer division in ALU.
+// =============================================================================
 module non_restoring_divider #(parameter WIDTH = 32) 
 (
     input   logic signed [WIDTH-1:0] dividend,

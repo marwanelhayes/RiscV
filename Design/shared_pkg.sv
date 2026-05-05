@@ -1,7 +1,18 @@
+// =============================================================================
+// shared_pkg.sv
+// -----------------------------------------------------------------------------
+// Shared package containing all common data types, enums, parameters, and
+// constants used across both design and verification.
+//
+// Responsibilities:
+//   - Define RISC-V opcode, ALU operation, and branch type enumerations
+//   - Define GPR and FPR register indices
+//   - Define CSR register indices and trap cause codes
+//   - Define floating-point operation types and rounding modes
+//   - Define pipeline state machine types for FPU operations
+//   - Provide global design parameters (data width, address width, precision)
+// =============================================================================
 package shared_pkg;
-
-    //This package contains all the shared data types, parameters, and constants that are used across the design and verification packages.
-    //This promotes code reusability and maintainability, as any changes to these shared elements can be made in one place and will reflect across all relevant files.
     typedef enum logic [6:0] 
     { 
         R_TYPE       = 7'b011_0011 , 
