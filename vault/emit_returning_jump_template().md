@@ -1,12 +1,12 @@
 ---
 source_file: "Python/riscv_testcase_generator.py"
 type: "code"
-community: "Python Testcase Generator"
+community: "Instruction Emitters"
 location: "L314"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Python_Testcase_Generator
+  - community/Instruction_Emitters
 ---
 
 # emit_returning_jump_template()
@@ -18,4 +18,4 @@ tags:
 - [[emit_random_instruction_sequence()]] - `calls` [EXTRACTED]
 - [[riscv_testcase_generator.py]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Python_Testcase_Generator
+#graphify/code #graphify/EXTRACTED #community/Instruction_Emitters

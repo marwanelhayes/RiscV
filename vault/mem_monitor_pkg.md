@@ -2,7 +2,6 @@
 source_file: "Verification/Memory/mem_agent_pkg.sv"
 type: "code"
 community: "Memory Verification Packages"
-location: "L7"
 tags:
   - graphify/code
   - graphify/EXTRACTED

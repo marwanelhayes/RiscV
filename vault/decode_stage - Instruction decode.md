@@ -1,11 +1,11 @@
 ---
 source_file: "Design/decode_stage.sv"
 type: "code"
-community: "Decode/Execute/FPU Design"
+community: "Decode Stage Components"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Decode/Execute/FPU_Design
+  - community/Decode_Stage_Components
 ---
 
 # decode_stage - Instruction decode
@@ -19,4 +19,4 @@ tags:
 - [[risc_reg_file - Integer register file]] - `references` [EXTRACTED]
 - [[riscv_processor.sv - Top-level RTL]] - `instantiates` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Decode/Execute/FPU_Design
+#graphify/code #graphify/EXTRACTED #community/Decode_Stage_Components

@@ -1,17 +1,16 @@
 ---
-source_file: "Python/binary1.txt"
-type: "document"
-community: "Decode/Execute/FPU Design"
+source_file: "binary1.txt - Generated instructions"
+type: "code"
+community: "Testcase Generator Functions"
 tags:
-  - graphify/document
+  - graphify/code
   - graphify/EXTRACTED
-  - community/Decode/Execute/FPU_Design
+  - community/Testcase_Generator_Functions
 ---
 
 # binary1.txt - Generated instructions
 
 ## Connections
-- [[program_info.txt - Program metadata]] - `references` [EXTRACTED]
-- [[riscv_testcase_generator.py_1]] - `outputs` [EXTRACTED]
+- [[riscv_testcase_generator.py]] - `outputs` [EXTRACTED]
 
-#graphify/document #graphify/EXTRACTED #community/Decode/Execute/FPU_Design
+#graphify/code #graphify/EXTRACTED #community/Testcase_Generator_Functions

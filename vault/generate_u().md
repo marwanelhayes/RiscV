@@ -1,12 +1,11 @@
 ---
 source_file: "Python/riscv_testcase_generator.py"
 type: "code"
-community: "Python Testcase Generator"
-location: "L502"
+community: "Instruction Emitters"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Python_Testcase_Generator
+  - community/Instruction_Emitters
 ---
 
 # generate_u()
@@ -14,6 +13,6 @@ tags:
 ## Connections
 - [[add_instructions()]] - `calls` [EXTRACTED]
 - [[generate_instruction()]] - `calls` [EXTRACTED]
-- [[riscv_testcase_generator.py]] - `contains` [EXTRACTED]
+- [[riscv_testcase_generator.py_1]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Python_Testcase_Generator
+#graphify/code #graphify/EXTRACTED #community/Instruction_Emitters

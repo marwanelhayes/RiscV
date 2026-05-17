@@ -1,21 +1,16 @@
 ---
 source_file: "Python/riscv_testcase_generator.py"
 type: "code"
-community: "Python Testcase Generator"
-location: "L143"
+community: "Instruction Emitters"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Python_Testcase_Generator
+  - community/Instruction_Emitters
 ---
 
 # encode_signed()
 
 ## Connections
-- [[emit_addi()]] - `calls` [EXTRACTED]
-- [[emit_branch()]] - `calls` [EXTRACTED]
 - [[emit_jal()]] - `calls` [EXTRACTED]
-- [[emit_jalr()]] - `calls` [EXTRACTED]
-- [[riscv_testcase_generator.py]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Python_Testcase_Generator
+#graphify/code #graphify/EXTRACTED #community/Instruction_Emitters

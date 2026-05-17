@@ -309,6 +309,33 @@ package shared_pkg;
         SQRT_DONE    = 3'b111
     } flp_sqrt_state_t;
 
+    typedef enum logic [2:0] {
+        AXI_IDLE    = 3'b000,
+        AXI_RD_ADDR = 3'b001,
+        AXI_RD_DATA = 3'b010,
+        AXI_WR_ADDR = 3'b011,
+        AXI_WR_DATA = 3'b100,
+        AXI_WR_RESP = 3'b101
+    } axi_state_t;
+
+    typedef enum logic [1:0] {
+        FIXED    = 2'b00,
+        INCR     = 2'b01,
+        WRAP     = 2'b10,
+        RESERVED = 2'b11
+    } axi_burst_t;
+
+    typedef enum logic [2:0] {
+        AXI_OKAY        = 3'b000,
+        AXI_EXOKAY      = 3'b001,
+        AXI_SLVERR      = 3'b010,
+        AXI_DECERR      = 3'b011,
+        AXI_PREFETCH    = 3'b100,
+        AXI_TRANSFAULT  = 3'b101,
+        AXI_OKAYDIRTY   = 3'b110,
+        AXI_RESERVED    = 3'b111
+    } axi_resp_t;
+
     // Parameter declaration section for clean code and easy modification
     // You can modify these parameters to change the design specifications
     // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files 

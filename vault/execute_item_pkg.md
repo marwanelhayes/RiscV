@@ -1,23 +1,16 @@
 ---
-source_file: "Verification/Execute/execute_scoreboard_pkg.sv"
+source_file: "Verification/Execute/execute_monitor_pkg.sv"
 type: "code"
-community: "Execute Verification"
-location: "L6"
+community: "CSR & Decode Verification"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Execute_Verification
+  - community/CSR_&_Decode_Verification
 ---
 
 # execute_item_pkg
 
 ## Connections
-- [[execute_agent_pkg.sv]] - `imports_from` [EXTRACTED]
-- [[execute_driver_pkg.sv]] - `imports_from` [EXTRACTED]
-- [[execute_interface.sv]] - `imports_from` [EXTRACTED]
 - [[execute_monitor_pkg.sv]] - `imports_from` [EXTRACTED]
-- [[execute_scoreboard_pkg.sv]] - `imports_from` [EXTRACTED]
-- [[execute_seq_pkg.sv]] - `imports_from` [EXTRACTED]
-- [[execute_subscriber_pkg.sv]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Execute_Verification
+#graphify/code #graphify/EXTRACTED #community/CSR_&_Decode_Verification

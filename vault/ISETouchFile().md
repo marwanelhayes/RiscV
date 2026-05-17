@@ -1,19 +1,16 @@
 ---
 source_file: "Syn/Risc/Risc.runs/synth_1/ISEWrap.js"
 type: "code"
-community: "Synthesis Scripts"
-location: "L187"
+community: "ISE Synthesis Scripts"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Synthesis_Scripts
+  - community/ISE_Synthesis_Scripts
 ---
 
 # ISETouchFile()
 
 ## Connections
-- [[ISEExec()]] - `calls` [EXTRACTED]
-- [[ISEOpenFile()]] - `calls` [EXTRACTED]
-- [[ISEWrap.js]] - `contains` [EXTRACTED]
+- [[ISEExec()_1]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Synthesis_Scripts
+#graphify/code #graphify/EXTRACTED #community/ISE_Synthesis_Scripts

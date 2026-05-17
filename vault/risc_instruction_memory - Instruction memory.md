@@ -1,11 +1,11 @@
 ---
 source_file: "Design/risc_instruction_memory.sv"
 type: "code"
-community: "Decode/Execute/FPU Design"
+community: "Processor Configuration"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Decode/Execute/FPU_Design
+  - community/Processor_Configuration
 ---
 
 # risc_instruction_memory - Instruction memory
@@ -13,4 +13,4 @@ tags:
 ## Connections
 - [[fetch_stage - Instruction fetch]] - `instantiates` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Decode/Execute/FPU_Design
+#graphify/code #graphify/EXTRACTED #community/Processor_Configuration

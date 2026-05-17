@@ -1,12 +1,12 @@
 ---
 source_file: "risc_fpu.c"
 type: "code"
-community: "RISC FPU C Implementation"
+community: "FPU C Implementation"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/RISC_FPU_C_Implementation
+  - community/FPU_C_Implementation
 ---
 
 # risc_fpu.c
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[risc_fpu()]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/RISC_FPU_C_Implementation
+#graphify/code #graphify/EXTRACTED #community/FPU_C_Implementation

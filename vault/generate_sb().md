@@ -1,12 +1,11 @@
 ---
 source_file: "Python/riscv_testcase_generator.py"
 type: "code"
-community: "Python Testcase Generator"
-location: "L480"
+community: "Testcase Generator Functions"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Python_Testcase_Generator
+  - community/Testcase_Generator_Functions
 ---
 
 # generate_sb()
@@ -14,7 +13,5 @@ tags:
 ## Connections
 - [[add_instructions()]] - `calls` [EXTRACTED]
 - [[choose_aligned_immediate()]] - `calls` [EXTRACTED]
-- [[generate_instruction()]] - `calls` [EXTRACTED]
-- [[riscv_testcase_generator.py]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Python_Testcase_Generator
+#graphify/code #graphify/EXTRACTED #community/Testcase_Generator_Functions

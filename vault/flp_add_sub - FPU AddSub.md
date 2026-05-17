@@ -1,16 +1,16 @@
 ---
-source_file: "Design/flp_add_sub.sv"
+source_file: "Design/risc_fpu.sv"
 type: "code"
-community: "Decode/Execute/FPU Design"
+community: "FPU Components"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Decode/Execute/FPU_Design
+  - community/FPU_Components
 ---
 
-# flp_add_sub - FPU Add/Sub
+# flp_add_sub - FPU AddSub
 
 ## Connections
 - [[risc_fpu - Floating Point Unit]] - `instantiates` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Decode/Execute/FPU_Design
+#graphify/code #graphify/EXTRACTED #community/FPU_Components

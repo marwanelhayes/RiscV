@@ -1,17 +1,16 @@
 ---
-source_file: "README.md"
-type: "document"
-community: "ISA Definitions & Parameters"
+source_file: "Design/shared_pkg.sv"
+type: "code"
+community: "Processor Configuration"
 tags:
-  - graphify/document
+  - graphify/code
   - graphify/EXTRACTED
-  - community/ISA_Definitions_&_Parameters
+  - community/Processor_Configuration
 ---
 
 # RV32 - 32-bit Integer Base
 
 ## Connections
-- [[sample_binary.txt - Sample output]] - `represents` [INFERRED]
 - [[shared_pkg.sv - ISA and register enums]] - `defines` [EXTRACTED]
 
-#graphify/document #graphify/EXTRACTED #community/ISA_Definitions_&_Parameters
+#graphify/code #graphify/EXTRACTED #community/Processor_Configuration

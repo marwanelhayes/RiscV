@@ -1,12 +1,12 @@
 ---
 source_file: "Verification/Execute/execute_monitor_pkg.sv"
 type: "code"
-community: "Execute Verification"
+community: "CSR & Decode Verification"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Execute_Verification
+  - community/CSR_&_Decode_Verification
 ---
 
 # execute_monitor_pkg.sv
@@ -15,4 +15,4 @@ tags:
 - [[execute_item_pkg]] - `imports_from` [EXTRACTED]
 - [[uvm_pkg]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Execute_Verification
+#graphify/code #graphify/EXTRACTED #community/CSR_&_Decode_Verification

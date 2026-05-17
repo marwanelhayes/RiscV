@@ -1,8 +1,7 @@
 ---
-source_file: "Verification/Risc/risc_test_pkg.sv"
+source_file: "Verification/Memory/mem_test_pkg.sv"
 type: "code"
 community: "Memory Verification Packages"
-location: "L10"
 tags:
   - graphify/code
   - graphify/EXTRACTED

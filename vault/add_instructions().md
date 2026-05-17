@@ -1,12 +1,12 @@
 ---
 source_file: "Python/riscv_testcase_generator.py"
 type: "code"
-community: "Python Testcase Generator"
+community: "Testcase Generator Functions"
 location: "L136"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Python_Testcase_Generator
+  - community/Testcase_Generator_Functions
 ---
 
 # add_instructions()
@@ -25,4 +25,4 @@ tags:
 - [[riscv_testcase_generator.py]] - `contains` [EXTRACTED]
 - [[validate_binary_instruction()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Python_Testcase_Generator
+#graphify/code #graphify/EXTRACTED #community/Testcase_Generator_Functions

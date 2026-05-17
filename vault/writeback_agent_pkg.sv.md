@@ -1,12 +1,12 @@
 ---
 source_file: "Verification/WriteBack/writeback_agent_pkg.sv"
 type: "code"
-community: "Writeback Verification Packages"
+community: "CSR & Decode Verification"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Writeback_Verification_Packages
+  - community/CSR_&_Decode_Verification
 ---
 
 # writeback_agent_pkg.sv
@@ -15,7 +15,7 @@ tags:
 - [[uvm_pkg]] - `imports_from` [EXTRACTED]
 - [[writeback_config_pkg]] - `imports_from` [EXTRACTED]
 - [[writeback_driver_pkg]] - `imports_from` [EXTRACTED]
-- [[writeback_item_pkg]] - `imports_from` [EXTRACTED]
+- [[writeback_item_pkg.sv]] - `imports_from` [EXTRACTED]
 - [[writeback_monitor_pkg]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Writeback_Verification_Packages
+#graphify/code #graphify/EXTRACTED #community/CSR_&_Decode_Verification

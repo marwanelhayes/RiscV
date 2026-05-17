@@ -1,297 +1,94 @@
 {
   "colorGroups": [
     {
-      "query": "tag:#community/Python_Testcase_Generator",
+      "query": "tag:#community/CSR_&_Decode_Verification",
       "color": {
         "a": 1,
         "rgb": 5142951
       }
     },
     {
-      "query": "tag:#community/CSR_Verification_Packages",
+      "query": "tag:#community/Testcase_Generator_Functions",
       "color": {
         "a": 1,
         "rgb": 15896107
       }
     },
     {
-      "query": "tag:#community/Execute/Fetch_Verification",
+      "query": "tag:#community/Instruction_Emitters",
       "color": {
         "a": 1,
         "rgb": 14767961
       }
     },
     {
-      "query": "tag:#community/Decode/Execute/FPU_Design",
+      "query": "tag:#community/Processor_Configuration",
       "color": {
         "a": 1,
         "rgb": 7780274
       }
     },
     {
-      "query": "tag:#community/Design_Modules_(RTL)",
+      "query": "tag:#community/ISE_Synthesis_Scripts",
       "color": {
         "a": 1,
         "rgb": 5873999
-      }
-    },
-    {
-      "query": "tag:#community/UVM_Verification_Framework",
-      "color": {
-        "a": 1,
-        "rgb": 15583560
       }
     },
     {
       "query": "tag:#community/Memory_Verification_Packages",
       "color": {
         "a": 1,
-        "rgb": 11565729
-      }
-    },
-    {
-      "query": "tag:#community/Decode_Verification_Packages",
-      "color": {
-        "a": 1,
-        "rgb": 16752039
-      }
-    },
-    {
-      "query": "tag:#community/Writeback_Verification_Packages",
-      "color": {
-        "a": 1,
-        "rgb": 10253663
-      }
-    },
-    {
-      "query": "tag:#community/ISA_Definitions_&_Parameters",
-      "color": {
-        "a": 1,
-        "rgb": 12234924
-      }
-    },
-    {
-      "query": "tag:#community/Synthesis_Scripts",
-      "color": {
-        "a": 1,
-        "rgb": 5142951
-      }
-    },
-    {
-      "query": "tag:#community/FPU_Verification",
-      "color": {
-        "a": 1,
-        "rgb": 15896107
-      }
-    },
-    {
-      "query": "tag:#community/Hazard_Verification",
-      "color": {
-        "a": 1,
-        "rgb": 14767961
-      }
-    },
-    {
-      "query": "tag:#community/Execute_Verification",
-      "color": {
-        "a": 1,
-        "rgb": 7780274
-      }
-    },
-    {
-      "query": "tag:#community/Fetch_Verification",
-      "color": {
-        "a": 1,
-        "rgb": 5873999
-      }
-    },
-    {
-      "query": "tag:#community/RISC_FPU_C_Implementation",
-      "color": {
-        "a": 1,
         "rgb": 15583560
       }
     },
     {
-      "query": "tag:#community/Synthesis_Run_Files",
+      "query": "tag:#community/Fetch/Execute_Verification",
       "color": {
         "a": 1,
         "rgb": 11565729
       }
     },
     {
-      "query": "tag:#community/CSR_Verification_Top",
+      "query": "tag:#community/Decode_Stage_Components",
       "color": {
         "a": 1,
         "rgb": 16752039
       }
     },
     {
-      "query": "tag:#community/Decode_Verification_Top",
+      "query": "tag:#community/Hazard_Detection",
       "color": {
         "a": 1,
         "rgb": 10253663
       }
     },
     {
-      "query": "tag:#community/Memory_Verification_Top",
+      "query": "tag:#community/FPU_Components",
       "color": {
         "a": 1,
         "rgb": 12234924
       }
     },
     {
-      "query": "tag:#community/RISC_Verification_Top",
+      "query": "tag:#community/RISC-V_Top_Level",
       "color": {
         "a": 1,
         "rgb": 5142951
       }
     },
     {
-      "query": "tag:#community/Fetch_Verification_Top",
+      "query": "tag:#community/FPU_C_Implementation",
       "color": {
         "a": 1,
         "rgb": 15896107
       }
     },
     {
-      "query": "tag:#community/Writeback_Verification_Top",
+      "query": "tag:#community/Mux4_Component",
       "color": {
         "a": 1,
         "rgb": 14767961
-      }
-    },
-    {
-      "query": "tag:#community/Hazard_Verification_Top",
-      "color": {
-        "a": 1,
-        "rgb": 7780274
-      }
-    },
-    {
-      "query": "tag:#community/FPU_Verification_Top",
-      "color": {
-        "a": 1,
-        "rgb": 5873999
-      }
-    },
-    {
-      "query": "tag:#community/Execute_Verification_Top",
-      "color": {
-        "a": 1,
-        "rgb": 15583560
-      }
-    },
-    {
-      "query": "tag:#community/Python_Hex_Converter",
-      "color": {
-        "a": 1,
-        "rgb": 11565729
-      }
-    },
-    {
-      "query": "tag:#community/Sample_Hex_Output",
-      "color": {
-        "a": 1,
-        "rgb": 16752039
-      }
-    },
-    {
-      "query": "tag:#community/CSR_Definitions",
-      "color": {
-        "a": 1,
-        "rgb": 10253663
-      }
-    },
-    {
-      "query": "tag:#community/Instruction_Memory",
-      "color": {
-        "a": 1,
-        "rgb": 12234924
-      }
-    },
-    {
-      "query": "tag:#community/LZC_Wrapper",
-      "color": {
-        "a": 1,
-        "rgb": 5142951
-      }
-    },
-    {
-      "query": "tag:#community/Non-restoring_Divider",
-      "color": {
-        "a": 1,
-        "rgb": 15896107
-      }
-    },
-    {
-      "query": "tag:#community/Shared_Package",
-      "color": {
-        "a": 1,
-        "rgb": 14767961
-      }
-    },
-    {
-      "query": "tag:#community/PC_Adder",
-      "color": {
-        "a": 1,
-        "rgb": 7780274
-      }
-    },
-    {
-      "query": "tag:#community/Fetch_Stage",
-      "color": {
-        "a": 1,
-        "rgb": 5873999
-      }
-    },
-    {
-      "query": "tag:#community/Mux4",
-      "color": {
-        "a": 1,
-        "rgb": 15583560
-      }
-    },
-    {
-      "query": "tag:#community/Data_Memory",
-      "color": {
-        "a": 1,
-        "rgb": 11565729
-      }
-    },
-    {
-      "query": "tag:#community/Mux3",
-      "color": {
-        "a": 1,
-        "rgb": 16752039
-      }
-    },
-    {
-      "query": "tag:#community/Mux2",
-      "color": {
-        "a": 1,
-        "rgb": 10253663
-      }
-    },
-    {
-      "query": "tag:#community/README",
-      "color": {
-        "a": 1,
-        "rgb": 12234924
-      }
-    },
-    {
-      "query": "tag:#community/Synthesis_HTR",
-      "color": {
-        "a": 1,
-        "rgb": 5142951
-      }
-    },
-    {
-      "query": "tag:#community/IP_README",
-      "color": {
-        "a": 1,
-        "rgb": 15896107
       }
     }
   ]
