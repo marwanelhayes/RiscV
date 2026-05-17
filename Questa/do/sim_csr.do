@@ -2,11 +2,11 @@
 # sim_csr.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for CSR verification
-# Usage: do sim_csr.do
+# Usage: do ../sim_csr.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work csr_top

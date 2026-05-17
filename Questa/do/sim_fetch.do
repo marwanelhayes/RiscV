@@ -2,11 +2,11 @@
 # sim_fetch.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Fetch stage verification
-# Usage: do sim_fetch.do
+# Usage: do ../sim_fetch.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work fetch_top

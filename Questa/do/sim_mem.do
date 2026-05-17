@@ -2,11 +2,11 @@
 # sim_mem.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Memory stage verification
-# Usage: do sim_mem.do
+# Usage: do ../sim_mem.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work mem_top

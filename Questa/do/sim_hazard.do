@@ -2,11 +2,11 @@
 # sim_hazard.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Hazard unit verification
-# Usage: do sim_hazard.do
+# Usage: do ../sim_hazard.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work hazard_top

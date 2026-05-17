@@ -8,14 +8,15 @@ This folder contains Questa simulation scripts for the RISC-V 5-stage pipeline p
 Questa/
 ├── do/
 │   ├── compile.do       # Compile all design and verification files
-│   ├── sim_fetch.do    # Simulate Fetch stage verification
-│   ├── sim_execute.do  # Simulate Execute stage verification
-│   ├── sim_mem.do      # Simulate Memory stage verification
+│   ├── add_files.do     # Add files to Questa project (scratch area)
+│   ├── sim_fetch.do     # Simulate Fetch stage verification
+│   ├── sim_execute.do   # Simulate Execute stage verification
+│   ├── sim_mem.do       # Simulate Memory stage verification
 │   ├── sim_writeback.do # Simulate Write-back stage verification
-│   ├── sim_fpu.do      # Simulate FPU verification
-│   ├── sim_csr.do      # Simulate CSR verification
-│   ├── sim_hazard.do   # Simulate Hazard unit verification
-│   └── sim_risc.do     # Simulate full processor verification
+│   ├── sim_fpu.do       # Simulate FPU verification
+│   ├── sim_csr.do       # Simulate CSR verification
+│   ├── sim_hazard.do    # Simulate Hazard unit verification
+│   └── sim_risc.do      # Simulate full processor verification
 └── README.md            # This file
 ```
 
@@ -27,7 +28,15 @@ cd C:/marwan-ahmed/Work/RiscV/Questa/do
 do compile.do
 ```
 
-### 2. Run Individual Simulations
+### 2. Add Files to Project (Scratch Area)
+To add files to a new Questa project (creates files in the scratch area):
+```tcl
+cd C:/marwan-ahmed/Work/RiscV/Questa/do
+do add_files.do
+```
+This adds all design and verification files to the Questa project for the scratch area where the Questasim project will be created.
+
+### 3. Run Individual Simulations
 
 **Fetch Stage:**
 ```tcl
@@ -98,3 +107,5 @@ Each simulation do file adds specific signals to the waveform:
 - Waveforms display top DUT signals for each verification environment
 - Simulation times are set to 1000ns (5000ns for full processor)
 - Modify run times in individual do files as needed
+- The scratch area (`Questa/work/`) is where the Questasim project and compiled libraries are stored
+- Use `add_files.do` to add files to a new Questa project in the scratch area

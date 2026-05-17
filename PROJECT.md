@@ -7,6 +7,7 @@ This is a complete RISC-V 5-stage pipeline processor implementation with:
 - RV32M multiply/divide extension
 - RV32F single-precision floating-point extension
 - Machine-mode CSR support
+- Instruction and Data Cache (configurable set-associativity)
 - Full UVM verification environment
 
 ## Directory Structure
@@ -38,6 +39,8 @@ RiscV/
 │   ├── risc_data_memory.sv        # Data memory (RAM)
 │   ├── data_memory.sv             # Data memory wrapper
 │   ├── risc_mem.sv                # Single-port memory cell
+│   │
+│   ├── cache.sv                   # Configurable L1 cache (I-cache and D-cache)
 │   │
 │   ├── csr_file.sv                # Control and Status Registers
 │   │
@@ -119,6 +122,7 @@ RiscV/
 - **Control Flow**: JAL, JALR, conditional branches
 - **Interrupts**: Machine timer, software, and external interrupts
 - **Traps**: Exception and trap handling via CSR
+- **L1 Cache**: Configurable instruction/data cache with set-associativity
 
 ## Design Parameters
 
@@ -128,6 +132,9 @@ RiscV/
 | ADDR_WIDTH | 32 | Address space (configurable) |
 | PRECISION | SINGLE | Floating-point precision |
 | STAGES | 4 | FPU pipeline stages |
+| CACHE_LINES | 32 | L1 cache lines (configurable) |
+| CACHE_WAY | 1 | Cache associativity (1=direct-mapped) |
+| CACHE_WORDS | 4 | Words per cache line |
 
 ## Instruction Extensions
 

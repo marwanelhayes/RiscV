@@ -2,11 +2,11 @@
 # sim_writeback.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Write-back stage verification
-# Usage: do sim_writeback.do
+# Usage: do ../sim_writeback.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work writeback_top

@@ -45,6 +45,7 @@ From the checked-in RTL and decoder definitions, the design appears to target:
 - M-extension integer multiply/divide operations
 - CSR/system instructions
 - single-precision floating-point operations
+- L1 instruction and data cache with configurable associativity
 
 The floating-point path includes modules such as:
 
@@ -70,6 +71,7 @@ If you need to work on a specific topic, start here:
 - Execute path: [`Design/execute_stage.sv`](/home/marwan-ahmed/Work/RiscV/Design/execute_stage.sv), [`Design/risc_alu.sv`](/home/marwan-ahmed/Work/RiscV/Design/risc_alu.sv), [`Design/csr_file.sv`](/home/marwan-ahmed/Work/RiscV/Design/csr_file.sv)
 - Memory/writeback: [`Design/memory_stage.sv`](/home/marwan-ahmed/Work/RiscV/Design/memory_stage.sv), [`Design/wb_stage.sv`](/home/marwan-ahmed/Work/RiscV/Design/wb_stage.sv), [`Design/risc_data_memory.sv`](/home/marwan-ahmed/Work/RiscV/Design/risc_data_memory.sv), [`Design/risc_instruction_memory.sv`](/home/marwan-ahmed/Work/RiscV/Design/risc_instruction_memory.sv)
 - Hazard/forwarding: [`Design/hazard_unit.sv`](/home/marwan-ahmed/Work/RiscV/Design/hazard_unit.sv)
+- Cache: [`Design/cache.sv`](/home/marwan-ahmed/Work/RiscV/Design/cache.sv) (L1 instruction/data cache)
 - Integer register files: [`Design/risc_reg_file.sv`](/home/marwan-ahmed/Work/RiscV/Design/risc_reg_file.sv), [`Design/fp_reg_file.sv`](/home/marwan-ahmed/Work/RiscV/Design/fp_reg_file.sv)
 
 ## Verification Structure

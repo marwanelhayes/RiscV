@@ -2,11 +2,11 @@
 # sim_fpu.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for FPU verification
-# Usage: do sim_fpu.do
+# Usage: do ../sim_fpu.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do C:/marwan-ahmed/Work/RiscV/Questa/do/compile.do
+do Questa/do/compile.do
 
 # Load simulation
 vsim -t 1ps -voptargs=+acc -lib work flp_top

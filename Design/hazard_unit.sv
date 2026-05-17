@@ -53,7 +53,11 @@ module hazard_unit
     // ─── FPU status ───────────────────────────────────────────────────────────
     input   logic FPUValidE,         // Valid FPU operation
     input   logic FPUBusyM,          // FPU busy flag
-    
+
+    // ─── Cache status ───────────────────────────────────────────────────────────
+    input   logic ICacheHit,         // Instruction cache hit
+    input   logic DCacheHit,         // Data cache hit
+
     // ─── Forwarding outputs ───────────────────────────────────────────────────
     output  logic [2:0] ForwardAE,    // GPR operand A forward select
     output  logic [2:0] ForwardBE,    // GPR operand B forward select
@@ -163,8 +167,11 @@ module hazard_unit
     end
         
     // ─── Pipeline stall and flush generation ────────────────────────────────
-    assign StallD = LWStall || FPUStall;
-    assign StallF = LWStall || FPUStall;
-    assign FlushD = PCSrcE  || TrapIsSet;
-    assign FlushE = LWStall || PCSrcE || TrapIsSet;
+    always_comb
+    begin
+        StallD = LWStall || FPUStall || (!ICacheHit) || (!DCacheHit);
+        StallF = LWStall || FPUStall || (!ICacheHit) || (!DCacheHit);
+        FlushD = PCSrcE  || TrapIsSet;
+        FlushE = LWStall || PCSrcE || TrapIsSet;
+    end
 endmodule

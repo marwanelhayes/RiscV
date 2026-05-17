@@ -22,10 +22,16 @@ import shared_pkg::*;
 
 module riscv_processor
 #(
-    parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 8,
-    parameter int ALU_SUB_CONTROL_WIDTH = 2,
-    parameter int STAGES = 4
+    parameter int   DATA_WIDTH = 32,
+    parameter int   ADDR_WIDTH = 8,
+    parameter int   ALU_SUB_CONTROL_WIDTH = 2,
+    parameter int   STAGES = 4,
+    parameter int   CACHE_TOTAL_LINES  = 32,                          
+    parameter int   CACHE_WAY          = 1,                          
+    parameter int   CACHE_LINE_WORDS   = 4,                           
+    parameter bit   ICACHE_READ_ONLY    = 1'b1,
+    parameter bit   DCACHE_READ_ONLY    = 1'b0,                         
+    parameter int   CACHE_AXI_SIZE     = 4
 )
 (
     // ─── Clock and reset ───────────────────────────────────────────────────────
@@ -35,12 +41,83 @@ module riscv_processor
     // ─── External interrupt inputs ─────────────────────────────────────────────
     input ExternalInterrupt,    // External hardware interrupt
     input TimerInterrupt,       // Timer interrupt
-    input SoftwareInterrupt    // Software interrupt
+    input SoftwareInterrupt,    // Software interrupt
+
+    // ─── AXI4 master interface: ICache write address channel ─────────────────────────
+    output logic [ADDR_WIDTH-1:0] IMAWAddr,
+    output logic [7:0]            IMAWLen,
+    output logic [CACHE_AXI_SIZE-1:0]   IMAWSize,
+    output axi_burst_t            IMAWBurst,
+    output logic                  IMAWValid,
+    input  logic                  IMAWReady,
+
+    // ── AXI4 master interface: ICachewrite data channel ────────────────────────────
+    output logic [DATA_WIDTH-1:0] IMWData,
+    output logic [(DATA_WIDTH/8)-1:0] IMWStrb,
+    output logic                  IMWLast,
+    output logic                  IMWValid,
+    input  logic                  IMWReady,
+
+    // ── AXI4 master interface: ICache write response channel ────────────────────────
+    output logic                  IMBReady,
+    input  axi_resp_t             IMBResp,
+    input  logic                  IMBValid,
+
+    // ── AXI4 master interface: ICache read address channel ──────────────────────────
+    output logic [ADDR_WIDTH-1:0] IMARAddr,
+    output logic [7:0]            IMARLen,
+    output logic [CACHE_AXI_SIZE-1:0]   IMARSize,
+    output axi_burst_t            IMARBurst,
+    output logic                  IMARValid,
+    input  logic                  IMARReady,
+
+    // ── AXI4 master interface: ICache read data channel ─────────────────────────────
+    output logic                  IMRReady,
+    input  logic [DATA_WIDTH-1:0] IMRRData,
+    input  axi_resp_t             IMRRResp,
+    input  logic                  IMRRLast,
+    input  logic                  IMRRValid,
+
+    // ─── AXI4 master interface: DCache write address channel ─────────────────────────
+    output logic [ADDR_WIDTH-1:0] DMAWAddr,
+    output logic [7:0]            DMAWLen,
+    output logic [CACHE_AXI_SIZE-1:0]   DMAWSize,
+    output axi_burst_t            DMAWBurst,
+    output logic                  DMAWValid,
+    input  logic                  DMAWReady,
+
+    // ── AXI4 master interface: DCache write data channel ────────────────────────────
+    output logic [DATA_WIDTH-1:0] DMWData,
+    output logic [(DATA_WIDTH/8)-1:0] DMWStrb,
+    output logic                  DMWLast,
+    output logic                  DMWValid,
+    input  logic                  DMWReady,
+
+    // ── AXI4 master interface: DCache write response channel ────────────────────────
+    output logic                  DMBReady,
+    input  axi_resp_t             DMBResp,
+    input  logic                  DMBValid,
+
+    // ── AXI4 master interface: DCache read address channel ──────────────────────────
+    output logic [ADDR_WIDTH-1:0] DMARAddr,
+    output logic [7:0]            DMARLen,
+    output logic [CACHE_AXI_SIZE-1:0]   DMARSize,
+    output axi_burst_t            DMARBurst,
+    output logic                  DMARValid,
+    input  logic                  DMARReady,
+
+    // ── AXI4 master interface: DCache read data channel ─────────────────────────────
+    output logic                  DMRReady,
+    input  logic [DATA_WIDTH-1:0] DMRRData,
+    input  axi_resp_t             DMRRResp,
+    input  logic                  DMRRLast,
+    input  logic                  DMRRValid
 );
 
     // ─── IF stage interconnects ───────────────────────────────────────────────
     wire [ADDR_WIDTH-1:0] PCF;             // Program counter (fetch)
     wire [ADDR_WIDTH-1:0] PCPlus4F;        // PC + 4 (next sequential)
+    wire CacheHitF;                     // Cache hit signal for stalling logic
 
     // ─── ID stage interconnects ───────────────────────────────────────────────
     wire [ADDR_WIDTH-1:0] PCPlus4D;        // PC+4 to decode
@@ -99,7 +176,6 @@ module riscv_processor
     wire RegWriteM;                           // Register write enable
     wire [DATA_WIDTH-1:0] CsrOutM;           // CSR read data
     selector_t SelectorM;                     // Write-back select
-    wire MemWriteE;                           // Memory write enable
     wire [ADDR_WIDTH-1:0] PCPlus4M;           // PC+4 to memory
     fpr_t RdFM;                               // FPR destination
     wire OverflowM;                           // FPU overflow flag
@@ -113,6 +189,7 @@ module riscv_processor
     move_operation_t MoveOperationM;          // FPU move operation
     wire FPUBusyM;                            // FPU busy flag
     wire FPUDoneM;                            // FPU done flag
+    wire CacheHitM;                           // Cache hit signal for stalling logic
 
     // ─── WB stage interconnects ───────────────────────────────────────────────
     wire signed [DATA_WIDTH-1:0] ReadDataW;    // Loaded data from memory
@@ -133,7 +210,15 @@ module riscv_processor
     wire [ADDR_WIDTH-1:0] CsrOutPC;           // Trap vector address
 
     // ─── riscv_processor: fetch_stage ─────────────────────────────────────────
-    fetch_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
+    fetch_stage #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .CACHE_TOTAL_LINES(CACHE_TOTAL_LINES),
+        .CACHE_WAY(CACHE_WAY),
+        .CACHE_LINE_WORDS(CACHE_LINE_WORDS),
+        .CACHE_READ_ONLY(ICACHE_READ_ONLY),
+        .CACHE_AXI_SIZE(CACHE_AXI_SIZE)
+    ) 
     Fetch
     (
         .clk(clk),
@@ -143,7 +228,33 @@ module riscv_processor
         .StallD(StallD),
         .PCPlus4D(PCPlus4D),
         .InstructionD(InstructionD),
-        .PCPlus4F(PCPlus4F)
+        .PCPlus4F(PCPlus4F),
+        .CacheHitF(CacheHitF),
+        .MAWAddr(IMAWAddr),
+        .MAWLen(IMAWLen),
+        .MAWSize(IMAWSize),
+        .MAWBurst(IMAWBurst),
+        .MAWValid(IMAWValid),
+        .MAWReady(IMAWReady),
+        .MWData(IMWData),
+        .MWStrb(IMWStrb),
+        .MWLast(IMWLast),
+        .MWValid(IMWValid),
+        .MWReady(IMWReady),
+        .MBReady(IMBReady),
+        .MBResp(IMBResp),
+        .MBValid(IMBValid),
+        .MARAddr(IMARAddr),
+        .MARLen(IMARLen),
+        .MARSize(IMARSize),
+        .MARBurst(IMARBurst),
+        .MARValid(IMARValid),
+        .MARReady(IMARReady),
+        .MRReady(IMRReady),
+        .MRRData(IMRRData),
+        .MRRResp(IMRRResp),
+        .MRRLast(IMRRLast),
+        .MRRValid(IMRRValid)
     );
 
     // ─── riscv_processor: decode_stage ─────────────────────────────────────────
@@ -287,6 +398,7 @@ module riscv_processor
         .RegWriteM(RegWriteM),
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
+        .CacheHitM(CacheHitM),
         .ReadDataW(ReadDataW),
         .RdW(RdW),
         .PCPlus4W(PCPlus4W),
@@ -312,7 +424,32 @@ module riscv_processor
         .InvalidDivW(InvalidDivW),
         .FPUOutW(FPUOutW),
         .FPURegWriteW(FPURegWriteW),
-        .MoveOperationW(MoveOperationW)
+        .MoveOperationW(MoveOperationW),
+        .MAWAddr(DMAWAddr),
+        .MAWLen(DMAWLen),
+        .MAWSize(DMAWSize),
+        .MAWBurst(DMAWBurst),
+        .MAWValid(DMAWValid),
+        .MAWReady(DMAWReady),
+        .MWData(DMWData),
+        .MWStrb(DMWStrb),
+        .MWLast(DMWLast),
+        .MWValid(DMWValid),
+        .MWReady(DMWReady),
+        .MBReady(DMBReady),
+        .MBResp(DMBResp),
+        .MBValid(DMBValid),
+        .MARAddr(DMARAddr),
+        .MARLen(DMARLen),
+        .MARSize(DMARSize),
+        .MARBurst(DMARBurst),
+        .MARValid(DMARValid),
+        .MARReady(DMARReady),
+        .MRReady(DMRReady),
+        .MRRData(DMRRData),
+        .MRRResp(DMRRResp),
+        .MRRLast(DMRRLast),
+        .MRRValid(DMRRValid)
     );
 
     wb_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
@@ -344,6 +481,8 @@ module riscv_processor
         .Rs2D(Rs2D), 
         .RdM(RdM),
         .RdW(RdW),
+        .ICacheHit(CacheHitF),
+        .DCacheHit(CacheHitM),
         .RegWriteM(RegWriteM),
         .RegWriteW(RegWriteW),
         .PCSrcE(PCSrcE),
