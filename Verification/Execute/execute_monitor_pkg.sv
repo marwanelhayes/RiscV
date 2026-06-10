@@ -15,7 +15,7 @@ package execute_monitor_pkg;
         endfunction:new
 
         uvm_analysis_port #(execute_item) mon_port;
-        execute_item mon_item;
+        execute_item mon_item, cloned_item;
         virtual execute_interface vif;
 
         virtual function void build_phase (uvm_phase phase);
@@ -23,16 +23,17 @@ package execute_monitor_pkg;
             mon_port = new("mon_port",this);
             mon_item = execute_item::type_id::create("mon_item");
         endfunction:build_phase
-        
+
         virtual task run_phase (uvm_phase phase);
             super.run_phase(phase);
             forever
             begin:monitoring
                 vif.intf2mon(mon_item);
-                `uvm_info("MON",mon_item.convert2str,UVM_DEBUG)
-                mon_port.write(mon_item);
+                if(!$cast(cloned_item, mon_item.clone()))
+                    `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
+                mon_port.write(cloned_item);
+                `uvm_info("MON",cloned_item.convert2str,UVM_HIGH)
             end:monitoring
-        
         endtask:run_phase
 
     endclass:execute_monitor

@@ -24,7 +24,7 @@ package csr_agent_pkg;
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             if(!uvm_config_db #(csr_config)::get(this,"","CONFG",configuration))
-                `uvm_error("AGT","Agent couldn't receive configuration object")
+                `uvm_error("AGT","CSR agent couldn't receive configuration object")
             if(configuration.enable == UVM_ACTIVE)
             begin
                 drv = csr_driver::type_id::create("drv",this);

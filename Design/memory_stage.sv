@@ -114,25 +114,13 @@ module memory_stage
     // ─── Internal wires – data memory interface ──────────────────────────────
     logic [DATA_WIDTH-1:0] ReadDataM;    // Data returned from memory
 
-    // ─── memory_stage: data memory ───────────────────────────────────────────
-    risc_data_memory #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) M1 
-    (
-        .clk(clk),
-        .rst(rst),
-        .a1(ALUOutM[ADDR_WIDTH-1:0]),       // Word-aligned address
-        .Wdata(WriteDataM),                 // Data to write
-        .we(MemWriteM),                     // Write enable
-        .sel(load_store_t'(funct3M)),       // Byte/half/word select
-        .RDdata(ReadDataM)                  // Read data output
-    );
-
     cache #(
         .DATA_WIDTH(DATA_WIDTH),
         .ADDR_WIDTH(ADDR_WIDTH),
         .TOTAL_LINES(CACHE_TOTAL_LINES),
         .WAY(CACHE_WAY),
         .LINE_WORDS(CACHE_LINE_WORDS),
-        .READ_ONLY(CACHE_READ_ONLY),
+        .READ_ONLY(0),
         .AXI_SIZE(CACHE_AXI_SIZE)
     ) DCache (
                     

@@ -18,6 +18,7 @@ package mem_test_pkg;
 
         mem_env env;
         mem_seq main_sequence;
+        mem_seq_no_rst main_sequence_no_rst;
         mem_config configuration;
 
         function void set_config_params();
@@ -33,6 +34,7 @@ package mem_test_pkg;
             uvm_config_db #(mem_config)::set(this,"env","CONFG",configuration);
             env = mem_env::type_id::create("env",this);
             main_sequence = mem_seq::type_id::create("main_sequence",this);
+            main_sequence_no_rst = mem_seq_no_rst::type_id::create("main_sequence_no_rst",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);
@@ -43,6 +45,7 @@ package mem_test_pkg;
         virtual task run_phase (uvm_phase phase);
             phase.raise_objection(this);
                 main_sequence.start(env.agent.seq);
+                main_sequence_no_rst.start(env.agent.seq);
             phase.drop_objection(this);
         endtask:run_phase
 

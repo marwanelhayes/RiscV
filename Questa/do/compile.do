@@ -12,6 +12,10 @@ echo "Compiling shared packages..."
 vlog -work work -vopt -stats=none ../../Design/shared_pkg.sv
 vlog -work work -vopt -stats=none ../../Design/csr_defs.sv
 
+# Reusable protocol assertion modules
+vlog -work work -vopt -stats=none ../../Verification/Protocol/AXI_Assertions.sv
+vlog -work work -vopt -stats=none ../../Verification/Protocol/axi_interface.sv
+
 # Design modules - core pipeline stages
 echo "Compiling design modules - Pipeline stages..."
 vlog -work work -vopt -stats=none ../../Design/fetch_stage.sv
@@ -44,7 +48,7 @@ vlog -work work -vopt -stats=none ../../Design/fp_reg_file.sv
 echo "Compiling memory modules..."
 vlog -work work -vopt -stats=none ../../Design/risc_instruction_memory.sv
 vlog -work work -vopt -stats=none ../../Design/risc_data_memory.sv
-vlog -work work -vopt -stats=none ../../Design/data_memory.sv
+vlog -work work -vopt -stats=none ../../Design/cache.sv
 
 # CSR
 echo "Compiling CSR modules..."
@@ -83,6 +87,7 @@ vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_seq_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_agent_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_scoreboard_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_predictor_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_env_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_test_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_interface.sv
@@ -98,52 +103,11 @@ vlog -work work -vopt -stats=none ../../Verification/Decode/decode_seq_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Decode/decode_agent_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Decode/decode_scoreboard_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Decode/decode_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Decode/decode_predictor_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Decode/decode_env_pkg.sv
-
-# Verification packages - Execute stage
-echo "Compiling Execute verification..."
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_item_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_config_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_driver_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_monitor_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_seq_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_agent_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_scoreboard_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_subscriber_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_env_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_test_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_interface.sv
-vlog -work work -vopt -stats=none ../../Verification/Execute/execute_top.sv
-
-# Verification packages - Memory stage
-echo "Compiling Memory verification..."
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_item_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_config_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_driver_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_monitor_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_seq_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_agent_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_scoreboard_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_subscriber_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_env_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_test_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_interface.sv
-vlog -work work -vopt -stats=none ../../Verification/Memory/mem_top.sv
-
-# Verification packages - WriteBack stage
-echo "Compiling WriteBack verification..."
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_item_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_config_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_driver_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_monitor_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_seq_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_agent_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_scoreboard_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_subscriber_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_env_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_test_pkg.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_interface.sv
-vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_top.sv
+vlog -work work -vopt -stats=none ../../Verification/Decode/decode_test_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Decode/decode_interface.sv
+vlog -work work -vopt -stats=none ../../Verification/Decode/decode_top.sv
 
 # Verification packages - FPU
 echo "Compiling FPU verification..."
@@ -155,6 +119,7 @@ vlog -work work -vopt -stats=none ../../Verification/FPU/flp_seq_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_agent_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_scoreboard_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/FPU/flp_predictor_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_env_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_test_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/FPU/flp_interface.sv
@@ -170,10 +135,61 @@ vlog -work work -vopt -stats=none ../../Verification/CSR/csr_seq_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_agent_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_scoreboard_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/CSR/csr_predictor_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_env_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_test_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_interface.sv
 vlog -work work -vopt -stats=none ../../Verification/CSR/csr_top.sv
+
+# Verification packages - Execute stage
+echo "Compiling Execute verification..."
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_item_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_config_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_driver_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_monitor_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_seq_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_agent_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_scoreboard_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_predictor_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_env_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_test_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_interface.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_top.sv
+
+# Verification packages - Memory stage
+echo "Compiling Memory verification..."
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_item_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_config_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_driver_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_monitor_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_seq_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_agent_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_scoreboard_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_predictor_pkg.sv
+#vlog -work work -vopt -stats=none ../../Verification/Memory/unused/mem_flat_predictor_pkg.sv
+#vlog -work work -vopt -stats=none ../../Verification/Memory/cache_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_env_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_test_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_interface.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/mem_top.sv
+
+# Verification packages - WriteBack stage
+echo "Compiling WriteBack verification..."
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_item_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_config_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_driver_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_monitor_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_seq_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_agent_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_scoreboard_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_predictor_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_env_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_test_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_interface.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/writeback_top.sv
 
 # Verification packages - Hazard
 echo "Compiling Hazard verification..."
@@ -185,6 +201,7 @@ vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_seq_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_agent_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_scoreboard_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_subscriber_pkg.sv
+vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_predictor_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_env_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_test_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_interface.sv
@@ -192,6 +209,13 @@ vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_top.sv
 
 # Verification packages - Risc (full processor)
 echo "Compiling Risc full processor verification..."
+vlog -work work -vopt -stats=none ../../Verification/Risc/csr_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/decode_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/execute_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/fetch_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/flp_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/hazard_wr.sv
+vlog -work work -vopt -stats=none ../../Verification/Risc/memory_wr.sv
 vlog -work work -vopt -stats=none ../../Verification/Risc/risc_interface.sv
 vlog -work work -vopt -stats=none ../../Verification/Risc/risc_test_pkg.sv
 vlog -work work -vopt -stats=none ../../Verification/Risc/risc_top.sv

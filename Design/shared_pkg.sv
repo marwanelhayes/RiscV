@@ -338,21 +338,26 @@ package shared_pkg;
 
     // Parameter declaration section for clean code and easy modification
     // You can modify these parameters to change the design specifications
-    // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files 
+    // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files     
     parameter int   ALU_OP                  = 4;
     parameter int   FINAL_DATA_WIDTH        = 32;
-    parameter int   FINAL_ADDR_WIDTH        = 22;
+    parameter int   FINAL_ADDR_WIDTH        = 10;
     parameter flp_t FINAL_PRECISION         = SINGLE;
     parameter int   FINAL_FLP_WIDTH         = (FINAL_PRECISION == SINGLE) ? 32 : 64;
     parameter int   FINAL_FLP_EXP_BITS      = (FINAL_PRECISION == SINGLE) ? 8  : 11;
     parameter int   FINAL_FLP_FRAC_BITS     = (FINAL_PRECISION == SINGLE) ? 23 : 52;
     parameter int   FINAL_FLP_BIAS          = (FINAL_PRECISION == SINGLE) ? 127: 1023;
     parameter int   CLK_PERIOD              = 10;
-    parameter int   CACHE_TOTAL_LINES       = 32;                          
-    parameter int   CACHE_WAY               = 1;                         
+    parameter int   CACHE_TOTAL_LINES       = (2 ** 5);                          
+    parameter int   CACHE_WAY               = 16;
     parameter int   CACHE_LINE_WORDS        = 4;                           
     parameter bit   ICACHE_READ_ONLY        = 1'b1;
     parameter bit   DCACHE_READ_ONLY        = 1'b0;                         
     parameter int   CACHE_AXI_SIZE          = 4;
+
+    // ── Verification reference image path ─────────────────────────────────
+    // Used by predictor and scoreboard so memory contents stay in sync with
+    // the design's instruction-memory ROM image.
+    parameter string INSTR_MEM_PATH         = "/home/marwan-ahmed/Work/RiscV/Python/binary1.txt";
 
 endpackage:shared_pkg

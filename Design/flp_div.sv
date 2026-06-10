@@ -160,7 +160,7 @@ module flp_div
             mantissa_out = mantissa_in >> (1 - exponent_out);
             Rounding = {sign, {EXP_BITS{1'b0}}, mantissa_out[FRAC_BITS-1:0]};
         end
-        else if (exponent_out[EXP_BITS])
+        else if (exponent_out >= (2**EXP_BITS - 1))
         begin
             Rounding = {sign, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
         end

@@ -34,9 +34,11 @@ module flp_top;
         .Inf(intf.Inf),
         .Zero(intf.Zero),
         .InvalidDiv(intf.InvalidDiv),
+        .MoveOperation(intf.MoveOperation),
         .Result(intf.Result),
         .RdFOut(intf.RdFOut),
-        .RegWriteOut(intf.RegWriteOut)
+        .RegWriteOut(intf.RegWriteOut),
+        .MoveOperationOut(intf.MoveOperationOut)
         );
 
     initial 

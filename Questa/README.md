@@ -25,14 +25,14 @@ Questa/
 ### 1. Compile All Files
 ```tcl
 cd C:/marwan-ahmed/Work/RiscV/Questa/do
-do compile.do
+do ../compile.do
 ```
 
 ### 2. Add Files to Project (Scratch Area)
 To add files to a new Questa project (creates files in the scratch area):
 ```tcl
 cd C:/marwan-ahmed/Work/RiscV/Questa/do
-do add_files.do
+do ../add_files.do
 ```
 This adds all design and verification files to the Questa project for the scratch area where the Questasim project will be created.
 
@@ -40,42 +40,42 @@ This adds all design and verification files to the Questa project for the scratc
 
 **Fetch Stage:**
 ```tcl
-do sim_fetch.do
+do ../sim_fetch.do
 ```
 
 **Execute Stage:**
 ```tcl
-do sim_execute.do
+do ../sim_execute.do
 ```
 
 **Memory Stage:**
 ```tcl
-do sim_mem.do
+do ../sim_mem.do
 ```
 
 **Write-back Stage:**
 ```tcl
-do sim_writeback.do
+do ../sim_writeback.do
 ```
 
 **FPU:**
 ```tcl
-do sim_fpu.do
+do ../sim_fpu.do
 ```
 
 **CSR:**
 ```tcl
-do sim_csr.do
+do ../sim_csr.do
 ```
 
 **Hazard Unit:**
 ```tcl
-do sim_hazard.do
+do ../sim_hazard.do
 ```
 
 **Full Processor:**
 ```tcl
-do sim_risc.do
+do ../sim_risc.do
 ```
 
 ## Simulation Flow

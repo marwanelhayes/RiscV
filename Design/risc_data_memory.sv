@@ -1,212 +1,156 @@
 // =============================================================================
-// risc_data_memory.sv
+// data_memory.sv
 // -----------------------------------------------------------------------------
-// Data memory (RAM) for RISC-V processor.
-//
-// Responsibilities:
-//   - Provide byte/halfword/word read and write access
-//   - Support unaligned load/store with hardware assist
-//   - Handle byte-enable masking for partial writes
-//   - Implement byte-lane architecture for efficient memory access
-//
-// Instantiates:
-//   - data_memory: four byte-lane memory instances
+// Synchronous data memory (RAM) with direct access and AXI4 slave interface.
 // =============================================================================
 import shared_pkg::*;
 
-module risc_data_memory 
+module risc_data_memory
 #(
     parameter int DATA_WIDTH = 32,
-    parameter int ADDR_WIDTH = 32
-) 
+    parameter int ADDR_WIDTH = 32,
+    parameter int AXI_SIZE   = 4
+)
 (
-    // ─── Clock and reset ───────────────────────────────────────────────────────
-    input clk,
-    input rst,
+    input  logic                  clk,
+    input  logic                  rst,
 
-    // ─── Memory interface ─────────────────────────────────────────────────────
-    input [ADDR_WIDTH-1:0] a1,              // Byte address
-    input signed [DATA_WIDTH-1:0] Wdata,    // Write data
-    input load_store_t sel,                // Size select (B/HW/W/BU/HWU)
-    input we,                               // Write enable
+    // AXI4 slave write address channel
+    input  logic [ADDR_WIDTH-1:0] MAWAddr,
+    input  logic [7:0]            MAWLen,
+    input  logic [AXI_SIZE-1:0]   MAWSize,
+    input  axi_burst_t            MAWBurst,
+    input  logic                  MAWValid,
+    output logic                  MAWReady,
 
-    // ─── Read data output ───────────────────────────────────────────────────
-    output logic signed [DATA_WIDTH-1:0] RDdata
+    // AXI4 slave write data channel
+    input  logic [DATA_WIDTH-1:0] MWData,
+    input  logic [(DATA_WIDTH/8)-1:0] MWStrb,
+    input  logic                  MWLast,
+    input  logic                  MWValid,
+    output logic                  MWReady,
+
+    // AXI4 slave write response channel
+    input  logic                  MBReady,
+    output axi_resp_t             MBResp,
+    output logic                  MBValid,
+
+    // AXI4 slave read address channel
+    input  logic [ADDR_WIDTH-1:0] MARAddr,
+    input  logic [7:0]            MARLen,
+    input  logic [AXI_SIZE-1:0]   MARSize,
+    input  axi_burst_t            MARBurst,
+    input  logic                  MARValid,
+    output logic                  MARReady,
+
+    // AXI4 slave read data channel
+    input  logic                  MRReady,
+    output logic [DATA_WIDTH-1:0] MRRData,
+    output axi_resp_t             MRRResp,
+    output logic                  MRRLast,
+    output logic                  MRRValid
 );
-    // ─── Internal parameters ─────────────────────────────────────────────────
-    localparam int MEM_DATA_WIDTH = (DATA_WIDTH/4);    // 8 bits per byte lane
 
-    // ─── Internal wires – byte lane read data ───────────────────────────────
-    logic signed [MEM_DATA_WIDTH-1:0] ReadData1;    // Byte lane 0
-    logic signed [MEM_DATA_WIDTH-1:0] ReadData2;    // Byte lane 1
-    logic signed [MEM_DATA_WIDTH-1:0] ReadData3;    // Byte lane 2
-    logic signed [MEM_DATA_WIDTH-1:0] ReadData4;    // Byte lane 3
+    localparam int DEPTH = 2**(ADDR_WIDTH - 2); // Assuming word-addressable memory
+    localparam int STRB_WIDTH = DATA_WIDTH / 8;
 
-    // ─── Internal wires – byte write enables ────────────────────────────────
-    logic we1, we2, we3, we4;    // Individual byte lane write enables
+    logic [DATA_WIDTH-1:0] mem [DEPTH];
+    logic [ADDR_WIDTH-1:0] raddr, raddr_next, waddr;
+    logic [AXI_SIZE-1:0]   rsize, wsize;
+    axi_burst_t            rburst, wburst;
+    logic [7:0]            rlen, rcnt, wlen, wcnt;
+    logic                  read_active, write_active;
 
-    // ─── risc_data_memory: byte lane 0 (bits 7:0) ─────────────────────────
-    data_memory #(.DATA_WIDTH(MEM_DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH - 2)) DM1 
-    (
-        .clk(clk),
-        .rst(rst),
-        .a1(a1[ADDR_WIDTH-1:2]),                           // Word-aligned address
-        .Wdata(Wdata[MEM_DATA_WIDTH-1:0]),                 // Byte 0
-        .we(we1),
-        .RDdata(ReadData1)
-    );
+    assign raddr_next = (rburst == FIXED) ? raddr : raddr + (1 << rsize);
+    assign MARReady = !read_active;
+    assign MAWReady = !write_active && !MBValid;
+    assign MWReady  = write_active;
+    assign MBResp   = AXI_OKAY;
 
-    // ─── risc_data_memory: byte lane 1 (bits 15:8) ─────────────────────────
-    data_memory #(.DATA_WIDTH(MEM_DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH - 2)) DM2 
-    (
-        .clk(clk),
-        .rst(rst),
-        .a1(a1[ADDR_WIDTH-1:2]),
-        .Wdata(Wdata[2*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH]),  // Byte 1
-        .we(we2),
-        .RDdata(ReadData2)
-    );
-
-    // ─── risc_data_memory: byte lane 2 (bits 23:16) ───────────────────────
-    data_memory #(.DATA_WIDTH(MEM_DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH - 2)) DM3 
-    (
-        .clk(clk),
-        .rst(rst),
-        .a1(a1[ADDR_WIDTH-1:2]),
-        .Wdata(Wdata[3*MEM_DATA_WIDTH-1:2*MEM_DATA_WIDTH]), // Byte 2
-        .we(we3),
-        .RDdata(ReadData3)
-    );
-
-    // ─── risc_data_memory: byte lane 3 (bits 31:24) ───────────────────────
-    data_memory #(.DATA_WIDTH(MEM_DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH - 2)) DM4 
-    (
-        .clk(clk),
-        .rst(rst),
-        .a1(a1[ADDR_WIDTH-1:2]),
-        .Wdata(Wdata[4*MEM_DATA_WIDTH-1:3*MEM_DATA_WIDTH]), // Byte 3
-        .we(we4),
-        .RDdata(ReadData4)
-    );
-
-    // ─── Read data selection based on size ───────────────────────────────────
-    always_comb
+    initial 
     begin
-        RDdata = '0;
-        case(sel)
-            // ── Word (32-bit) load ─────────────────────────────────────────
-            W: RDdata = {ReadData4,ReadData3,ReadData2,ReadData1};
-            // ── Halfword signed load ───────────────────────────────────────
-            HW:     begin
-                        if(a1[1])    // Unaligned: address[1]=1
-                        begin
-                            RDdata[2*MEM_DATA_WIDTH-1:0] = {ReadData4,ReadData3};
-                            RDdata[4*MEM_DATA_WIDTH-1:2*MEM_DATA_WIDTH] = {2*MEM_DATA_WIDTH{ReadData4[MEM_DATA_WIDTH-1]}};
-                        end
-                        else         // Aligned: address[1]=0
-                        begin
-                            RDdata[2*MEM_DATA_WIDTH-1:0] = {ReadData2,ReadData1};
-                            RDdata[4*MEM_DATA_WIDTH-1:2*MEM_DATA_WIDTH] = {2*MEM_DATA_WIDTH{ReadData2[MEM_DATA_WIDTH-1]}};
-                        end
-                    end
-            // ── Halfword unsigned load ──────────────────────────────────────
-            HWU:    begin
-                        if(a1[1])
-                        begin
-                            RDdata[2*MEM_DATA_WIDTH-1:0] = {ReadData4,ReadData3};
-                            RDdata[4*MEM_DATA_WIDTH-1:2*MEM_DATA_WIDTH] = '0;
-                        end
-                        else
-                        begin
-                            RDdata[2*MEM_DATA_WIDTH-1:0] = {ReadData2,ReadData1};
-                            RDdata[4*MEM_DATA_WIDTH-1:2*MEM_DATA_WIDTH] = '0;
-                        end
-                    end
-            // ── Byte signed load ────────────────────────────────────────────
-            B:     begin
-                        case(a1[1:0])
-                            2'b00:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData1;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = {3*MEM_DATA_WIDTH{ReadData1[MEM_DATA_WIDTH-1]}}; 
-                                    end
-                            2'b01:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData2;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = {3*MEM_DATA_WIDTH{ReadData2[MEM_DATA_WIDTH-1]}}; 
-                                    end
-                            2'b10:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData3;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = {3*MEM_DATA_WIDTH{ReadData3[MEM_DATA_WIDTH-1]}}; 
-                                    end
-                            2'b11:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData4;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = {3*MEM_DATA_WIDTH{ReadData4[MEM_DATA_WIDTH-1]}}; 
-                                    end
-                        endcase
-                    end
-            // ── Byte unsigned load ───────────────────────────────────────────
-            BU:    begin
-                        case(a1[1:0])
-                            2'b00:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData1;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = '0; 
-                                    end
-                            2'b01:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData2;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = '0; 
-                                    end
-                            2'b10:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData3;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = '0; 
-                                    end
-                            2'b11:  begin
-                                        RDdata[MEM_DATA_WIDTH-1:0] = ReadData4;
-                                        RDdata[4*MEM_DATA_WIDTH-1:MEM_DATA_WIDTH] = '0; 
-                                    end
-                        endcase
-                    end
-        endcase
+        foreach (mem[idx]) mem[idx] = '0;
     end
-
-    // ─── Write enable generation for byte lanes ─────────────────────────────
-    always_comb
+    
+    always @(posedge clk or negedge rst)
     begin
-        we1 = 1'b0;
-        we2 = 1'b0;
-        we3 = 1'b0;
-        we4 = 1'b0;
-        if(we)
+        if(!rst)
         begin
-            case(sel)
-                // ── Word store: enable all byte lanes ─────────────────────
-                W: begin
-                        we1 = 1'b1;
-                        we2 = 1'b1;
-                        we3 = 1'b1; 
-                        we4 = 1'b1;
-                    end
-                // ── Halfword store: select based on address ───────────────
-                HW: begin
-                        if(a1[1])
-                        begin
-                            we3 = 1'b1;
-                            we4 = 1'b1;
-                        end
-                        else
-                        begin
-                            we1 = 1'b1;
-                            we2 = 1'b1;
-                        end
-                    end
-                // ── Byte store: select single byte lane ───────────────────
-                B: begin
-                        case(a1[1:0])
-                            2'b00:  we1 = 1'b1;
-                            2'b01:  we2 = 1'b1;
-                            2'b10:  we3 = 1'b1;
-                            2'b11:  we4 = 1'b1;
-                        endcase
-                    end
-            endcase
+            read_active <= 1'b0;
+            write_active <= 1'b0;
+            MRRValid <= 1'b0;
+            MRRData <= '0;
+            MRRResp <= AXI_OKAY;
+            MRRLast <= 1'b0;
+            MBValid <= 1'b0;
+            raddr <= '0;
+            waddr <= '0;
+            rlen <= '0;
+            rcnt <= '0;
+            wlen <= '0;
+            wcnt <= '0;
+            rsize <= '0;
+            wsize <= '0;
+            rburst <= FIXED;
+            wburst <= FIXED;
+        end
+        else
+        begin
+            if(MARValid && MARReady)
+            begin
+                read_active <= 1'b1;
+                MRRValid <= 1'b1;
+                MRRData <= mem[MARAddr[ADDR_WIDTH-1:2]];
+                MRRResp <= AXI_OKAY;
+                MRRLast <= (MARLen == '0);
+                raddr <= MARAddr;
+                rlen <= MARLen;
+                rsize <= MARSize;
+                rburst <= MARBurst;
+                rcnt <= '0;
+            end
+            else if(MRRValid && MRReady)
+            begin
+                if(MRRLast)
+                begin
+                    read_active <= 1'b0;
+                    MRRValid <= 1'b0;
+                    MRRLast <= 1'b0;
+                end
+                else
+                begin
+                    rcnt <= rcnt + 1'b1;
+                    raddr <= raddr_next;
+                    MRRData <= mem[raddr_next[ADDR_WIDTH-1:2]];
+                    MRRResp <= AXI_OKAY;
+                    MRRLast <= ((rcnt + 1'b1) == rlen);
+                end
+            end
+
+            if(MAWValid && MAWReady)
+            begin
+                write_active <= 1'b1;
+                waddr <= MAWAddr;
+                wlen <= MAWLen;
+                wsize <= MAWSize;
+                wburst <= MAWBurst;
+                wcnt <= '0;
+            end
+            else if(MWValid && MWReady)
+            begin
+                for(int i = 0; i < STRB_WIDTH; i = i + 1)
+                    if(MWStrb[i])
+                        mem[waddr[ADDR_WIDTH-1:2]][8*i +: 8] <= MWData[8*i +: 8];
+                wcnt <= wcnt + 1'b1;
+                waddr <= (wburst == FIXED) ? waddr : waddr + (1 << wsize);
+                if(MWLast || (wcnt == wlen))
+                begin
+                    write_active <= 1'b0;
+                    MBValid <= 1'b1;
+                end
+            end
+            if(MBValid && MBReady)
+                MBValid <= 1'b0;
         end
     end
 

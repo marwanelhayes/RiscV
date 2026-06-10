@@ -107,7 +107,7 @@ module fetch_stage
                     
         .clk(clk),
         .rst(rst),
-        .CPUAddr(PCF[ADDR_WIDTH-1:2]),  // Word-aligned address
+        .CPUAddr(PCF),
         .CPUWriteData('b0),
         .CPUWriteEn(1'b0),
         .CPUReadEn(1'b1),

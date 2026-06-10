@@ -26,7 +26,9 @@ interface hazard_interface
     logic FPURegWriteM;
     logic FPURegWriteW;
     logic FPUValidE;
-    logic FPUBusyM; 
+    logic FPUBusyM;
+    logic ICacheHit;
+    logic DCacheHit; 
     
     logic [2:0] ForwardAE;
     logic [2:0] ForwardBE;
@@ -38,9 +40,45 @@ interface hazard_interface
     logic [1:0] ForwardFloatingBE; 
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
-    clocking cb @(posedge clk);
-        default input #0; 
-        default output #CLK;
+    clocking mck @(posedge clk);
+        default input #1step output #CLK;
+        
+        output   Rs1E;
+        output   Rs2E;
+        output   RdE;
+        output   Rs1D; 
+        output   Rs2D; 
+        output   RdM;
+        output   RdW;
+        output   RegWriteM;
+        output   RegWriteW;
+        output   SelectorE;
+        output   PCSrcE;
+        output   TrapIsSet;
+        output   MoveOperationE;
+        output   RdFM;
+        output   RdFW;
+        output   Rs1FE;
+        output   Rs2FE;
+        output   FPURegWriteM;
+        output   FPURegWriteW;
+        output   FPUValidE;
+        output   FPUBusyM;
+        output   ICacheHit;
+        output   DCacheHit;
+
+        input  ForwardAE;
+        input  ForwardBE;
+        input  StallD;
+        input  StallF;
+        input  FlushE;
+        input  FlushD;
+        input  ForwardFloatingAE;
+        input  ForwardFloatingBE;    
+    endclocking:mck
+
+    clocking pck @(posedge clk);
+        default input #1step;
         
         input   Rs1E;
         input   Rs2E;
@@ -63,6 +101,8 @@ interface hazard_interface
         input   FPURegWriteW;
         input   FPUValidE;
         input   FPUBusyM;
+        input   ICacheHit;
+        input   DCacheHit;
 
         input  ForwardAE;
         input  ForwardBE;
@@ -72,7 +112,7 @@ interface hazard_interface
         input  FlushD;
         input  ForwardFloatingAE;
         input  ForwardFloatingBE;    
-    endclocking:cb
+    endclocking:pck
 
 
     task initialize;
@@ -97,108 +137,75 @@ interface hazard_interface
         FPURegWriteW = 0;
         FPUValidE = 0;
         FPUBusyM = 0;
+        ICacheHit = 1;
+        DCacheHit = 1;
         repeat(5)
         begin
-            @(cb);
+            @(mck);
         end
     endtask:initialize
 
     task drv2intf (hazard_item drv);
-        @(cb);
-        
-        Rs1E <= drv.Rs1E;
-        Rs2E <= drv.Rs2E;
-        RdE <= drv.RdE;
-        Rs1D <= drv.Rs1D;
-        Rs2D <= drv.Rs2D;
-        RdM <= drv.RdM;
-        RdW <= drv.RdW;
-        RegWriteM <= drv.RegWriteM;
-        RegWriteW <= drv.RegWriteW;
-        SelectorE <= drv.SelectorE;
-        PCSrcE <= drv.PCSrcE;
-        TrapIsSet <= drv.TrapIsSet;
-        MoveOperationE <= drv.MoveOperationE;
-        RdFM <= drv.RdFM;
-        RdFW <= drv.RdFW;
-        Rs1FE <= drv.Rs1FE;
-        Rs2FE <= drv.Rs2FE;
-        FPURegWriteM <= drv.FPURegWriteM;
-        FPURegWriteW <= drv.FPURegWriteW;
-        FPUValidE <= drv.FPUValidE;
-        FPUBusyM <= drv.FPUBusyM;
-
+        @(mck);     
+        mck.Rs1E <= drv.Rs1E;
+        mck.Rs2E <= drv.Rs2E;
+        mck.RdE <= drv.RdE;
+        mck.Rs1D <= drv.Rs1D;
+        mck.Rs2D <= drv.Rs2D;
+        mck.RdM <= drv.RdM;
+        mck.RdW <= drv.RdW;
+        mck.RegWriteM <= drv.RegWriteM;
+        mck.RegWriteW <= drv.RegWriteW;
+        mck.SelectorE <= drv.SelectorE;
+        mck.PCSrcE <= drv.PCSrcE;
+        mck.TrapIsSet <= drv.TrapIsSet;
+        mck.MoveOperationE <= drv.MoveOperationE;
+        mck.RdFM <= drv.RdFM;
+        mck.RdFW <= drv.RdFW;
+        mck.Rs1FE <= drv.Rs1FE;
+        mck.Rs2FE <= drv.Rs2FE;
+        mck.FPURegWriteM <= drv.FPURegWriteM;
+        mck.FPURegWriteW <= drv.FPURegWriteW;
+        mck.FPUValidE <= drv.FPUValidE;
+        mck.FPUBusyM <= drv.FPUBusyM;
+        mck.ICacheHit <= drv.ICacheHit;
+        mck.DCacheHit <= drv.DCacheHit;
     endtask:drv2intf
 
     task intf2mon (hazard_item mon);
-        
-        @(cb);
-        
-        mon.Rs1E = Rs1E;
-        mon.Rs2E = Rs2E;
-        mon.RdE = RdE;
-        mon.Rs1D = Rs1D;
-        mon.Rs2D = Rs2D;
-        mon.RdM = RdM;
-        mon.RdW = RdW;
-        mon.RegWriteM = RegWriteM;
-        mon.RegWriteW = RegWriteW;
-        mon.SelectorE = SelectorE;
-        mon.PCSrcE = PCSrcE;
-        mon.TrapIsSet = TrapIsSet;
-        mon.ForwardAE = ForwardAE;
-        mon.ForwardBE = ForwardBE;
-        mon.StallD = StallD;
-        mon.StallF = StallF;
-        mon.FlushE = FlushE;
-        mon.FlushD = FlushD;
-        mon.MoveOperationE = MoveOperationE;
-        mon.RdFM = RdFM;
-        mon.RdFW = RdFW;
-        mon.Rs1FE = Rs1FE;
-        mon.Rs2FE = Rs2FE;
-        mon.FPURegWriteM = FPURegWriteM;
-        mon.FPURegWriteW = FPURegWriteW;
-        mon.ForwardFloatingAE = ForwardFloatingAE;
-        mon.ForwardFloatingBE = ForwardFloatingBE;
-        mon.FPUValidE = FPUValidE;
-        mon.FPUBusyM = FPUBusyM;
-
-
+        @(pck);   
+        mon.Rs1E = pck.Rs1E;
+        mon.Rs2E = pck.Rs2E;
+        mon.RdE = pck.RdE;
+        mon.Rs1D = pck.Rs1D;
+        mon.Rs2D = pck.Rs2D;
+        mon.RdM = pck.RdM;
+        mon.RdW = pck.RdW;
+        mon.RegWriteM = pck.RegWriteM;
+        mon.RegWriteW = pck.RegWriteW;
+        mon.SelectorE = pck.SelectorE;
+        mon.PCSrcE = pck.PCSrcE;
+        mon.TrapIsSet = pck.TrapIsSet;
+        mon.ForwardAE = pck.ForwardAE;
+        mon.ForwardBE = pck.ForwardBE;
+        mon.StallD = pck.StallD;
+        mon.StallF = pck.StallF;
+        mon.FlushE = pck.FlushE;
+        mon.FlushD = pck.FlushD;
+        mon.MoveOperationE = pck.MoveOperationE;
+        mon.RdFM = pck.RdFM;
+        mon.RdFW = pck.RdFW;
+        mon.Rs1FE = pck.Rs1FE;
+        mon.Rs2FE = pck.Rs2FE;
+        mon.ICacheHit = pck.ICacheHit;
+        mon.DCacheHit = pck.DCacheHit;
+        mon.FPURegWriteM = pck.FPURegWriteM;
+        mon.FPURegWriteW = pck.FPURegWriteW;
+        mon.ForwardFloatingAE = pck.ForwardFloatingAE;
+        mon.ForwardFloatingBE = pck.ForwardFloatingBE;
+        mon.FPUValidE = pck.FPUValidE;
+        mon.FPUBusyM = pck.FPUBusyM;
     endtask:intf2mon
 
-    modport DUT 
-    (
-        input   Rs1E,
-        Rs2E,
-        RdE,
-        Rs1D, 
-        Rs2D, 
-        RdM,
-        RdW,
-        RegWriteM,
-        RegWriteW,
-        SelectorE,
-        PCSrcE,
-        TrapIsSet,
-        MoveOperationE,
-        RdFM,
-        RdFW,
-        Rs1FE,
-        Rs2FE,
-        FPURegWriteM,
-        FPURegWriteW,
-        FPUValidE,
-        FPUBusyM, 
-        output  ForwardAE, 
-        ForwardBE, 
-        StallD, 
-        StallF, 
-        FlushE, 
-        FlushD, 
-        ForwardFloatingAE, 
-        ForwardFloatingBE  
-    );
-
-    modport TEST (clocking cb); 
+    modport RISC (clocking pck); 
 endinterface: hazard_interface

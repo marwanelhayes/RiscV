@@ -1,9 +1,9 @@
 // =============================================================================
 // cache.sv
 // -----------------------------------------------------------------------------
-// Parameterized cache with configurable WAYiativity.
+// Parameterized cache with configurable WAY.
 //
-// WAYiativity model:
+// WAY model:
 //   - WAY = 1                 -> direct-mapped cache
 //   - 1 < WAY < TOTAL_LINES           -> set-WAYiative cache
 //   - WAY = TOTAL_LINES               -> fully WAYiative cache
@@ -37,7 +37,7 @@ module cache
 #(
     parameter int  DATA_WIDTH   = 32,
     parameter int  ADDR_WIDTH   = 32,
-    parameter int  TOTAL_LINES  = 32,                         // total cache lines, power of 2 recommended
+    parameter int  TOTAL_LINES  = 32,                         // total cache lines, power of 2 recommended. This represents the cache capacity for lines of words. Multiply this value by LINE_WORDS to get the number of words stored in cache
     parameter int  WAY          = 1,                          // 1=direct, TOTAL_LINES =fully WAY
     parameter int  LINE_WORDS   = 4,                          // words per cache line, power of 2
     parameter bit  READ_ONLY    = 1'b0,                       // 1 for I-cache
@@ -106,16 +106,23 @@ module cache
     localparam int WORD_W      = (WORD_W_RAW  > 0)  ? WORD_W_RAW          : 1;
     localparam int TAG_W       = ADDR_WIDTH - OFF_W - IDX_W_RAW;
 
-    logic valid [SETS][WAY];  // valid bits
-    logic valid_next [SETS][WAY];
-    logic [TAG_W-1:0] tags [SETS][WAY];  // tags
-    logic [TAG_W-1:0] tags_next [SETS][WAY];
-    logic [DATA_WIDTH-1:0] data [SETS][WAY][LINE_WORDS];  // Data arrays
-    logic [DATA_WIDTH-1:0] data_next [SETS][WAY][LINE_WORDS];
-    logic [WORD_W-1:0] counter; // for tracking burst progress
-    logic [WORD_W-1:0] counter_next;
-    logic [WAY_W-1:0] lru_way_empty [SETS]; // for replacement logic
-    logic [WAY_W-1:0] lru_way_empty_next [SETS];
+    logic valid_reg [SETS][WAY];  // valid bits
+    logic valid [SETS][WAY];
+    logic [TAG_W-1:0] tags_reg [SETS][WAY];  // tags
+    logic [TAG_W-1:0] tags [SETS][WAY];
+    logic [DATA_WIDTH-1:0] data_reg [SETS][WAY][LINE_WORDS];  // Data arrays
+    logic [DATA_WIDTH-1:0] data [SETS][WAY][LINE_WORDS];
+    logic [WORD_W-1:0] counter_reg; // for tracking burst progress
+    logic [WORD_W-1:0] counter;
+    logic [WAY_W-1:0] lru_way_empty_reg [SETS]; // for replacement logic
+    logic [WAY_W-1:0] lru_way_empty [SETS];
+    logic pending_write;
+    logic [DATA_WIDTH-1:0] pending_write_data;
+    logic [ADDR_WIDTH-1:0] miss_line_addr;
+    logic [WAY_W-1:0] hit_way;
+    logic [WAY_W-1:0] victim_way;
+    logic [WAY_W-1:0] victim_way_reg;
+    logic [WAY-1:0] hit_array;
 
     logic [IDX_W-1:0] CpuIdx;
     logic [TAG_W-1:0] CpuTag;
@@ -126,8 +133,10 @@ module cache
     logic [TAG_W-1:0] CpuTag_reg;
     logic [OFF_W-1:0] CpuOffset_reg;
 
+    logic read_through_hit_reg;
     logic read_through_hit;
-    logic read_through_hit_next;
+    logic refill_error_reg;
+    logic refill_error;
 
     logic [ADDR_WIDTH-1:0] MAWAddr_next;
     logic [7:0]            MAWLen_next;
@@ -148,6 +157,7 @@ module cache
 
     logic [3:0] lru_counter [SETS][WAY];
     logic [WAY_W-1:0] lru_way [SETS];
+    logic [WAY_W-1:0] lru_min_way;
 
     logic and_valid_bits;
 
@@ -169,28 +179,52 @@ module cache
         end
     end
 
-    always_comb 
+
+    always_comb
+    begin
+        hit_array = '0;
+        hit_way = '0;
+        victim_way = lru_way[CpuIdx];
+
+        for(int i = 0; i < WAY; i++)
+        begin
+            if(valid_reg[CpuIdx][i] && (tags_reg[CpuIdx][i] == CpuTag))
+            begin
+                hit_array[i] = 1'b1;
+                hit_way = WAY_W'(i);
+            end
+        end
+
+        for(int i = WAY - 1; i >= 0; i--)
+        begin
+            if(!valid_reg[CpuIdx][i])
+            begin
+                victim_way = WAY_W'(i);
+            end
+        end
+    end
+
+    always_comb
     begin
         and_valid_bits = 1'b1;
         for(int i = 0; i < WAY; i++)
         begin
-            and_valid_bits &= valid[CpuIdx_reg][i];
+            and_valid_bits &= valid_reg[CpuIdx_reg][i];
         end
-        and_valid_bits = !and_valid_bits;
     end
 
-    generate  
+    generate
         if(WAY == 1)
         begin : gen_direct_mapped
             always_comb
             begin
                 if(CPUReadEn || CPUWriteEn)
                 begin
-                    if((valid[CpuIdx][0]) && (!(tags[CpuIdx][0] ^ CpuTag)) && (state == AXI_IDLE))
+                    if((|hit_array) && (state == AXI_IDLE))
                     begin
                         CacheHit = 1'b1;
                     end
-                    else if(read_through_hit) 
+                    else if(read_through_hit_reg)
                     begin
                         CacheHit = 1'b1;
                     end
@@ -207,33 +241,35 @@ module cache
 
             always_comb
             begin
-                CPUReadData = data[CpuIdx][0][CpuOffset[OFF_W-1 : 2]];
+                if(read_through_hit_reg)
+                begin
+                    CPUReadData = data_reg[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1 : 2]];
+                end
+                else if(CPUWriteEn && CacheHit)
+                begin
+                    CPUReadData = CPUWriteData;
+                end
+                else if(CacheHit)
+                begin
+                    CPUReadData = data_reg[CpuIdx][0][CpuOffset[OFF_W-1 : 2]];
+                end
+                else
+                begin
+                    CPUReadData = '0;
+                end
             end
         end:gen_direct_mapped
         else
         begin:gen_set_associative
-            logic [WAY-1:0] HitArray; 
-
-            always_comb
-            begin
-                HitArray = '0;
-                for(int i = 0; i < WAY; i++)
-                begin
-                    if(valid[CpuIdx][i] && (tags[CpuIdx][i] == CpuTag))
-                    begin
-                        HitArray[i] = 1'b1;
-                    end
-                end
-            end
             always_comb
             begin
                 if(CPUReadEn || CPUWriteEn)
                 begin
-                    if(|HitArray && (state == AXI_IDLE))
+                    if(|hit_array && (state == AXI_IDLE))
                     begin
                         CacheHit = 1'b1;
                     end
-                    else if(read_through_hit) 
+                    else if(read_through_hit_reg)
                     begin
                         CacheHit = 1'b1;
                     end
@@ -243,7 +279,7 @@ module cache
                     end
                 end
                 else
-                begin                    
+                begin
                     CacheHit = 1'b1;
                 end
             end
@@ -251,15 +287,22 @@ module cache
             always_comb
             begin
                 CPUReadData = '0;
-                for(int i = 0; i < WAY; i++) 
+                for(int i = 0; i < WAY; i++)
                 begin
-                    if(HitArray[i])
+                    if(hit_array[i] && CacheHit)
                     begin
-                        CPUReadData = data[CpuIdx][i][CpuOffset[OFF_W-1 : 2]];
+                        if(CPUWriteEn)
+                        begin
+                            CPUReadData = CPUWriteData;
+                        end
+                        else
+                        begin
+                            CPUReadData = data_reg[CpuIdx][i][CpuOffset[OFF_W-1 : 2]];
+                        end
                     end
-                    else if(read_through_hit) 
+                    else if(read_through_hit_reg)
                     begin
-                        CPUReadData = data[CpuIdx][lru_way[CpuIdx]][CpuOffset[OFF_W-1 : 2]];
+                        CPUReadData = data_reg[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1 : 2]];
                     end
                 end
             end
@@ -272,22 +315,34 @@ module cache
                 end
                 else
                 begin
-                    foreach(HitArray[i])
+                    foreach(hit_array[i])
                     begin
-                        if(HitArray[i])
+                        if(hit_array[i])
                         begin
-                            if(lru_counter[CpuIdx][i] < 15) 
-                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] + 1'b1; 
+                            if(lru_counter[CpuIdx][i] < 15)
+                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] + 1'b1;
                         end
                         else
                         begin
                             if(lru_counter[CpuIdx][i] > 0)
-                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] - 1'b1; 
-                        end 
+                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] - 1'b1;
+                        end
                     end
                 end
             end
-            
+
+            // Least-recently-used way = way with the minimum counter (lowest
+            // index wins on a tie). Computed combinationally, registered below.
+            always_comb
+            begin
+                lru_min_way = '0;
+                for(int i = 1; i < WAY; i++)
+                begin
+                    if(lru_counter[CpuIdx][i] < lru_counter[CpuIdx][lru_min_way])
+                        lru_min_way = WAY_W'(i);
+                end
+            end
+
             always_ff @(negedge clk or negedge rst)
             begin
                 if(!rst)
@@ -296,17 +351,7 @@ module cache
                 end
                 else
                 begin
-                    for(int i = 0; i < WAY-1; i++)
-                    begin
-                        if(lru_counter[CpuIdx][i] < lru_counter[CpuIdx][i+1])
-                        begin
-                            lru_way[CpuIdx] <= i;
-                        end
-                        else
-                        begin
-                            lru_way[CpuIdx] <= i+1;
-                        end
-                    end
+                    lru_way[CpuIdx] <= lru_min_way;
                 end
             end
         end:gen_set_associative
@@ -319,12 +364,20 @@ module cache
             CpuIdx_reg <= '0;
             CpuTag_reg <= '0;
             CpuOffset_reg <= '0;
+            pending_write <= 1'b0;
+            pending_write_data <= '0;
+            miss_line_addr <= '0;
+            victim_way_reg <= '0;
         end
         else
         begin
-            if((state == AXI_IDLE) && CPUReadEn && !CacheHit) 
+            if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit)
             begin
                 CpuOffset_reg <= CpuOffset;
+                pending_write <= CPUWriteEn;
+                pending_write_data <= CPUWriteData;
+                miss_line_addr <= {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
+                victim_way_reg <= victim_way;
                 if(WAY == TOTAL_LINES)
                 begin
                     CpuIdx_reg <= '0;
@@ -344,18 +397,18 @@ module cache
         if(!rst)
         begin
             state <= AXI_IDLE;
-            foreach (valid[i, j]) valid[i][j] <= 1'b0;
-            foreach (tags[i, j]) tags[i][j] <= '0;
-            foreach (data[i, j, k]) data[i][j][k] <= '0;
-            foreach (lru_way_empty[i]) lru_way_empty[i] <= '0;
+            foreach (valid_reg[i, j]) valid_reg[i][j] <= 1'b0;
+            foreach (tags_reg[i, j]) tags_reg[i][j] <= '0;
+            foreach (data_reg[i, j, k]) data_reg[i][j][k] <= '0;
+            foreach (lru_way_empty_reg[i]) lru_way_empty_reg[i] <= '0;
         end
         else
         begin
             state <= next_state;
-            foreach (valid[i, j]) valid[i][j] <= valid_next[i][j];
-            foreach (tags[i, j]) tags[i][j] <= tags_next[i][j];
-            foreach (data[i, j, k]) data[i][j][k] <= data_next[i][j][k];
-            foreach (lru_way_empty[i]) lru_way_empty[i] <= lru_way_empty_next[i];
+            foreach (valid_reg[i, j]) valid_reg[i][j] <= valid[i][j];
+            foreach (tags_reg[i, j]) tags_reg[i][j] <= tags[i][j];
+            foreach (data_reg[i, j, k]) data_reg[i][j][k] <= data[i][j][k];
+            foreach (lru_way_empty_reg[i]) lru_way_empty_reg[i] <= lru_way_empty[i];
         end
     end
 
@@ -372,15 +425,16 @@ module cache
             MWStrb <= '0;
             MWLast <= 1'b0;
             MWValid <= 1'b0;
-            MBReady <= 1'b1;
+            MBReady <= 1'b0;
             MARAddr <= '0;
             MARLen <= '0;
             MARSize <= '0;
             MARBurst <= FIXED;
             MARValid <= 1'b0;
             MRReady <= 1'b0;
-            counter <= '0;
-            read_through_hit <= 1'b0;
+            counter_reg <= '0;
+            read_through_hit_reg <= 1'b0;
+            refill_error_reg <= 1'b0;
         end
         else
         begin
@@ -389,7 +443,7 @@ module cache
             MAWSize <= MAWSize_next;
             MAWBurst <= MAWBurst_next;
             MAWValid <= MAWValid_next;
-            MWData <= MWData_next;  
+            MWData <= MWData_next;
             MWStrb <= MWStrb_next;
             MWLast <= MWLast_next;
             MWValid <= MWValid_next;
@@ -400,8 +454,9 @@ module cache
             MARBurst <= MARBurst_next;
             MARValid <= MARValid_next;
             MRReady <= 1'b1;
-            counter <= counter_next;
-            read_through_hit <= read_through_hit_next;
+            counter_reg <= counter;
+            read_through_hit_reg <= read_through_hit;
+            refill_error_reg <= refill_error;
         end
     end
 
@@ -411,9 +466,9 @@ module cache
             always_comb
             begin
                 next_state = state;
-                valid_next = valid;
-                tags_next = tags;
-                data_next = data;
+                valid = valid_reg;
+                tags = tags_reg;
+                data = data_reg;
                 MAWAddr_next = MAWAddr;
                 MAWLen_next = MAWLen;
                 MAWSize_next = MAWSize;
@@ -429,9 +484,10 @@ module cache
                 MARSize_next = MARSize;
                 MARBurst_next = MARBurst;
                 MARValid_next = MARValid;
-                counter_next = counter;
-                lru_way_empty_next = lru_way_empty;
-                read_through_hit_next = read_through_hit;
+                counter = counter_reg;
+                lru_way_empty = lru_way_empty_reg;
+                read_through_hit = read_through_hit_reg;
+                refill_error = refill_error_reg;
 
                 case(state)
                     AXI_IDLE:
@@ -444,8 +500,9 @@ module cache
                             MARLen_next = LINE_WORDS - 1;
                             MARSize_next = TRANSFER_SIZE;
                             MARBurst_next = INCR;
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
+                            counter = '0;
+                            read_through_hit = 1'b0;
+                            refill_error = 1'b0;
                             MAWAddr_next = 'b0;
                             MAWLen_next = 'b0;
                             MAWSize_next = 'b0;
@@ -466,8 +523,9 @@ module cache
                             MARLen_next = '0;
                             MARSize_next = '0;
                             MARBurst_next = INCR;
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
+                            counter = '0;
+                            read_through_hit = 1'b0;
+                            refill_error = 1'b0;
                             MAWAddr_next = 'b0;
                             MAWLen_next = 'b0;
                             MAWSize_next = 'b0;
@@ -492,62 +550,75 @@ module cache
                             MARLen_next = '0;
                             MARSize_next = '0;
                             MARBurst_next = INCR;
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
+                            counter = '0;
+                            read_through_hit = 1'b0;
                         end
                     end
-                    
+
                     AXI_RD_DATA:
                     begin
                         if(WAY == 1)
                         begin:direct_mapped_read
-                            if(MRRValid && (MRRResp == AXI_OKAY))
+                            if(MRRValid && MRReady)
                             begin
-                                data_next[CpuIdx_reg][0][counter_next] = MRRData;
-                                if(counter_next == (CpuOffset_reg[OFF_W-1:2])) 
+                                if(MRRResp == AXI_OKAY)
                                 begin
-                                    read_through_hit_next = 1'b1;
+                                    data[CpuIdx_reg][0][counter] = MRRData;
                                 end
                                 else
                                 begin
-                                    read_through_hit_next = 1'b0;
+                                    refill_error = 1'b1;
                                 end
-                                counter_next = counter_next + 1'b1;
-                                if(MRRLast) 
+                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:2])))
                                 begin
-                                    valid_next[CpuIdx_reg][0] = 1'b1;
-                                    tags_next[CpuIdx_reg][0] = CpuTag_reg;
+                                    read_through_hit = 1'b1;
+                                end
+                                else
+                                begin
+                                    read_through_hit = 1'b0;
+                                end
+                                counter = counter + 1'b1;
+                                if(MRRLast)
+                                begin
+                                    if((MRRResp == AXI_OKAY) && !refill_error_reg)
+                                    begin
+                                        valid[CpuIdx_reg][0] = 1'b1;
+                                        tags[CpuIdx_reg][0] = CpuTag_reg;
+                                    end
                                     next_state = AXI_IDLE;
-                                    counter_next = '0;
+                                    counter = '0;
                                 end
                             end
                         end:direct_mapped_read
-                        else                        
+                        else
                         begin:set_associative_read
-                            if(MRRValid && (MRRResp == AXI_OKAY))
+                            if(MRRValid && MRReady)
                             begin
-                                if(and_valid_bits)
+                                if(MRRResp == AXI_OKAY)
                                 begin
-                                    data_next[CpuIdx][lru_way_empty_next[CpuIdx]][counter_next] = MRRData;
+                                    data[CpuIdx_reg][victim_way_reg][counter] = MRRData;
                                 end
                                 else
                                 begin
-                                    data_next[CpuIdx_reg][lru_way[CpuIdx_reg]][counter_next] = MRRData;
+                                    refill_error = 1'b1;
                                 end
-                                if(counter_next == (CpuOffset_reg[OFF_W-1:2])) 
+                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:2])))
                                 begin
-                                    read_through_hit_next = 1'b1;
+                                    read_through_hit = 1'b1;
                                 end
                                 else
                                 begin
-                                    read_through_hit_next = 1'b0;
+                                    read_through_hit = 1'b0;
                                 end
-                                counter_next = counter_next + 1'b1;
-                                
+                                counter = counter + 1'b1;
+
                                 if(MRRLast)
                                 begin
-                                    valid_next[CpuIdx_reg][lru_way[CpuIdx_reg]] = 1'b1;
-                                    tags_next[CpuIdx_reg][lru_way[CpuIdx_reg]] = CpuTag_reg;
+                                    if((MRRResp == AXI_OKAY) && !refill_error_reg)
+                                    begin
+                                        valid[CpuIdx_reg][victim_way_reg] = 1'b1;
+                                        tags[CpuIdx_reg][victim_way_reg] = CpuTag_reg;
+                                    end
                                     next_state = AXI_IDLE;
                                     MAWValid_next = 1'b0;
                                     MARAddr_next = '0;
@@ -555,43 +626,43 @@ module cache
                                     MARLen_next = '0;
                                     MARSize_next = '0;
                                     MARBurst_next = INCR;
-                                    counter_next = '0;
-                                    if(and_valid_bits)
+                                    counter = '0;
+                                    if(!and_valid_bits)
                                     begin
-                                        lru_way_empty_next[CpuIdx] = lru_way_empty_next[CpuIdx] + 1'b1;
+                                        lru_way_empty[CpuIdx_reg] = lru_way_empty[CpuIdx_reg] + 1'b1;
                                     end
                                 end
                             end
                         end:set_associative_read
                     end
-                endcase 
+                endcase
             end
         end:gen_read_only_cache
-        
+
         else
         begin:gen_read_write_cache
 
+            logic dirty_reg [SETS][WAY];
             logic dirty [SETS][WAY];
-            logic dirty_next [SETS][WAY];
 
-            always_ff @(posedge clk or negedge rst) 
+            always_ff @(posedge clk or negedge rst)
             begin
                 if(!rst)
                 begin
-                    foreach (dirty[i, j]) dirty[i][j] <= 1'b0;
+                    foreach (dirty_reg[i, j]) dirty_reg[i][j] <= 1'b0;
                 end
                 else
                 begin
-                    foreach (dirty[i, j]) dirty[i][j] <= dirty_next[i][j];
+                    foreach (dirty_reg[i, j]) dirty_reg[i][j] <= dirty[i][j];
                 end
             end
 
             always_comb
             begin
                 next_state = state;
-                valid_next = valid;
-                tags_next = tags;
-                data_next = data;
+                valid = valid_reg;
+                tags = tags_reg;
+                data = data_reg;
                 MAWAddr_next = MAWAddr;
                 MAWLen_next = MAWLen;
                 MAWSize_next = MAWSize;
@@ -607,39 +678,73 @@ module cache
                 MARSize_next = MARSize;
                 MARBurst_next = MARBurst;
                 MARValid_next = MARValid;
-                counter_next = counter;
-                lru_way_empty_next = lru_way_empty;
-                read_through_hit_next = read_through_hit;
-                dirty_next = dirty;
+                counter = counter_reg;
+                lru_way_empty = lru_way_empty_reg;
+                read_through_hit = read_through_hit_reg;
+                refill_error = refill_error_reg;
+                dirty = dirty_reg;
 
                 case(state)
                     AXI_IDLE:
                     begin
+                        read_through_hit = 1'b0;
                         if(CPUReadEn && !CacheHit)
                         begin
-                            if (dirty[CpuIdx][lru_way[CpuIdx]])
-                            begin
-                                next_state = AXI_WR_ADDR;
-                                MAWValid_next = 1'b1;
-                                MAWAddr_next = {tags[CpuIdx][lru_way[CpuIdx]], CpuIdx, {OFF_W{1'b0}}};
-                                MAWLen_next = LINE_WORDS - 1;
-                                MAWSize_next = TRANSFER_SIZE;
-                                MAWBurst_next = INCR;
-                                counter_next = '0;
-                                MBReady_next = 1'b1;
-                            end
-                            else
-                            begin
-                                MARValid_next = 1'b1;
-                                MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
-                                MARLen_next = LINE_WORDS - 1;
-                                MARSize_next = TRANSFER_SIZE;
-                                MARBurst_next = INCR;
-                                counter_next = '0;
-                                read_through_hit_next = 1'b0;
-                                next_state = AXI_RD_ADDR;
+                            if(WAY == 1)
+                            begin:direct_mapped_read
+                                if (valid_reg[CpuIdx][0] && dirty_reg[CpuIdx][0])
+                                begin
+                                    next_state = AXI_WR_ADDR;
+                                    MAWValid_next = 1'b1;
+                                    MAWAddr_next = {tags_reg[CpuIdx][0], CpuIdx, {OFF_W{1'b0}}};
+                                    MAWLen_next = LINE_WORDS - 1;
+                                    MAWSize_next = TRANSFER_SIZE;
+                                    MAWBurst_next = INCR;
+                                    counter = '0;
+                                    MBReady_next = 1'b0;
+                                    refill_error = 1'b0;
+                                end
+                                else
+                                begin
+                                    MARValid_next = 1'b1;
+                                    MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
+                                    MARLen_next = LINE_WORDS - 1;
+                                    MARSize_next = TRANSFER_SIZE;
+                                    MARBurst_next = INCR;
+                                    counter = '0;
+                                    refill_error = 1'b0;
+                                    next_state = AXI_RD_ADDR;
 
-                            end
+                                end
+                            end:direct_mapped_read
+                            else
+                            begin:set_associative_read
+                                if (valid_reg[CpuIdx][victim_way] && dirty_reg[CpuIdx][victim_way])
+                                begin
+                                    next_state = AXI_WR_ADDR;
+                                    MAWValid_next = 1'b1;
+                                    MAWAddr_next = (WAY == TOTAL_LINES)
+                                                 ? {tags_reg[CpuIdx][victim_way], {OFF_W{1'b0}}}
+                                                 : {tags_reg[CpuIdx][victim_way], CpuIdx, {OFF_W{1'b0}}};
+                                    MAWLen_next = LINE_WORDS - 1;
+                                    MAWSize_next = TRANSFER_SIZE;
+                                    MAWBurst_next = INCR;
+                                    counter = '0;
+                                    MBReady_next = 1'b0;
+                                    refill_error = 1'b0;
+                                end
+                                else
+                                begin
+                                    MARValid_next = 1'b1;
+                                    MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
+                                    MARLen_next = LINE_WORDS - 1;
+                                    MARSize_next = TRANSFER_SIZE;
+                                    MARBurst_next = INCR;
+                                    counter = '0;
+                                    refill_error = 1'b0;
+                                    next_state = AXI_RD_ADDR;
+                                end
+                            end:set_associative_read
                         end
                         else if(CPUWriteEn && CacheHit)
                         begin
@@ -661,77 +766,169 @@ module cache
                             MWLast_next = 'b0;
                             MWValid_next = 'b0;
 
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
-                            data_next[CpuIdx][lru_way[CpuIdx]][CpuOffset[OFF_W-1:2]] = CPUWriteData;
-                            dirty_next[CpuIdx][lru_way[CpuIdx]] = 1'b1; 
+                            counter = '0;
+                            read_through_hit = 1'b0;
+                            if(WAY == 1)
+                            begin:direct_mapped_write
+                                data[CpuIdx][0][CpuOffset[OFF_W-1:2]] = CPUWriteData;
+                                dirty[CpuIdx][0] = 1'b1;
+                            end:direct_mapped_write
+                            else                            
+                            begin:set_associative_write
+                                data[CpuIdx][hit_way][CpuOffset[OFF_W-1:2]] = CPUWriteData;
+                                dirty[CpuIdx][hit_way] = 1'b1;
+                            end:set_associative_write
                         end
-                        else if(CPUWriteEn && !CacheHit) 
+                        else if(CPUWriteEn && !CacheHit)
                         begin
-                            begin
-                                if(dirty[CpuIdx][lru_way[CpuIdx]]) 
+                            if(WAY == 1)
+                            begin:direct_mapped_write_miss
+                                if(valid_reg[CpuIdx][0] && dirty_reg[CpuIdx][0])
                                 begin
                                     next_state = AXI_WR_ADDR;
                                     MAWValid_next = 1'b1;
-                                    MAWAddr_next = {tags[CpuIdx][lru_way[CpuIdx]], CpuIdx, {OFF_W{1'b0}}};
+                                    MAWAddr_next = {tags_reg[CpuIdx][0], CpuIdx, {OFF_W{1'b0}}};
                                     MAWLen_next = LINE_WORDS - 1;
                                     MAWSize_next = TRANSFER_SIZE;
                                     MAWBurst_next = INCR;
-                                    counter_next = '0;
-                                    MBReady_next = 1'b1;
+                                    counter = '0;
+                                    MBReady_next = 1'b0;
                                 end
-                            end
+                                else
+                                begin
+                                    MARValid_next = 1'b1;
+                                    MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
+                                    MARLen_next = LINE_WORDS - 1;
+                                    MARSize_next = TRANSFER_SIZE;
+                                    MARBurst_next = INCR;
+                                    counter = '0;
+                                    read_through_hit = 1'b0;
+                                    refill_error = 1'b0;
+                                    next_state = AXI_RD_ADDR;
+                                end
+                            end:direct_mapped_write_miss
+                            else
+                            begin:set_associative_write_miss
+                                if(valid_reg[CpuIdx][victim_way] && dirty_reg[CpuIdx][victim_way])
+                                begin
+                                    next_state = AXI_WR_ADDR;
+                                    MAWValid_next = 1'b1;
+                                    MAWAddr_next = (WAY == TOTAL_LINES)
+                                                 ? {tags_reg[CpuIdx][victim_way], {OFF_W{1'b0}}}
+                                                 : {tags_reg[CpuIdx][victim_way], CpuIdx, {OFF_W{1'b0}}};
+                                    MAWLen_next = LINE_WORDS - 1;
+                                    MAWSize_next = TRANSFER_SIZE;
+                                    MAWBurst_next = INCR;
+                                    counter = '0;
+                                    MBReady_next = 1'b0;
+                                end
+                                else
+                                begin
+                                    MARValid_next = 1'b1;
+                                    MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
+                                    MARLen_next = LINE_WORDS - 1;
+                                    MARSize_next = TRANSFER_SIZE;
+                                    MARBurst_next = INCR;
+                                    counter = '0;
+                                    read_through_hit = 1'b0;
+                                    refill_error = 1'b0;
+                                    next_state = AXI_RD_ADDR;
+                                end
+                            end:set_associative_write_miss
                         end
                     end
 
                     AXI_WR_ADDR:
                     begin
-                        if(MAWReady)
+                        if(MAWValid && MAWReady)
                         begin
                             next_state = AXI_WR_DATA;
+                            MAWValid_next = 1'b0;
+                            MWStrb_next = {(DATA_BYTES){1'b1}};
+                            MWValid_next = 1'b1;
+                            MWLast_next = (LINE_WORDS == 1);
                             MARAddr_next = '0;
                             MARValid_next = 1'b0;
                             MARLen_next = '0;
                             MARSize_next = '0;
                             MARBurst_next = INCR;
+                            if(WAY == 1)
+                            begin
+                                MWData_next = data_reg[CpuIdx_reg][0][0];
+                            end
+                            else
+                            begin
+                                MWData_next = data_reg[CpuIdx_reg][victim_way_reg][0];
+                            end
                         end
                     end
 
                     AXI_WR_DATA:
                     begin
-                        if(MWReady)
+                        if(MWValid && MWReady)
                         begin
-                            MWData_next = data[CpuIdx_reg][lru_way[CpuIdx_reg]][counter_next];
-                            MWStrb_next = {(DATA_BYTES){1'b1}};
-                            MWValid_next = 1'b1;
-                            counter_next = counter_next + 1'b1;
-                            if(!counter_next)
+                            if(counter_reg == (LINE_WORDS - 1))
                             begin
                                 next_state = AXI_WR_RESP;
-                                MAWValid_next = 1'b1;
+                                MWValid_next = 1'b0;
+                                MWLast_next = 1'b0;
+                                MBReady_next = 1'b1;
+                                counter = '0;
+                            end
+                            else
+                            begin
+                                counter = counter_reg + 1'b1;
+                                MWStrb_next = {(DATA_BYTES){1'b1}};
                                 MWValid_next = 1'b1;
-                                MWLast_next = 1'b1;
-                                dirty_next[CpuIdx_reg][lru_way[CpuIdx_reg]] = 1'b0;
+                                MWLast_next = ((counter_reg + 1'b1) == (LINE_WORDS - 1));
+                                if(WAY == 1)
+                                begin
+                                    MWData_next = data_reg[CpuIdx_reg][0][counter_reg + 1'b1];
+                                end
+                                else
+                                begin
+                                    MWData_next = data_reg[CpuIdx_reg][victim_way_reg][counter_reg + 1'b1];
+                                end
                             end
                         end
                     end
 
                     AXI_WR_RESP:
                     begin
-                        if(MBValid && (MBResp == AXI_OKAY))
+                        MBReady_next = 1'b1;
+                        if(MBValid && MBReady)
                         begin
-                            next_state = AXI_RD_ADDR;
+                            MBReady_next = 1'b0;
                             MAWValid_next = 1'b0;
-                            MARValid_next = 1'b1;
-                            MARAddr_next = {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
-                            MARLen_next = LINE_WORDS - 1;
-                            MARSize_next = TRANSFER_SIZE;
-                            MARBurst_next = INCR;
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
+                            if(MBResp == AXI_OKAY)
+                            begin
+                                next_state = AXI_RD_ADDR;
+                                MARValid_next = 1'b1;
+                                MARAddr_next = miss_line_addr;
+                                MARLen_next = LINE_WORDS - 1;
+                                MARSize_next = TRANSFER_SIZE;
+                                MARBurst_next = INCR;
+                                counter = '0;
+                                read_through_hit = 1'b0;
+                                refill_error = 1'b0;
+                                if(WAY == 1)
+                                begin
+                                    dirty[CpuIdx_reg][0] = 1'b0;
+                                end
+                                else
+                                begin
+                                    dirty[CpuIdx_reg][victim_way_reg] = 1'b0;
+                                end
+
+                            end
+                            else
+                            begin
+                                next_state = AXI_IDLE;
+                                MARValid_next = 1'b0;
+                            end
                         end
                     end
-                    
+
                     AXI_RD_ADDR:
                     begin
                         if(MARReady && MARValid)
@@ -744,62 +941,96 @@ module cache
                             MARLen_next = '0;
                             MARSize_next = '0;
                             MARBurst_next = INCR;
-                            counter_next = '0;
-                            read_through_hit_next = 1'b0;
+                            counter = '0;
+                            read_through_hit = 1'b0;
+                            refill_error = 1'b0;
                         end
                     end
-                    
+
                     AXI_RD_DATA:
                     begin
                         if(WAY == 1)
-                        begin:direct_mapped_read
-                            if(MRRValid && (MRRResp == AXI_OKAY))
+                        begin:direct_mapped_read_loop
+                            if(MRRValid && MRReady)
                             begin
-                                data_next[CpuIdx_reg][0][counter_next] = MRRData;
-                                if(counter_next == (CpuOffset_reg[OFF_W-1:2]))
+                                if(MRRResp == AXI_OKAY)
                                 begin
-                                    read_through_hit_next = 1'b1;
+                                    data[CpuIdx_reg][0][counter] = MRRData;
                                 end
                                 else
                                 begin
-                                    read_through_hit_next = 1'b0;
+                                    refill_error = 1'b1;
                                 end
-                                counter_next = counter_next + 1'b1;
-                                if(MRRLast) 
+                                if((MRRResp == AXI_OKAY) && !pending_write &&
+                                   (counter == (CpuOffset_reg[OFF_W-1:2])))
                                 begin
-                                    valid_next[CpuIdx_reg][0] = 1'b1;
-                                    tags_next[CpuIdx_reg][0] = CpuTag_reg;
-                                    next_state = AXI_IDLE;
-                                    counter_next = '0;
-                                end
-                            end
-                        end:direct_mapped_read
-                        else                        
-                        begin:set_associative_read
-                            if(MRRValid && (MRRResp == AXI_OKAY))
-                            begin
-                                if(and_valid_bits)
-                                begin
-                                    data_next[CpuIdx][lru_way_empty_next[CpuIdx]][counter_next] = MRRData;
+                                    read_through_hit = 1'b1;
                                 end
                                 else
                                 begin
-                                    data_next[CpuIdx_reg][lru_way[CpuIdx_reg]][counter_next] = MRRData;
+                                    read_through_hit = 1'b0;
                                 end
-                                if(counter_next == (CpuOffset_reg[OFF_W-1:2])) 
-                                begin
-                                    read_through_hit_next = 1'b1;
-                                end
-                                else
-                                begin
-                                    read_through_hit_next = 1'b0;
-                                end
-                                counter_next = counter_next + 1'b1;
-                                
+                                counter = counter + 1'b1;
                                 if(MRRLast)
                                 begin
-                                    valid_next[CpuIdx_reg][lru_way[CpuIdx_reg]] = 1'b1;
-                                    tags_next[CpuIdx_reg][lru_way[CpuIdx_reg]] = CpuTag_reg;
+                                    if((MRRResp == AXI_OKAY) && !refill_error_reg)
+                                    begin
+                                        if(pending_write)
+                                        begin
+                                            data[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1:2]] = pending_write_data;
+                                            dirty[CpuIdx_reg][0] = 1'b1;
+                                        end
+                                        else
+                                        begin
+                                            dirty[CpuIdx_reg][0] = 1'b0;
+                                        end
+                                        valid[CpuIdx_reg][0] = 1'b1;
+                                        tags[CpuIdx_reg][0] = CpuTag_reg;
+                                    end
+                                    next_state = AXI_IDLE;
+                                    counter = '0;
+                                end
+                            end
+                        end:direct_mapped_read_loop
+                        else
+                        begin:set_associative_read_loop
+                            if(MRRValid && MRReady)
+                            begin
+                                if(MRRResp == AXI_OKAY)
+                                begin
+                                    data[CpuIdx_reg][victim_way_reg][counter] = MRRData;
+                                end
+                                else
+                                begin
+                                    refill_error = 1'b1;
+                                end
+                                if((MRRResp == AXI_OKAY) && !pending_write &&
+                                   (counter == (CpuOffset_reg[OFF_W-1:2])))
+                                begin
+                                    read_through_hit = 1'b1;
+                                end
+                                else
+                                begin
+                                    read_through_hit = 1'b0;
+                                end
+                                counter = counter + 1'b1;
+
+                                if(MRRLast)
+                                begin
+                                    if((MRRResp == AXI_OKAY) && !refill_error_reg)
+                                    begin
+                                        if(pending_write)
+                                        begin
+                                            data[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1:2]] = pending_write_data;
+                                            dirty[CpuIdx_reg][victim_way_reg] = 1'b1;
+                                        end
+                                        else
+                                        begin
+                                            dirty[CpuIdx_reg][victim_way_reg] = 1'b0;
+                                        end
+                                        valid[CpuIdx_reg][victim_way_reg] = 1'b1;
+                                        tags[CpuIdx_reg][victim_way_reg] = CpuTag_reg;
+                                    end
                                     next_state = AXI_IDLE;
                                     MAWValid_next = 1'b0;
                                     MARAddr_next = '0;
@@ -807,16 +1038,16 @@ module cache
                                     MARLen_next = '0;
                                     MARSize_next = '0;
                                     MARBurst_next = INCR;
-                                    counter_next = '0;
-                                    if(and_valid_bits)
+                                    counter = '0;
+                                    if(!and_valid_bits)
                                     begin
-                                        lru_way_empty_next[CpuIdx] = lru_way_empty_next[CpuIdx] + 1'b1;
+                                        lru_way_empty[CpuIdx_reg] = lru_way_empty[CpuIdx_reg] + 1'b1;
                                     end
                                 end
                             end
-                        end:set_associative_read
+                        end:set_associative_read_loop
                     end
-                endcase 
+                endcase
             end
         end:gen_read_write_cache
     endgenerate

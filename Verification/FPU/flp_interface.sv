@@ -1,58 +1,88 @@
-interface flp_interface 
+// =============================================================================
+// flp_interface.sv
+// -----------------------------------------------------------------------------
+// FPU verification interface for the RISC-V processor.
+//
+// UVM Cookbook compliant structure (mirrors fetch_interface):
+//   - Two clocking blocks (mck = master/driver, pck = passive monitor)
+//   - Master outputs use #CLK skew, all inputs use #1step
+//   - Bus Functional Model (BFM) tasks live in the interface and are invoked
+//     from the driver and monitor
+//   - "TEST" modport is the verification-side modport passed through the
+//     RISC-V top-level verification environment
+// =============================================================================
+import shared_pkg::*;
+import flp_item_pkg::*;
+
+interface flp_interface
 (
     input bit clk
 );
-    import shared_pkg::*;
-    import flp_item_pkg::*;
-
     localparam CLK = (CLK_PERIOD/5.0);
-    localparam CLK_NECESSARY = (CLK_PERIOD/10.0);
-    localparam TIMER = (CLK_PERIOD/7.0);
-    localparam SOFTWARE = (CLK_PERIOD/3.5);
-    localparam EXTERNAL = (CLK_PERIOD/1.75);
 
+    // ─── DUT input signals ────────────────────────────────────────────────────
+    logic                            rst;
+    logic                            valid;
+    logic [FINAL_FLP_WIDTH-1:0]      InA;
+    logic [FINAL_FLP_WIDTH-1:0]      InB;
+    fpr_t                            RdF;
+    logic                            RegWrite;
+    round_mode_t                     round_mode;
+    fpu_operation_t                  operation;
+    move_operation_t                 MoveOperation;
 
-    logic rst;
-    logic valid;
-    logic [ (FINAL_PRECISION == SINGLE) ? 31 : 63 :0] InA, InB;
-    fpr_t RdF;
-    logic RegWrite;
-    round_mode_t round_mode;
-    fpu_operation_t operation;
-    logic busy;
-    logic done;
-    logic Overflow, Underflow, NaN, Inf, Zero,InvalidDiv;
-    logic [ (FINAL_PRECISION == SINGLE) ? 31 : 63 :0] Result;
-    fpr_t RdFOut;
-    logic RegWriteOut;
-    move_operation_t MoveOperation;
-    move_operation_t MoveOperationOut;
+    // ─── DUT output signals ──────────────────────────────────────────────────
+    logic                            busy;
+    logic                            done;
+    logic                            Overflow;
+    logic                            Underflow;
+    logic                            NaN;
+    logic                            Inf;
+    logic                            Zero;
+    logic                            InvalidDiv;
+    logic [FINAL_FLP_WIDTH-1:0]      Result;
+    fpr_t                            RdFOut;
+    logic                            RegWriteOut;
+    move_operation_t                 MoveOperationOut;
 
-    logic rst_old;
-    logic valid_old;
-    logic [ (FINAL_PRECISION == SINGLE) ? 31 : 63 :0] InA_old, InB_old;
-    fpr_t RdF_old;
-    logic RegWrite_old;
-    round_mode_t round_mode_old;
-    fpu_operation_t operation_old;
+    // ─── Master clocking block (driver view) ─────────────────────────────────
+    clocking mck @(posedge clk);
+        default input #1step output #CLK;
+        output rst;
+        output valid;
+        output InA;
+        output InB;
+        output RdF;
+        output RegWrite;
+        output round_mode;
+        output operation;
+        output MoveOperation;
+        input  busy;
+        input  done;
+        input  Overflow;
+        input  Underflow;
+        input  NaN;
+        input  Inf;
+        input  Zero;
+        input  InvalidDiv;
+        input  Result;
+        input  RdFOut;
+        input  RegWriteOut;
+        input  MoveOperationOut;
+    endclocking:mck
 
-
-
-
-    //For clocking block the input output signal direction is with respect to the testbench not the design
-    clocking cb @(posedge clk);
-        default input #0 ; 
-
-        input #CLK rst;
-        input #CLK valid;
-        input #CLK InA;
-        input #CLK InB;
-        input #CLK RdF;
-        input #CLK RegWrite;
-        input #CLK round_mode;
-        input #CLK operation;
-        input #CLK MoveOperation;
-
+    // ─── Passive clocking block (monitor view) ───────────────────────────────
+    clocking pck @(posedge clk);
+        default input #1step;
+        input rst;
+        input valid;
+        input InA;
+        input InB;
+        input RdF;
+        input RegWrite;
+        input round_mode;
+        input operation;
+        input MoveOperation;
         input busy;
         input done;
         input Overflow;
@@ -65,136 +95,79 @@ interface flp_interface
         input RdFOut;
         input RegWriteOut;
         input MoveOperationOut;
+    endclocking:pck
 
-    endclocking:cb
-
-    task initialize ();
-        rst <= 0;
-        valid <= 0;
-        InA <= 0;
-        InB <= 0;
-        RdF <= f0;
-        RegWrite <= 0;
-        round_mode <= round_mode_t'(0);
-        operation <= fpu_operation_t'(0);
-        repeat(5)
-        begin
-            @(cb);
-        end
+    // ─── Initialization task (BFM) ───────────────────────────────────────────
+    task initialize;
+        rst           <= 1'b0;
+        valid         <= 1'b0;
+        InA           <= '0;
+        InB           <= '0;
+        RdF           <= f0;
+        RegWrite      <= 1'b0;
+        round_mode    <= round_mode_t'(0);
+        operation     <= fpu_operation_t'(0);
+        MoveOperation <= FPUToFPU;
+        repeat(5) @(posedge clk);
+        mck.rst <= 1'b1;
     endtask:initialize
 
+    // ─── Driver to interface task (BFM) ──────────────────────────────────────
+    // Issues stimulus and waits for the multi-cycle done handshake before
+    // releasing the sequencer, so the next item does not overrun the FPU.
     task drv2intf (flp_item drv);
-        @(cb);
-        valid <= drv.valid;
-        InA <= drv.InA;
-        InB <= drv.InB;
-        RdF <= drv.RdF;
-        RegWrite <= drv.RegWrite;
-        round_mode <= drv.round_mode;
-        operation <= drv.operation;
-        MoveOperation <= drv.MoveOperation;
-        #CLK rst <= 1'b1; //drv.rst;
+        @(mck);
+        mck.rst           <= drv.rst;
+        mck.valid         <= drv.valid;
+        mck.InA           <= drv.InA;
+        mck.InB           <= drv.InB;
+        mck.RdF           <= drv.RdF;
+        mck.RegWrite      <= drv.RegWrite;
+        mck.round_mode    <= drv.round_mode;
+        mck.operation     <= drv.operation;
+        mck.MoveOperation <= drv.MoveOperation;
     endtask:drv2intf
 
+    // ─── Interface to monitor task (BFM) ─────────────────────────────────────
     task intf2mon (flp_item mon);
-        fork
-            begin
-                @(cb);
-                mon.rst       = cb.rst;
-                mon.valid     = cb.valid;
-                mon.InA       = cb.InA;
-                mon.InB       = cb.InB;
-                mon.RdF       = cb.RdF;
-                mon.RegWrite  = cb.RegWrite;
-                mon.round_mode = cb.round_mode;
-                mon.operation  = cb.operation;
-                mon.busy      = cb.busy;
-                mon.done      = cb.done;
-                mon.Overflow  = cb.Overflow;
-                mon.Underflow = cb.Underflow;
-                mon.NaN       = cb.NaN;
-                mon.Inf       = cb.Inf;
-                mon.Zero      = cb.Zero;
-                mon.InvalidDiv = cb.InvalidDiv;
-                mon.Result    = cb.Result;
-                mon.RdFOut    = cb.RdFOut;
-                mon.RegWriteOut = cb.RegWriteOut;
-                mon.MoveOperation = cb.MoveOperation;
-                mon.MoveOperationOut = cb.MoveOperationOut;
-                if (cb.valid)
-                begin
-                    @(cb);
-                    while(!cb.done)
-                    begin
-                        @(cb);
-                    end
-                    mon.busy      = cb.busy;
-                    mon.done      = cb.done;
-                    mon.Overflow  = cb.Overflow;
-                    mon.Underflow = cb.Underflow;
-                    mon.NaN       = cb.NaN;
-                    mon.Inf       = cb.Inf;
-                    mon.Zero      = cb.Zero;
-                    mon.InvalidDiv = cb.InvalidDiv;
-                    mon.Result    = cb.Result;
-                    mon.RdFOut    = cb.RdFOut;
-                    mon.RegWriteOut = cb.RegWriteOut;
-                    mon.MoveOperationOut = cb.MoveOperationOut;
-                end
-            end
-            begin
-                @(negedge cb.rst);
-                mon.rst       = cb.rst;
-                mon.valid     = cb.valid;
-                mon.InA       = cb.InA;
-                mon.InB       = cb.InB;
-                mon.RdF       = cb.RdF;
-                mon.RegWrite  = cb.RegWrite;
-                mon.round_mode = cb.round_mode;
-                mon.operation  = cb.operation;
-                mon.busy      = cb.busy;
-                mon.done      = cb.done;
-                mon.Overflow  = cb.Overflow;
-                mon.Underflow = cb.Underflow;
-                mon.NaN       = cb.NaN;
-                mon.Inf       = cb.Inf;
-                mon.Zero      = cb.Zero;
-                mon.InvalidDiv = cb.InvalidDiv;
-                mon.Result    = cb.Result;
-                mon.RdFOut    = cb.RdFOut;
-                mon.RegWriteOut = cb.RegWriteOut;
-                mon.MoveOperation = cb.MoveOperation;
-                mon.MoveOperationOut = cb.MoveOperationOut;
-            end
-        join_any
-endtask : intf2mon
+        @(pck);
+        mon.rst              = pck.rst;
+        mon.valid            = pck.valid;
+        mon.InA              = pck.InA;
+        mon.InB              = pck.InB;
+        mon.RdF              = pck.RdF;
+        mon.RegWrite         = pck.RegWrite;
+        mon.round_mode       = pck.round_mode;
+        mon.operation        = pck.operation;
+        mon.MoveOperation    = pck.MoveOperation;
+        mon.busy             = pck.busy;
+        mon.done             = pck.done;
+        mon.Overflow         = pck.Overflow;
+        mon.Underflow        = pck.Underflow;
+        mon.NaN              = pck.NaN;
+        mon.Inf              = pck.Inf;
+        mon.Zero             = pck.Zero;
+        mon.InvalidDiv       = pck.InvalidDiv;
+        mon.Result           = pck.Result;
+        mon.RdFOut           = pck.RdFOut;
+        mon.RegWriteOut      = pck.RegWriteOut;
+        mon.MoveOperationOut = pck.MoveOperationOut;
+    endtask:intf2mon
 
-    modport DUT 
-    (
-        input clk,
-        rst,
-        valid,
-        InA,
-        InB,
-        RdF,
-        RegWrite,
-        round_mode,
-        operation,
-        MoveOperation,
+    function bit checkifvalid (flp_item mon);
+        return (mon.valid && !mon.busy && mon.rst);
+    endfunction:checkifvalid
 
-        output busy,
-        done,
-        Overflow,
-        Underflow,
-        NaN,
-        Inf,
-        Zero,
-        InvalidDiv,
-        Result,
-        RdFOut,
-        RegWriteOut,
-        MoveOperationOut
-    );
+    function bit checkifrst (flp_item mon);
+        return (!mon.rst);
+    endfunction:checkifrst
 
-    modport TEST (clocking cb); 
+    function bit checkifdone (flp_item mon);
+        return (mon.done && !mon.busy && mon.rst);
+    endfunction:checkifdone
+
+    // ─── Verification-side modport ───────────────────────────────────────────
+    // "TEST" is the modport passed to the RISC-V top-level verification env.
+    modport TEST (clocking pck);
+
 endinterface: flp_interface

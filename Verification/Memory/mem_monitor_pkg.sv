@@ -15,7 +15,7 @@ package mem_monitor_pkg;
         endfunction:new
 
         uvm_analysis_port #(mem_item) mon_port;
-        mem_item mon_item;
+        mem_item mon_item , cloned_item;
         virtual mem_interface vif;
 
         virtual function void build_phase (uvm_phase phase);
@@ -29,8 +29,13 @@ package mem_monitor_pkg;
             forever
             begin:monitoring
                 vif.intf2mon(mon_item);
-                `uvm_info("MON",mon_item.convert2str,UVM_DEBUG)
-                mon_port.write(mon_item);
+                // Clone so every downstream component (subscriber, predictor,
+                // scoreboard FIFO) holds its own object instead of aliasing the
+                // single mutating mon_item.
+                if(!$cast(cloned_item,mon_item.clone()))
+                    `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
+                `uvm_info("MON",cloned_item.convert2str,UVM_DEBUG)
+                mon_port.write(cloned_item);
             end:monitoring
         
         endtask:run_phase

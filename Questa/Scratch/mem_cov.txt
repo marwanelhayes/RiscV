@@ -1,0 +1,663 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /mem_top/DUT/axi_protocol_assertions
+=== Design Unit: work.AXI_Assertions
+=================================================================================
+
+Assertion Coverage:
+    Assertions                      23        18         5    78.26%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/mem_top/DUT/axi_protocol_assertions/a_aw_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(150)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_w_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(154)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_b_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(158)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_ar_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(162)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_r_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(166)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_aw_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(172)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_w_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(178)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_b_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(184)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ar_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(190)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_r_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(196)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ready_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(202)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_aw_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(215)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ar_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(235)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_b_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(248)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_r_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(254)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#275/immed__276
+                     ../../Verification/Protocol/AXI_Assertions.sv(276)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__290
+                     ../../Verification/Protocol/AXI_Assertions.sv(290)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__288
+                     ../../Verification/Protocol/AXI_Assertions.sv(288)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__286
+                     ../../Verification/Protocol/AXI_Assertions.sv(286)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#308/immed__309
+                     ../../Verification/Protocol/AXI_Assertions.sv(309)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#315/immed__316
+                     ../../Verification/Protocol/AXI_Assertions.sv(316)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__327
+                     ../../Verification/Protocol/AXI_Assertions.sv(327)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__325
+                     ../../Verification/Protocol/AXI_Assertions.sv(325)
+                                                        0          1
+
+Directive Coverage:
+    Directives                      15        10         5    66.66%
+
+DIRECTIVE COVERAGE:
+--------------------------------------------------------------------------------------------
+Name                                     Design Design   Lang File(Line)      Hits Status    
+                                         Unit   UnitType                                     
+--------------------------------------------------------------------------------------------
+/mem_top/DUT/axi_protocol_assertions/a_aw_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(152)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_w_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(156)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_b_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(160)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_ar_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(164)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_r_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(168)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_aw_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(175)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_w_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(181)
+                                                                              197180 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_b_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(187)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ar_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(193)
+                                                                              93638 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_r_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(199)
+                                                                              374552 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ready_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(205)
+                                                                              1010000 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_aw_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(225)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ar_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(245)
+                                                                              93638 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_b_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(251)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_r_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(257)
+                                                                              374552 Covered   
+
+=================================================================================
+=== Instance: /mem_seq_pkg
+=== Design Unit: work.mem_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       2         2         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/mem_seq_pkg/mem_seq/body/main_sequence/immed__26
+                     ../../Verification/Memory/mem_seq_pkg.sv(26)
+                                                        0          1
+/mem_seq_pkg/mem_seq_no_rst/body/main_sequence/immed__51
+                     ../../Verification/Memory/mem_seq_pkg.sv(51)
+                                                        0          1
+
+=================================================================================
+=== Instance: /mem_subscriber_pkg
+=== Design Unit: work.mem_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na   100.00%
+        Coverpoints/Crosses         21        na        na        na
+            Covergroup Bins         83        83         0   100.00%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /mem_subscriber_pkg/mem_subscriber/cvr_grp      100.00%        100          -    Covered              
+    covered/total bins:                                    83         83          -                      
+    missing/total bins:                                     0         83          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint funct3M_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin others                                   4                     -    Occurred             
+        bin word                                      1009996          1          -    Covered              
+    Coverpoint CacheHitM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin miss                                       822210          1          -    Covered              
+        bin hit                                        187790          1          -    Covered              
+    Coverpoint MemWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         470252          1          -    Covered              
+        bin hi                                         539748          1          -    Covered              
+    Coverpoint RegWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         510928          1          -    Covered              
+        bin hi                                         499072          1          -    Covered              
+    Coverpoint FPURegWriteM_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         506938          1          -    Covered              
+        bin hi                                         503062          1          -    Covered              
+    Coverpoint RegWriteW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         510928          1          -    Covered              
+        bin hi                                         499072          1          -    Covered              
+    Coverpoint SelectorM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                        255212          1          -    Covered              
+        bin mem                                        252355          1          -    Covered              
+        bin pc                                         252086          1          -    Covered              
+        bin csr                                        250347          1          -    Covered              
+    Coverpoint SelectorW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                        255212          1          -    Covered              
+        bin mem                                        252355          1          -    Covered              
+        bin pc                                         252086          1          -    Covered              
+        bin csr                                        250347          1          -    Covered              
+    Coverpoint MoveOperationM_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                 335279          1          -    Covered              
+        bin reg_to_fpu                                 337663          1          -    Covered              
+        bin fpu_to_fpu                                 337058          1          -    Covered              
+    Coverpoint OverflowM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         504357          1          -    Covered              
+        bin hi                                         505643          1          -    Covered              
+    Coverpoint UnderflowM_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505904          1          -    Covered              
+        bin hi                                         504096          1          -    Covered              
+    Coverpoint NaNM_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505296          1          -    Covered              
+        bin hi                                         504704          1          -    Covered              
+    Coverpoint InfM_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505743          1          -    Covered              
+        bin hi                                         504257          1          -    Covered              
+    Coverpoint ZeroM_cg                               100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         503758          1          -    Covered              
+        bin hi                                         506242          1          -    Covered              
+    Coverpoint InvalidDivM_cg                         100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         504934          1          -    Covered              
+        bin hi                                         505066          1          -    Covered              
+    Coverpoint RdM_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                31         31          -                      
+        missing/total bins:                                 0         31          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin x0                                   15431                     -    Occurred             
+        bin auto[ra]                                    32920          1          -    Covered              
+        bin auto[sp]                                    31510          1          -    Covered              
+        bin auto[gp]                                    31994          1          -    Covered              
+        bin auto[tp]                                    32388          1          -    Covered              
+        bin auto[t0]                                    32045          1          -    Covered              
+        bin auto[t1]                                    33035          1          -    Covered              
+        bin auto[t2]                                    32117          1          -    Covered              
+        bin auto[s0_fp]                                 31760          1          -    Covered              
+        bin auto[s1]                                    31865          1          -    Covered              
+        bin auto[a0]                                    30603          1          -    Covered              
+        bin auto[a1]                                    32184          1          -    Covered              
+        bin auto[a2]                                    32628          1          -    Covered              
+        bin auto[a3]                                    32876          1          -    Covered              
+        bin auto[a4]                                    32517          1          -    Covered              
+        bin auto[a5]                                    31546          1          -    Covered              
+        bin auto[a6]                                    30609          1          -    Covered              
+        bin auto[a7]                                    32372          1          -    Covered              
+        bin auto[s2]                                    32128          1          -    Covered              
+        bin auto[s3]                                    31756          1          -    Covered              
+        bin auto[s4]                                    32194          1          -    Covered              
+        bin auto[s5]                                    32087          1          -    Covered              
+        bin auto[s6]                                    31678          1          -    Covered              
+        bin auto[s7]                                    30640          1          -    Covered              
+        bin auto[s8]                                    31402          1          -    Covered              
+        bin auto[s9]                                    32907          1          -    Covered              
+        bin auto[s10]                                   32282          1          -    Covered              
+        bin auto[s11]                                   31852          1          -    Covered              
+        bin auto[t3]                                    31772          1          -    Covered              
+        bin auto[t4]                                    33299          1          -    Covered              
+        bin auto[t5]                                    33089          1          -    Covered              
+        bin auto[t6]                                    32514          1          -    Covered              
+    Coverpoint ALUOutM_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                   502873          1          -    Covered              
+        bin positive                                   507127          1          -    Covered              
+    Coverpoint ReadDataW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                    94143          1          -    Covered              
+        bin positive                                   915857          1          -    Covered              
+    Coverpoint ALUOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                   502872          1          -    Covered              
+        bin positive                                   507128          1          -    Covered              
+    Cross MemWrite_x_CacheHit_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hit>                                93690          1          -    Covered              
+            bin <lo,hit>                                94100          1          -    Covered              
+            bin <hi,miss>                              446058          1          -    Covered              
+            bin <lo,miss>                              376152          1          -    Covered              
+    Cross Selector_x_RegWrite_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 8          8          -                      
+        missing/total bins:                                 0          8          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csr,hi>                               123838          1          -    Covered              
+            bin <pc,hi>                                124382          1          -    Covered              
+            bin <mem,hi>                               123811          1          -    Covered              
+            bin <alu,hi>                               127041          1          -    Covered              
+            bin <csr,lo>                               126509          1          -    Covered              
+            bin <pc,lo>                                127704          1          -    Covered              
+            bin <mem,lo>                               128544          1          -    Covered              
+            bin <alu,lo>                               128171          1          -    Covered              
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /mem_subscriber_pkg/mem_subscriber/cvr_grp      100.00%        100          -    Covered              
+    covered/total bins:                                    83         83          -                      
+    missing/total bins:                                     0         83          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint funct3M_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin others                                   4                     -    Occurred             
+        bin word                                      1009996          1          -    Covered              
+    Coverpoint CacheHitM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin miss                                       822210          1          -    Covered              
+        bin hit                                        187790          1          -    Covered              
+    Coverpoint MemWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         470252          1          -    Covered              
+        bin hi                                         539748          1          -    Covered              
+    Coverpoint RegWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         510928          1          -    Covered              
+        bin hi                                         499072          1          -    Covered              
+    Coverpoint FPURegWriteM_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         506938          1          -    Covered              
+        bin hi                                         503062          1          -    Covered              
+    Coverpoint RegWriteW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         510928          1          -    Covered              
+        bin hi                                         499072          1          -    Covered              
+    Coverpoint SelectorM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                        255212          1          -    Covered              
+        bin mem                                        252355          1          -    Covered              
+        bin pc                                         252086          1          -    Covered              
+        bin csr                                        250347          1          -    Covered              
+    Coverpoint SelectorW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                        255212          1          -    Covered              
+        bin mem                                        252355          1          -    Covered              
+        bin pc                                         252086          1          -    Covered              
+        bin csr                                        250347          1          -    Covered              
+    Coverpoint MoveOperationM_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                 335279          1          -    Covered              
+        bin reg_to_fpu                                 337663          1          -    Covered              
+        bin fpu_to_fpu                                 337058          1          -    Covered              
+    Coverpoint OverflowM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         504357          1          -    Covered              
+        bin hi                                         505643          1          -    Covered              
+    Coverpoint UnderflowM_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505904          1          -    Covered              
+        bin hi                                         504096          1          -    Covered              
+    Coverpoint NaNM_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505296          1          -    Covered              
+        bin hi                                         504704          1          -    Covered              
+    Coverpoint InfM_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         505743          1          -    Covered              
+        bin hi                                         504257          1          -    Covered              
+    Coverpoint ZeroM_cg                               100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         503758          1          -    Covered              
+        bin hi                                         506242          1          -    Covered              
+    Coverpoint InvalidDivM_cg                         100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         504934          1          -    Covered              
+        bin hi                                         505066          1          -    Covered              
+    Coverpoint RdM_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                31         31          -                      
+        missing/total bins:                                 0         31          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin x0                                   15431                     -    Occurred             
+        bin auto[ra]                                    32920          1          -    Covered              
+        bin auto[sp]                                    31510          1          -    Covered              
+        bin auto[gp]                                    31994          1          -    Covered              
+        bin auto[tp]                                    32388          1          -    Covered              
+        bin auto[t0]                                    32045          1          -    Covered              
+        bin auto[t1]                                    33035          1          -    Covered              
+        bin auto[t2]                                    32117          1          -    Covered              
+        bin auto[s0_fp]                                 31760          1          -    Covered              
+        bin auto[s1]                                    31865          1          -    Covered              
+        bin auto[a0]                                    30603          1          -    Covered              
+        bin auto[a1]                                    32184          1          -    Covered              
+        bin auto[a2]                                    32628          1          -    Covered              
+        bin auto[a3]                                    32876          1          -    Covered              
+        bin auto[a4]                                    32517          1          -    Covered              
+        bin auto[a5]                                    31546          1          -    Covered              
+        bin auto[a6]                                    30609          1          -    Covered              
+        bin auto[a7]                                    32372          1          -    Covered              
+        bin auto[s2]                                    32128          1          -    Covered              
+        bin auto[s3]                                    31756          1          -    Covered              
+        bin auto[s4]                                    32194          1          -    Covered              
+        bin auto[s5]                                    32087          1          -    Covered              
+        bin auto[s6]                                    31678          1          -    Covered              
+        bin auto[s7]                                    30640          1          -    Covered              
+        bin auto[s8]                                    31402          1          -    Covered              
+        bin auto[s9]                                    32907          1          -    Covered              
+        bin auto[s10]                                   32282          1          -    Covered              
+        bin auto[s11]                                   31852          1          -    Covered              
+        bin auto[t3]                                    31772          1          -    Covered              
+        bin auto[t4]                                    33299          1          -    Covered              
+        bin auto[t5]                                    33089          1          -    Covered              
+        bin auto[t6]                                    32514          1          -    Covered              
+    Coverpoint ALUOutM_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                   502873          1          -    Covered              
+        bin positive                                   507127          1          -    Covered              
+    Coverpoint ReadDataW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                    94143          1          -    Covered              
+        bin positive                                   915857          1          -    Covered              
+    Coverpoint ALUOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin negative                                   502872          1          -    Covered              
+        bin positive                                   507128          1          -    Covered              
+    Cross MemWrite_x_CacheHit_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hit>                                93690          1          -    Covered              
+            bin <lo,hit>                                94100          1          -    Covered              
+            bin <hi,miss>                              446058          1          -    Covered              
+            bin <lo,miss>                              376152          1          -    Covered              
+    Cross Selector_x_RegWrite_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 8          8          -                      
+        missing/total bins:                                 0          8          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csr,hi>                               123838          1          -    Covered              
+            bin <pc,hi>                                124382          1          -    Covered              
+            bin <mem,hi>                               123811          1          -    Covered              
+            bin <alu,hi>                               127041          1          -    Covered              
+            bin <csr,lo>                               126509          1          -    Covered              
+            bin <pc,lo>                                127704          1          -    Covered              
+            bin <mem,lo>                               128544          1          -    Covered              
+            bin <alu,lo>                               128171          1          -    Covered              
+
+TOTAL COVERGROUP COVERAGE: 100.00%  COVERGROUP TYPES: 1
+
+DIRECTIVE COVERAGE:
+--------------------------------------------------------------------------------------------
+Name                                     Design Design   Lang File(Line)      Hits Status    
+                                         Unit   UnitType                                     
+--------------------------------------------------------------------------------------------
+/mem_top/DUT/axi_protocol_assertions/a_aw_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(152)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_w_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(156)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_b_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(160)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_ar_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(164)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_r_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(168)
+                                                                                 0 ZERO      
+/mem_top/DUT/axi_protocol_assertions/a_aw_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(175)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_w_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(181)
+                                                                              197180 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_b_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(187)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ar_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(193)
+                                                                              93638 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_r_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(199)
+                                                                              374552 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ready_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(205)
+                                                                              1010000 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_aw_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(225)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_ar_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(245)
+                                                                              93638 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_b_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(251)
+                                                                              49295 Covered   
+/mem_top/DUT/axi_protocol_assertions/a_r_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(257)
+                                                                              374552 Covered   
+
+TOTAL DIRECTIVE COVERAGE: 66.66%  COVERS: 15
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/mem_top/DUT/axi_protocol_assertions/a_aw_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(150)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_w_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(154)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_b_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(158)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_ar_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(162)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_r_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(166)
+                                                        0          0
+/mem_top/DUT/axi_protocol_assertions/a_aw_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(172)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_w_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(178)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_b_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(184)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ar_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(190)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_r_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(196)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ready_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(202)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_aw_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(215)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_ar_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(235)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_b_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(248)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/a_r_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(254)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#275/immed__276
+                     ../../Verification/Protocol/AXI_Assertions.sv(276)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__290
+                     ../../Verification/Protocol/AXI_Assertions.sv(290)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__288
+                     ../../Verification/Protocol/AXI_Assertions.sv(288)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#285/immed__286
+                     ../../Verification/Protocol/AXI_Assertions.sv(286)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#308/immed__309
+                     ../../Verification/Protocol/AXI_Assertions.sv(309)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#315/immed__316
+                     ../../Verification/Protocol/AXI_Assertions.sv(316)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__327
+                     ../../Verification/Protocol/AXI_Assertions.sv(327)
+                                                        0          1
+/mem_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__325
+                     ../../Verification/Protocol/AXI_Assertions.sv(325)
+                                                        0          1
+/mem_seq_pkg/mem_seq/body/main_sequence/immed__26
+                     ../../Verification/Memory/mem_seq_pkg.sv(26)
+                                                        0          1
+/mem_seq_pkg/mem_seq_no_rst/body/main_sequence/immed__51
+                     ../../Verification/Memory/mem_seq_pkg.sv(51)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 82.22%
+

@@ -44,7 +44,7 @@ project addfile ../../Design/fp_reg_file.sv
 echo "Adding memory modules..."
 project addfile ../../Design/risc_instruction_memory.sv
 project addfile ../../Design/risc_data_memory.sv
-project addfile ../../Design/data_memory.sv
+project addfile ../../Design/cache.sv
 
 # CSR
 echo "Adding CSR modules..."
@@ -83,6 +83,7 @@ project addfile ../../Verification/Fetch/fetch_seq_pkg.sv
 project addfile ../../Verification/Fetch/fetch_agent_pkg.sv
 project addfile ../../Verification/Fetch/fetch_scoreboard_pkg.sv
 project addfile ../../Verification/Fetch/fetch_subscriber_pkg.sv
+project addfile ../../Verification/Fetch/fetch_predictor_pkg.sv
 project addfile ../../Verification/Fetch/fetch_env_pkg.sv
 project addfile ../../Verification/Fetch/fetch_test_pkg.sv
 project addfile ../../Verification/Fetch/fetch_interface.sv
@@ -110,6 +111,7 @@ project addfile ../../Verification/Execute/execute_seq_pkg.sv
 project addfile ../../Verification/Execute/execute_agent_pkg.sv
 project addfile ../../Verification/Execute/execute_scoreboard_pkg.sv
 project addfile ../../Verification/Execute/execute_subscriber_pkg.sv
+project addfile ../../Verification/Execute/execute_predictor_pkg.sv
 project addfile ../../Verification/Execute/execute_env_pkg.sv
 project addfile ../../Verification/Execute/execute_test_pkg.sv
 project addfile ../../Verification/Execute/execute_interface.sv
@@ -125,6 +127,7 @@ project addfile ../../Verification/Memory/mem_seq_pkg.sv
 project addfile ../../Verification/Memory/mem_agent_pkg.sv
 project addfile ../../Verification/Memory/mem_scoreboard_pkg.sv
 project addfile ../../Verification/Memory/mem_subscriber_pkg.sv
+project addfile ../../Verification/Memory/mem_predictor_pkg.sv
 project addfile ../../Verification/Memory/mem_env_pkg.sv
 project addfile ../../Verification/Memory/mem_test_pkg.sv
 project addfile ../../Verification/Memory/mem_interface.sv
@@ -140,6 +143,7 @@ project addfile ../../Verification/WriteBack/writeback_seq_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_agent_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_scoreboard_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_subscriber_pkg.sv
+project addfile ../../Verification/WriteBack/writeback_predictor_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_env_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_test_pkg.sv
 project addfile ../../Verification/WriteBack/writeback_interface.sv
@@ -190,8 +194,20 @@ project addfile ../../Verification/Hazard/hazard_test_pkg.sv
 project addfile ../../Verification/Hazard/hazard_interface.sv
 project addfile ../../Verification/Hazard/hazard_top.sv
 
+# Reusable protocol assertion modules
+echo "Adding reusable assertions module"
+project addfile ../../Verification/Protocol/AXI_Assertions.sv
+project addfile ../../Verification/Protocol/axi_interface.sv
+
 # Verification packages - Risc (full processor)
 echo "Adding Risc full processor verification..."
+project addfile ../../Verification/Risc/csr_wr.sv
+project addfile ../../Verification/Risc/decode_wr.sv
+project addfile ../../Verification/Risc/execute_wr.sv
+project addfile ../../Verification/Risc/fetch_wr.sv
+project addfile ../../Verification/Risc/flp_wr.sv
+project addfile ../../Verification/Risc/hazard_wr.sv
+project addfile ../../Verification/Risc/memory_wr.sv
 project addfile ../../Verification/Risc/risc_interface.sv
 project addfile ../../Verification/Risc/risc_test_pkg.sv
 project addfile ../../Verification/Risc/risc_top.sv

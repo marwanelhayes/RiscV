@@ -1,0 +1,530 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /csr_seq_pkg
+=== Design Unit: work.csr_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       1         1         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/csr_seq_pkg/csr_seq/body/main_sequence/immed__24
+                     ../../Verification/CSR/csr_seq_pkg.sv(24)
+                                                        0          1
+
+=================================================================================
+=== Instance: /csr_subscriber_pkg
+=== Design Unit: work.csr_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na   100.00%
+        Coverpoints/Crosses         16        na        na        na
+            Covergroup Bins        163       163         0   100.00%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /csr_subscriber_pkg/csr_subscriber/cvr_grp      100.00%        100          -    Covered              
+    covered/total bins:                                   163        163          -                      
+    missing/total bins:                                     0        163          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint rst_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin idle                                          132          1          -    Covered              
+        bin operating                                    9872          1          -    Covered              
+    Coverpoint CsrAccess_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_access                                    8008          1          -    Covered              
+        bin access                                       1864          1          -    Covered              
+    Coverpoint CsrOperation_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin not_under_access                         0                     -    ZERO                 
+        bin csrrw_op                                      320          1          -    Covered              
+        bin csrrs_op                                      296          1          -    Covered              
+        bin csrrc_op                                      296          1          -    Covered              
+        bin csrrwi_op                                     319          1          -    Covered              
+        bin csrrsi_op                                     302          1          -    Covered              
+        bin csrrci_op                                     331          1          -    Covered              
+    Coverpoint CsrIndex_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                14         14          -                      
+        missing/total bins:                                 0         14          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin read_only                                0                     -    ZERO                 
+        bin fflags_idx                                    136          1          -    Covered              
+        bin frm_idx                                       120          1          -    Covered              
+        bin fcsr_idx                                      119          1          -    Covered              
+        bin mstatus_idx                                   121          1          -    Covered              
+        bin medeleg_idx                                   143          1          -    Covered              
+        bin mideleg_idx                                   135          1          -    Covered              
+        bin mie_idx                                       141          1          -    Covered              
+        bin mtvec_idx                                     117          1          -    Covered              
+        bin mscratch_idx                                  138          1          -    Covered              
+        bin mepc_idx                                      120          1          -    Covered              
+        bin mcause_idx                                    141          1          -    Covered              
+        bin mbadaddr_idx                                  158          1          -    Covered              
+        bin mcycle_idx                                    136          1          -    Covered              
+        bin mhartid_idx                                   139          1          -    Covered              
+    Coverpoint Traps_cg                               100.00%        100          -    Covered              
+        covered/total bins:                                13         13          -                      
+        missing/total bins:                                 0         13          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_trap                                      4250          1          -    Covered              
+        bin instr_addr_misaligned                         477          1          -    Covered              
+        bin instr_access_fault                            487          1          -    Covered              
+        bin illegal_instruction                           459          1          -    Covered              
+        bin breakpoint                                    502          1          -    Covered              
+        bin load_addr_misaligned                          446          1          -    Covered              
+        bin load_access_fault                             478          1          -    Covered              
+        bin store_addr_misaligned                         453          1          -    Covered              
+        bin store_access_fault                            473          1          -    Covered              
+        bin ecall_u                                       478          1          -    Covered              
+        bin ecall_s                                       443          1          -    Covered              
+        bin ecall_h                                       442          1          -    Covered              
+        bin ecall_m                                       484          1          -    Covered              
+    Coverpoint mret_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_mret                                      7706          1          -    Covered              
+        bin mret                                         2166          1          -    Covered              
+    Coverpoint TimerInterrupt_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8790          1          -    Covered              
+        bin high                                         1082          1          -    Covered              
+    Coverpoint ExternalInterrupt_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8782          1          -    Covered              
+        bin high                                         1090          1          -    Covered              
+    Coverpoint SoftwareInterrupt_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8745          1          -    Covered              
+        bin high                                         1127          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin clear                                        4321          1          -    Covered              
+        bin set                                          5551          1          -    Covered              
+    Coverpoint RoundingMode_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin rne                                          5815          1          -    Covered              
+        bin rtz                                           508          1          -    Covered              
+        bin rdn                                           823          1          -    Covered              
+        bin rup                                           679          1          -    Covered              
+        bin rmm                                           529          1          -    Covered              
+        bin dyn                                           920          1          -    Covered              
+    Cross CsrOp_x_CsrIndex_cx                         100.00%        100          -    Covered              
+        covered/total bins:                                84         84          -                      
+        missing/total bins:                                 0         84          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csrrci_op,mhartid_idx>                    21          1          -    Covered              
+            bin <csrrsi_op,mhartid_idx>                    22          1          -    Covered              
+            bin <csrrwi_op,mhartid_idx>                    25          1          -    Covered              
+            bin <csrrc_op,mhartid_idx>                     28          1          -    Covered              
+            bin <csrrs_op,mhartid_idx>                     21          1          -    Covered              
+            bin <csrrw_op,mhartid_idx>                     22          1          -    Covered              
+            bin <csrrci_op,mcycle_idx>                     29          1          -    Covered              
+            bin <csrrsi_op,mcycle_idx>                     27          1          -    Covered              
+            bin <csrrwi_op,mcycle_idx>                     25          1          -    Covered              
+            bin <csrrc_op,mcycle_idx>                      16          1          -    Covered              
+            bin <csrrs_op,mcycle_idx>                      19          1          -    Covered              
+            bin <csrrw_op,mcycle_idx>                      20          1          -    Covered              
+            bin <csrrci_op,mbadaddr_idx>                   30          1          -    Covered              
+            bin <csrrsi_op,mbadaddr_idx>                   29          1          -    Covered              
+            bin <csrrwi_op,mbadaddr_idx>                   33          1          -    Covered              
+            bin <csrrc_op,mbadaddr_idx>                    25          1          -    Covered              
+            bin <csrrs_op,mbadaddr_idx>                    16          1          -    Covered              
+            bin <csrrw_op,mbadaddr_idx>                    25          1          -    Covered              
+            bin <csrrci_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrsi_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrwi_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrc_op,mcause_idx>                      27          1          -    Covered              
+            bin <csrrs_op,mcause_idx>                      21          1          -    Covered              
+            bin <csrrw_op,mcause_idx>                      24          1          -    Covered              
+            bin <csrrci_op,mepc_idx>                       17          1          -    Covered              
+            bin <csrrsi_op,mepc_idx>                       27          1          -    Covered              
+            bin <csrrwi_op,mepc_idx>                       14          1          -    Covered              
+            bin <csrrc_op,mepc_idx>                        17          1          -    Covered              
+            bin <csrrs_op,mepc_idx>                        25          1          -    Covered              
+            bin <csrrw_op,mepc_idx>                        20          1          -    Covered              
+            bin <csrrci_op,mscratch_idx>                   26          1          -    Covered              
+            bin <csrrsi_op,mscratch_idx>                   25          1          -    Covered              
+            bin <csrrwi_op,mscratch_idx>                   20          1          -    Covered              
+            bin <csrrc_op,mscratch_idx>                    22          1          -    Covered              
+            bin <csrrs_op,mscratch_idx>                    18          1          -    Covered              
+            bin <csrrw_op,mscratch_idx>                    27          1          -    Covered              
+            bin <csrrci_op,mtvec_idx>                      25          1          -    Covered              
+            bin <csrrsi_op,mtvec_idx>                      15          1          -    Covered              
+            bin <csrrwi_op,mtvec_idx>                      20          1          -    Covered              
+            bin <csrrc_op,mtvec_idx>                       27          1          -    Covered              
+            bin <csrrs_op,mtvec_idx>                       11          1          -    Covered              
+            bin <csrrw_op,mtvec_idx>                       19          1          -    Covered              
+            bin <csrrci_op,mie_idx>                        23          1          -    Covered              
+            bin <csrrsi_op,mie_idx>                        20          1          -    Covered              
+            bin <csrrwi_op,mie_idx>                        30          1          -    Covered              
+            bin <csrrc_op,mie_idx>                         22          1          -    Covered              
+            bin <csrrs_op,mie_idx>                         26          1          -    Covered              
+            bin <csrrw_op,mie_idx>                         20          1          -    Covered              
+            bin <csrrci_op,mideleg_idx>                    20          1          -    Covered              
+            bin <csrrsi_op,mideleg_idx>                    19          1          -    Covered              
+            bin <csrrwi_op,mideleg_idx>                    25          1          -    Covered              
+            bin <csrrc_op,mideleg_idx>                     21          1          -    Covered              
+            bin <csrrs_op,mideleg_idx>                     21          1          -    Covered              
+            bin <csrrw_op,mideleg_idx>                     29          1          -    Covered              
+            bin <csrrci_op,medeleg_idx>                    30          1          -    Covered              
+            bin <csrrsi_op,medeleg_idx>                    25          1          -    Covered              
+            bin <csrrwi_op,medeleg_idx>                    19          1          -    Covered              
+            bin <csrrc_op,medeleg_idx>                     20          1          -    Covered              
+            bin <csrrs_op,medeleg_idx>                     26          1          -    Covered              
+            bin <csrrw_op,medeleg_idx>                     23          1          -    Covered              
+            bin <csrrci_op,mstatus_idx>                    24          1          -    Covered              
+            bin <csrrsi_op,mstatus_idx>                    14          1          -    Covered              
+            bin <csrrwi_op,mstatus_idx>                    17          1          -    Covered              
+            bin <csrrc_op,mstatus_idx>                     18          1          -    Covered              
+            bin <csrrs_op,mstatus_idx>                     28          1          -    Covered              
+            bin <csrrw_op,mstatus_idx>                     20          1          -    Covered              
+            bin <csrrci_op,fcsr_idx>                       16          1          -    Covered              
+            bin <csrrsi_op,fcsr_idx>                       19          1          -    Covered              
+            bin <csrrwi_op,fcsr_idx>                       19          1          -    Covered              
+            bin <csrrc_op,fcsr_idx>                        19          1          -    Covered              
+            bin <csrrs_op,fcsr_idx>                        27          1          -    Covered              
+            bin <csrrw_op,fcsr_idx>                        19          1          -    Covered              
+            bin <csrrci_op,frm_idx>                        24          1          -    Covered              
+            bin <csrrsi_op,frm_idx>                        17          1          -    Covered              
+            bin <csrrwi_op,frm_idx>                        26          1          -    Covered              
+            bin <csrrc_op,frm_idx>                         10          1          -    Covered              
+            bin <csrrs_op,frm_idx>                         17          1          -    Covered              
+            bin <csrrw_op,frm_idx>                         26          1          -    Covered              
+            bin <csrrci_op,fflags_idx>                     23          1          -    Covered              
+            bin <csrrsi_op,fflags_idx>                     20          1          -    Covered              
+            bin <csrrwi_op,fflags_idx>                     23          1          -    Covered              
+            bin <csrrc_op,fflags_idx>                      24          1          -    Covered              
+            bin <csrrs_op,fflags_idx>                      20          1          -    Covered              
+            bin <csrrw_op,fflags_idx>                      26          1          -    Covered              
+    Cross Traps_x_mret_cx                             100.00%        100          -    Covered              
+        covered/total bins:                                14         14          -                      
+        missing/total bins:                                 0         14          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <no_trap,mret>                           2166          1          -    Covered              
+            bin <ecall_m,no_mret>                         484          1          -    Covered              
+            bin <ecall_h,no_mret>                         442          1          -    Covered              
+            bin <ecall_u,no_mret>                         478          1          -    Covered              
+            bin <ecall_s,no_mret>                         443          1          -    Covered              
+            bin <store_access_fault,no_mret>              473          1          -    Covered              
+            bin <store_addr_misaligned,no_mret>           453          1          -    Covered              
+            bin <illegal_instruction,no_mret>             459          1          -    Covered              
+            bin <load_addr_misaligned,no_mret>            446          1          -    Covered              
+            bin <instr_addr_misaligned,no_mret>           477          1          -    Covered              
+            bin <load_access_fault,no_mret>               478          1          -    Covered              
+            bin <instr_access_fault,no_mret>              487          1          -    Covered              
+            bin <breakpoint,no_mret>                      502          1          -    Covered              
+            bin <no_trap,no_mret>                        2084          1          -    Covered              
+        Illegal and Ignore Bins:
+            ignore_bin trap_with_mret                       0                     -    ZERO                 
+    Cross Timer_x_Trap_cx                             100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                633          1          -    Covered              
+            bin <low,set>                                4918          1          -    Covered              
+            bin <high,clear>                              449          1          -    Covered              
+            bin <low,clear>                              3872          1          -    Covered              
+    Cross External_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                622          1          -    Covered              
+            bin <low,set>                                4929          1          -    Covered              
+            bin <high,clear>                              468          1          -    Covered              
+            bin <low,clear>                              3853          1          -    Covered              
+    Cross Software_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                639          1          -    Covered              
+            bin <low,set>                                4912          1          -    Covered              
+            bin <high,clear>                              488          1          -    Covered              
+            bin <low,clear>                              3833          1          -    Covered              
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /csr_subscriber_pkg/csr_subscriber/cvr_grp      100.00%        100          -    Covered              
+    covered/total bins:                                   163        163          -                      
+    missing/total bins:                                     0        163          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint rst_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin idle                                          132          1          -    Covered              
+        bin operating                                    9872          1          -    Covered              
+    Coverpoint CsrAccess_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_access                                    8008          1          -    Covered              
+        bin access                                       1864          1          -    Covered              
+    Coverpoint CsrOperation_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin not_under_access                         0                     -    ZERO                 
+        bin csrrw_op                                      320          1          -    Covered              
+        bin csrrs_op                                      296          1          -    Covered              
+        bin csrrc_op                                      296          1          -    Covered              
+        bin csrrwi_op                                     319          1          -    Covered              
+        bin csrrsi_op                                     302          1          -    Covered              
+        bin csrrci_op                                     331          1          -    Covered              
+    Coverpoint CsrIndex_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                14         14          -                      
+        missing/total bins:                                 0         14          -                      
+        % Hit:                                        100.00%        100          -                      
+        ignore_bin read_only                                0                     -    ZERO                 
+        bin fflags_idx                                    136          1          -    Covered              
+        bin frm_idx                                       120          1          -    Covered              
+        bin fcsr_idx                                      119          1          -    Covered              
+        bin mstatus_idx                                   121          1          -    Covered              
+        bin medeleg_idx                                   143          1          -    Covered              
+        bin mideleg_idx                                   135          1          -    Covered              
+        bin mie_idx                                       141          1          -    Covered              
+        bin mtvec_idx                                     117          1          -    Covered              
+        bin mscratch_idx                                  138          1          -    Covered              
+        bin mepc_idx                                      120          1          -    Covered              
+        bin mcause_idx                                    141          1          -    Covered              
+        bin mbadaddr_idx                                  158          1          -    Covered              
+        bin mcycle_idx                                    136          1          -    Covered              
+        bin mhartid_idx                                   139          1          -    Covered              
+    Coverpoint Traps_cg                               100.00%        100          -    Covered              
+        covered/total bins:                                13         13          -                      
+        missing/total bins:                                 0         13          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_trap                                      4250          1          -    Covered              
+        bin instr_addr_misaligned                         477          1          -    Covered              
+        bin instr_access_fault                            487          1          -    Covered              
+        bin illegal_instruction                           459          1          -    Covered              
+        bin breakpoint                                    502          1          -    Covered              
+        bin load_addr_misaligned                          446          1          -    Covered              
+        bin load_access_fault                             478          1          -    Covered              
+        bin store_addr_misaligned                         453          1          -    Covered              
+        bin store_access_fault                            473          1          -    Covered              
+        bin ecall_u                                       478          1          -    Covered              
+        bin ecall_s                                       443          1          -    Covered              
+        bin ecall_h                                       442          1          -    Covered              
+        bin ecall_m                                       484          1          -    Covered              
+    Coverpoint mret_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin no_mret                                      7706          1          -    Covered              
+        bin mret                                         2166          1          -    Covered              
+    Coverpoint TimerInterrupt_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8790          1          -    Covered              
+        bin high                                         1082          1          -    Covered              
+    Coverpoint ExternalInterrupt_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8782          1          -    Covered              
+        bin high                                         1090          1          -    Covered              
+    Coverpoint SoftwareInterrupt_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin low                                          8745          1          -    Covered              
+        bin high                                         1127          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin clear                                        4321          1          -    Covered              
+        bin set                                          5551          1          -    Covered              
+    Coverpoint RoundingMode_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin rne                                          5815          1          -    Covered              
+        bin rtz                                           508          1          -    Covered              
+        bin rdn                                           823          1          -    Covered              
+        bin rup                                           679          1          -    Covered              
+        bin rmm                                           529          1          -    Covered              
+        bin dyn                                           920          1          -    Covered              
+    Cross CsrOp_x_CsrIndex_cx                         100.00%        100          -    Covered              
+        covered/total bins:                                84         84          -                      
+        missing/total bins:                                 0         84          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csrrci_op,mhartid_idx>                    21          1          -    Covered              
+            bin <csrrsi_op,mhartid_idx>                    22          1          -    Covered              
+            bin <csrrwi_op,mhartid_idx>                    25          1          -    Covered              
+            bin <csrrc_op,mhartid_idx>                     28          1          -    Covered              
+            bin <csrrs_op,mhartid_idx>                     21          1          -    Covered              
+            bin <csrrw_op,mhartid_idx>                     22          1          -    Covered              
+            bin <csrrci_op,mcycle_idx>                     29          1          -    Covered              
+            bin <csrrsi_op,mcycle_idx>                     27          1          -    Covered              
+            bin <csrrwi_op,mcycle_idx>                     25          1          -    Covered              
+            bin <csrrc_op,mcycle_idx>                      16          1          -    Covered              
+            bin <csrrs_op,mcycle_idx>                      19          1          -    Covered              
+            bin <csrrw_op,mcycle_idx>                      20          1          -    Covered              
+            bin <csrrci_op,mbadaddr_idx>                   30          1          -    Covered              
+            bin <csrrsi_op,mbadaddr_idx>                   29          1          -    Covered              
+            bin <csrrwi_op,mbadaddr_idx>                   33          1          -    Covered              
+            bin <csrrc_op,mbadaddr_idx>                    25          1          -    Covered              
+            bin <csrrs_op,mbadaddr_idx>                    16          1          -    Covered              
+            bin <csrrw_op,mbadaddr_idx>                    25          1          -    Covered              
+            bin <csrrci_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrsi_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrwi_op,mcause_idx>                     23          1          -    Covered              
+            bin <csrrc_op,mcause_idx>                      27          1          -    Covered              
+            bin <csrrs_op,mcause_idx>                      21          1          -    Covered              
+            bin <csrrw_op,mcause_idx>                      24          1          -    Covered              
+            bin <csrrci_op,mepc_idx>                       17          1          -    Covered              
+            bin <csrrsi_op,mepc_idx>                       27          1          -    Covered              
+            bin <csrrwi_op,mepc_idx>                       14          1          -    Covered              
+            bin <csrrc_op,mepc_idx>                        17          1          -    Covered              
+            bin <csrrs_op,mepc_idx>                        25          1          -    Covered              
+            bin <csrrw_op,mepc_idx>                        20          1          -    Covered              
+            bin <csrrci_op,mscratch_idx>                   26          1          -    Covered              
+            bin <csrrsi_op,mscratch_idx>                   25          1          -    Covered              
+            bin <csrrwi_op,mscratch_idx>                   20          1          -    Covered              
+            bin <csrrc_op,mscratch_idx>                    22          1          -    Covered              
+            bin <csrrs_op,mscratch_idx>                    18          1          -    Covered              
+            bin <csrrw_op,mscratch_idx>                    27          1          -    Covered              
+            bin <csrrci_op,mtvec_idx>                      25          1          -    Covered              
+            bin <csrrsi_op,mtvec_idx>                      15          1          -    Covered              
+            bin <csrrwi_op,mtvec_idx>                      20          1          -    Covered              
+            bin <csrrc_op,mtvec_idx>                       27          1          -    Covered              
+            bin <csrrs_op,mtvec_idx>                       11          1          -    Covered              
+            bin <csrrw_op,mtvec_idx>                       19          1          -    Covered              
+            bin <csrrci_op,mie_idx>                        23          1          -    Covered              
+            bin <csrrsi_op,mie_idx>                        20          1          -    Covered              
+            bin <csrrwi_op,mie_idx>                        30          1          -    Covered              
+            bin <csrrc_op,mie_idx>                         22          1          -    Covered              
+            bin <csrrs_op,mie_idx>                         26          1          -    Covered              
+            bin <csrrw_op,mie_idx>                         20          1          -    Covered              
+            bin <csrrci_op,mideleg_idx>                    20          1          -    Covered              
+            bin <csrrsi_op,mideleg_idx>                    19          1          -    Covered              
+            bin <csrrwi_op,mideleg_idx>                    25          1          -    Covered              
+            bin <csrrc_op,mideleg_idx>                     21          1          -    Covered              
+            bin <csrrs_op,mideleg_idx>                     21          1          -    Covered              
+            bin <csrrw_op,mideleg_idx>                     29          1          -    Covered              
+            bin <csrrci_op,medeleg_idx>                    30          1          -    Covered              
+            bin <csrrsi_op,medeleg_idx>                    25          1          -    Covered              
+            bin <csrrwi_op,medeleg_idx>                    19          1          -    Covered              
+            bin <csrrc_op,medeleg_idx>                     20          1          -    Covered              
+            bin <csrrs_op,medeleg_idx>                     26          1          -    Covered              
+            bin <csrrw_op,medeleg_idx>                     23          1          -    Covered              
+            bin <csrrci_op,mstatus_idx>                    24          1          -    Covered              
+            bin <csrrsi_op,mstatus_idx>                    14          1          -    Covered              
+            bin <csrrwi_op,mstatus_idx>                    17          1          -    Covered              
+            bin <csrrc_op,mstatus_idx>                     18          1          -    Covered              
+            bin <csrrs_op,mstatus_idx>                     28          1          -    Covered              
+            bin <csrrw_op,mstatus_idx>                     20          1          -    Covered              
+            bin <csrrci_op,fcsr_idx>                       16          1          -    Covered              
+            bin <csrrsi_op,fcsr_idx>                       19          1          -    Covered              
+            bin <csrrwi_op,fcsr_idx>                       19          1          -    Covered              
+            bin <csrrc_op,fcsr_idx>                        19          1          -    Covered              
+            bin <csrrs_op,fcsr_idx>                        27          1          -    Covered              
+            bin <csrrw_op,fcsr_idx>                        19          1          -    Covered              
+            bin <csrrci_op,frm_idx>                        24          1          -    Covered              
+            bin <csrrsi_op,frm_idx>                        17          1          -    Covered              
+            bin <csrrwi_op,frm_idx>                        26          1          -    Covered              
+            bin <csrrc_op,frm_idx>                         10          1          -    Covered              
+            bin <csrrs_op,frm_idx>                         17          1          -    Covered              
+            bin <csrrw_op,frm_idx>                         26          1          -    Covered              
+            bin <csrrci_op,fflags_idx>                     23          1          -    Covered              
+            bin <csrrsi_op,fflags_idx>                     20          1          -    Covered              
+            bin <csrrwi_op,fflags_idx>                     23          1          -    Covered              
+            bin <csrrc_op,fflags_idx>                      24          1          -    Covered              
+            bin <csrrs_op,fflags_idx>                      20          1          -    Covered              
+            bin <csrrw_op,fflags_idx>                      26          1          -    Covered              
+    Cross Traps_x_mret_cx                             100.00%        100          -    Covered              
+        covered/total bins:                                14         14          -                      
+        missing/total bins:                                 0         14          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <no_trap,mret>                           2166          1          -    Covered              
+            bin <ecall_m,no_mret>                         484          1          -    Covered              
+            bin <ecall_h,no_mret>                         442          1          -    Covered              
+            bin <ecall_u,no_mret>                         478          1          -    Covered              
+            bin <ecall_s,no_mret>                         443          1          -    Covered              
+            bin <store_access_fault,no_mret>              473          1          -    Covered              
+            bin <store_addr_misaligned,no_mret>           453          1          -    Covered              
+            bin <illegal_instruction,no_mret>             459          1          -    Covered              
+            bin <load_addr_misaligned,no_mret>            446          1          -    Covered              
+            bin <instr_addr_misaligned,no_mret>           477          1          -    Covered              
+            bin <load_access_fault,no_mret>               478          1          -    Covered              
+            bin <instr_access_fault,no_mret>              487          1          -    Covered              
+            bin <breakpoint,no_mret>                      502          1          -    Covered              
+            bin <no_trap,no_mret>                        2084          1          -    Covered              
+        Illegal and Ignore Bins:
+            ignore_bin trap_with_mret                       0                     -    ZERO                 
+    Cross Timer_x_Trap_cx                             100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                633          1          -    Covered              
+            bin <low,set>                                4918          1          -    Covered              
+            bin <high,clear>                              449          1          -    Covered              
+            bin <low,clear>                              3872          1          -    Covered              
+    Cross External_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                622          1          -    Covered              
+            bin <low,set>                                4929          1          -    Covered              
+            bin <high,clear>                              468          1          -    Covered              
+            bin <low,clear>                              3853          1          -    Covered              
+    Cross Software_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <high,set>                                639          1          -    Covered              
+            bin <low,set>                                4912          1          -    Covered              
+            bin <high,clear>                              488          1          -    Covered              
+            bin <low,clear>                              3833          1          -    Covered              
+
+TOTAL COVERGROUP COVERAGE: 100.00%  COVERGROUP TYPES: 1
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/csr_seq_pkg/csr_seq/body/main_sequence/immed__24
+                     ../../Verification/CSR/csr_seq_pkg.sv(24)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 100.00%
+

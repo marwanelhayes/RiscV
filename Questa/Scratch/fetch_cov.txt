@@ -1,0 +1,417 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /fetch_top/DUT/axi_protocol_assertions
+=== Design Unit: work.AXI_Assertions
+=================================================================================
+
+Assertion Coverage:
+    Assertions                      18         8        10    44.44%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/fetch_top/DUT/axi_protocol_assertions/a_aw_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(150)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_w_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(154)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_b_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(158)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(162)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_r_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(166)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_aw_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(172)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_w_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(178)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_b_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(184)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(190)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_r_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(196)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_ready_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(202)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_aw_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(215)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(235)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_b_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(248)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_r_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(254)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#315/immed__316
+                     ../../Verification/Protocol/AXI_Assertions.sv(316)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__327
+                     ../../Verification/Protocol/AXI_Assertions.sv(327)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__325
+                     ../../Verification/Protocol/AXI_Assertions.sv(325)
+                                                        0          1
+
+Directive Coverage:
+    Directives                      15         5        10    33.33%
+
+DIRECTIVE COVERAGE:
+--------------------------------------------------------------------------------------------
+Name                                     Design Design   Lang File(Line)      Hits Status    
+                                         Unit   UnitType                                     
+--------------------------------------------------------------------------------------------
+/fetch_top/DUT/axi_protocol_assertions/a_aw_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(152)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_w_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(156)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_b_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(160)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(164)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_r_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(168)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_aw_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(175)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_w_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(181)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_b_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(187)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(193)
+                                                                              1382 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_r_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(199)
+                                                                              5238 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_ready_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(205)
+                                                                              9774 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_aw_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(225)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(245)
+                                                                              1382 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_b_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(251)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_r_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(257)
+                                                                              5238 Covered   
+
+=================================================================================
+=== Instance: /fetch_seq_pkg
+=== Design Unit: work.fetch_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       1         1         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/fetch_seq_pkg/fetch_seq/body/main_sequence/immed__32
+                     ../../Verification/Fetch/fetch_seq_pkg.sv(32)
+                                                        0          1
+
+=================================================================================
+=== Instance: /fetch_subscriber_pkg
+=== Design Unit: work.fetch_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na    65.00%
+        Coverpoints/Crosses         10        na        na        na
+            Covergroup Bins         25        15        10    60.00%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /fetch_subscriber_pkg/fetch_subscriber/cvr_grp 
+                                                       65.00%        100          -    Uncovered            
+    covered/total bins:                                    15         25          -                      
+    missing/total bins:                                    10         25          -                      
+    % Hit:                                             60.00%        100          -                      
+    Coverpoint rst_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin active                                        231          1          -    Covered              
+        bin idle                                         9773          1          -    Covered              
+    Coverpoint StallD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           1363          1          -    Covered              
+        bin hi                                           8410          1          -    Covered              
+    Coverpoint FlushD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           9637          1          -    Covered              
+        bin hi                                            136          1          -    Covered              
+    Coverpoint StallBit_cg                              0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          2          -                      
+        missing/total bins:                                 2          2          -                      
+        % Hit:                                          0.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint FlushBit_cg                              0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          2          -                      
+        missing/total bins:                                 2          2          -                      
+        % Hit:                                          0.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint CacheHitF_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin miss                                         7046          1          -    Covered              
+        bin hit                                          2727          1          -    Covered              
+    Coverpoint PCF_align_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin aligned                                      9773          1          -    Covered              
+    Cross Stall_x_Flush_cx                             75.00%        100          -    Uncovered            
+        covered/total bins:                                 3          4          -                      
+        missing/total bins:                                 1          4          -                      
+        % Hit:                                         75.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <lo,hi>                                   136          1          -    Covered              
+            bin <hi,lo>                                  8410          1          -    Covered              
+            bin <lo,lo>                                  1227          1          -    Covered              
+            bin <hi,hi>                                     0          1          1    ZERO                 
+    Cross CacheHit_x_Flush_cx                          75.00%        100          -    Uncovered            
+        covered/total bins:                                 3          4          -                      
+        missing/total bins:                                 1          4          -                      
+        % Hit:                                         75.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hit,hi>                                  136          1          -    Covered              
+            bin <hit,lo>                                 2591          1          -    Covered              
+            bin <miss,lo>                                7046          1          -    Covered              
+            bin <miss,hi>                                   0          1          1    ZERO                 
+    Cross StallBit_x_FlushBit_cx                        0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          4          -                      
+        missing/total bins:                                 4          4          -                      
+        % Hit:                                          0.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <*,*>                                       0          1          4    ZERO                 
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /fetch_subscriber_pkg/fetch_subscriber/cvr_grp 
+                                                       65.00%        100          -    Uncovered            
+    covered/total bins:                                    15         25          -                      
+    missing/total bins:                                    10         25          -                      
+    % Hit:                                             60.00%        100          -                      
+    Coverpoint rst_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin active                                        231          1          -    Covered              
+        bin idle                                         9773          1          -    Covered              
+    Coverpoint StallD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           1363          1          -    Covered              
+        bin hi                                           8410          1          -    Covered              
+    Coverpoint FlushD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           9637          1          -    Covered              
+        bin hi                                            136          1          -    Covered              
+    Coverpoint StallBit_cg                              0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          2          -                      
+        missing/total bins:                                 2          2          -                      
+        % Hit:                                          0.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint FlushBit_cg                              0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          2          -                      
+        missing/total bins:                                 2          2          -                      
+        % Hit:                                          0.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint CacheHitF_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin miss                                         7046          1          -    Covered              
+        bin hit                                          2727          1          -    Covered              
+    Coverpoint PCF_align_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin aligned                                      9773          1          -    Covered              
+    Cross Stall_x_Flush_cx                             75.00%        100          -    Uncovered            
+        covered/total bins:                                 3          4          -                      
+        missing/total bins:                                 1          4          -                      
+        % Hit:                                         75.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <lo,hi>                                   136          1          -    Covered              
+            bin <hi,lo>                                  8410          1          -    Covered              
+            bin <lo,lo>                                  1227          1          -    Covered              
+            bin <hi,hi>                                     0          1          1    ZERO                 
+    Cross CacheHit_x_Flush_cx                          75.00%        100          -    Uncovered            
+        covered/total bins:                                 3          4          -                      
+        missing/total bins:                                 1          4          -                      
+        % Hit:                                         75.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hit,hi>                                  136          1          -    Covered              
+            bin <hit,lo>                                 2591          1          -    Covered              
+            bin <miss,lo>                                7046          1          -    Covered              
+            bin <miss,hi>                                   0          1          1    ZERO                 
+    Cross StallBit_x_FlushBit_cx                        0.00%        100          -    ZERO                 
+        covered/total bins:                                 0          4          -                      
+        missing/total bins:                                 4          4          -                      
+        % Hit:                                          0.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <*,*>                                       0          1          4    ZERO                 
+
+TOTAL COVERGROUP COVERAGE: 65.00%  COVERGROUP TYPES: 1
+
+DIRECTIVE COVERAGE:
+--------------------------------------------------------------------------------------------
+Name                                     Design Design   Lang File(Line)      Hits Status    
+                                         Unit   UnitType                                     
+--------------------------------------------------------------------------------------------
+/fetch_top/DUT/axi_protocol_assertions/a_aw_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(152)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_w_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(156)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_b_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(160)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(164)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_r_payload_stable_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(168)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_aw_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(175)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_w_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(181)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_b_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(187)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(193)
+                                                                              1382 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_r_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(199)
+                                                                              5238 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_ready_known_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(205)
+                                                                              9774 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_aw_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(225)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_ar_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(245)
+                                                                              1382 Covered   
+/fetch_top/DUT/axi_protocol_assertions/a_b_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(251)
+                                                                                 0 ZERO      
+/fetch_top/DUT/axi_protocol_assertions/a_r_resp_legal_cover 
+                                         AXI_Assertions Verilog  SVA  ../../Verification/Protocol/AXI_Assertions.sv(257)
+                                                                              5238 Covered   
+
+TOTAL DIRECTIVE COVERAGE: 33.33%  COVERS: 15
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/fetch_top/DUT/axi_protocol_assertions/a_aw_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(150)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_w_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(154)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_b_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(158)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(162)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_r_payload_stable
+                     ../../Verification/Protocol/AXI_Assertions.sv(166)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_aw_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(172)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_w_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(178)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_b_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(184)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(190)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_r_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(196)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_ready_known
+                     ../../Verification/Protocol/AXI_Assertions.sv(202)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_aw_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(215)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_ar_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(235)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/a_b_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(248)
+                                                        0          0
+/fetch_top/DUT/axi_protocol_assertions/a_r_resp_legal
+                     ../../Verification/Protocol/AXI_Assertions.sv(254)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#315/immed__316
+                     ../../Verification/Protocol/AXI_Assertions.sv(316)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__327
+                     ../../Verification/Protocol/AXI_Assertions.sv(327)
+                                                        0          1
+/fetch_top/DUT/axi_protocol_assertions/#ublk#6917283#324/immed__325
+                     ../../Verification/Protocol/AXI_Assertions.sv(325)
+                                                        0          1
+/fetch_seq_pkg/fetch_seq/body/main_sequence/immed__32
+                     ../../Verification/Fetch/fetch_seq_pkg.sv(32)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 48.56%
+

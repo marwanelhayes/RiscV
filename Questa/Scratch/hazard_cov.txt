@@ -1,0 +1,414 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /hazard_seq_pkg
+=== Design Unit: work.hazard_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       2         2         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/hazard_seq_pkg/hazard_seq/body/main_sequence/immed__27
+                     ../../Verification/Hazard/hazard_seq_pkg.sv(27)
+                                                        0          1
+/hazard_seq_pkg/hazard_directed_seq/body/directed_sequence/immed__56
+                     ../../Verification/Hazard/hazard_seq_pkg.sv(56)
+                                                        0          1
+
+=================================================================================
+=== Instance: /hazard_subscriber_pkg
+=== Design Unit: work.hazard_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na   100.00%
+        Coverpoints/Crosses         23        na        na        na
+            Covergroup Bins         76        76         0   100.00%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /hazard_subscriber_pkg/hazard_subscriber/cvr_grp 
+                                                      100.00%        100          -    Covered              
+    covered/total bins:                                    76         76          -                      
+    missing/total bins:                                     0         76          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint ForwardAE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23563          1          -    Covered              
+        bin wb                                           2339          1          -    Covered              
+        bin mem                                          1912          1          -    Covered              
+        bin wb_fpu                                       1209          1          -    Covered              
+        bin mem_fpu                                       982          1          -    Covered              
+    Coverpoint ForwardBE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23443          1          -    Covered              
+        bin wb                                           2404          1          -    Covered              
+        bin mem                                          1971          1          -    Covered              
+        bin wb_fpu                                       1197          1          -    Covered              
+        bin mem_fpu                                       990          1          -    Covered              
+    Coverpoint ForwardFloatingAE_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23581          1          -    Covered              
+        bin wb                                           3493          1          -    Covered              
+        bin mem                                          2931          1          -    Covered              
+    Coverpoint ForwardFloatingBE_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23575          1          -    Covered              
+        bin wb                                           3494          1          -    Covered              
+        bin mem                                          2936          1          -    Covered              
+    Coverpoint StallD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           5486          1          -    Covered              
+        bin hi                                          24519          1          -    Covered              
+    Coverpoint StallF_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           5486          1          -    Covered              
+        bin hi                                          24519          1          -    Covered              
+    Coverpoint FlushE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           7331          1          -    Covered              
+        bin hi                                          22674          1          -    Covered              
+    Coverpoint FlushD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           7456          1          -    Covered              
+        bin hi                                          22549          1          -    Covered              
+    Coverpoint RegWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14950          1          -    Covered              
+        bin hi                                          15055          1          -    Covered              
+    Coverpoint RegWriteW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14953          1          -    Covered              
+        bin hi                                          15052          1          -    Covered              
+    Coverpoint FPURegWriteM_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15022          1          -    Covered              
+        bin hi                                          14983          1          -    Covered              
+    Coverpoint FPURegWriteW_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14867          1          -    Covered              
+        bin hi                                          15138          1          -    Covered              
+    Coverpoint PCSrcE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15033          1          -    Covered              
+        bin hi                                          14972          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14990          1          -    Covered              
+        bin hi                                          15015          1          -    Covered              
+    Coverpoint FPUValidE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15069          1          -    Covered              
+        bin hi                                          14936          1          -    Covered              
+    Coverpoint FPUBusyM_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15028          1          -    Covered              
+        bin hi                                          14977          1          -    Covered              
+    Coverpoint ICacheHit_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15068          1          -    Covered              
+        bin hi                                          14937          1          -    Covered              
+    Coverpoint DCacheHit_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15075          1          -    Covered              
+        bin hi                                          14930          1          -    Covered              
+    Coverpoint SelectorE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                          7561          1          -    Covered              
+        bin mem                                          7572          1          -    Covered              
+        bin pc                                           7462          1          -    Covered              
+        bin csr                                          7410          1          -    Covered              
+    Coverpoint MoveOperationE_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                  10132          1          -    Covered              
+        bin reg_to_fpu                                   9929          1          -    Covered              
+        bin fpu_to_fpu                                   9944          1          -    Covered              
+    Cross RegWriteM_x_RegWriteW_cx                    100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  7548          1          -    Covered              
+            bin <lo,hi>                                  7504          1          -    Covered              
+            bin <hi,lo>                                  7507          1          -    Covered              
+            bin <lo,lo>                                  7446          1          -    Covered              
+    Cross FPUBusy_x_DCacheHit_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  7433          1          -    Covered              
+            bin <lo,hi>                                  7497          1          -    Covered              
+            bin <hi,lo>                                  7544          1          -    Covered              
+            bin <lo,lo>                                  7531          1          -    Covered              
+    Cross ForwardA_x_ForwardB_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                17         17          -                      
+        missing/total bins:                                 0         17          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <mem_fpu,mem_fpu>                         330          1          -    Covered              
+            bin <wb_fpu,mem_fpu>                          138          1          -    Covered              
+            bin <none,mem_fpu>                            522          1          -    Covered              
+            bin <mem_fpu,wb_fpu>                          133          1          -    Covered              
+            bin <wb_fpu,wb_fpu>                           393          1          -    Covered              
+            bin <none,wb_fpu>                             671          1          -    Covered              
+            bin <mem,mem>                                 610          1          -    Covered              
+            bin <wb,mem>                                  230          1          -    Covered              
+            bin <none,mem>                               1131          1          -    Covered              
+            bin <mem,wb>                                  241          1          -    Covered              
+            bin <wb,wb>                                   753          1          -    Covered              
+            bin <none,wb>                                1410          1          -    Covered              
+            bin <mem_fpu,none>                            519          1          -    Covered              
+            bin <wb_fpu,none>                             678          1          -    Covered              
+            bin <wb,none>                                1356          1          -    Covered              
+            bin <mem,none>                               1061          1          -    Covered              
+            bin <none,none>                             19829          1          -    Covered              
+        Illegal and Ignore Bins:
+            ignore_bin fpu_a_int_b                          0                     -    ZERO                 
+            ignore_bin int_a_fpu_b                          0                     -    ZERO                 
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /hazard_subscriber_pkg/hazard_subscriber/cvr_grp 
+                                                      100.00%        100          -    Covered              
+    covered/total bins:                                    76         76          -                      
+    missing/total bins:                                     0         76          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint ForwardAE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23563          1          -    Covered              
+        bin wb                                           2339          1          -    Covered              
+        bin mem                                          1912          1          -    Covered              
+        bin wb_fpu                                       1209          1          -    Covered              
+        bin mem_fpu                                       982          1          -    Covered              
+    Coverpoint ForwardBE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23443          1          -    Covered              
+        bin wb                                           2404          1          -    Covered              
+        bin mem                                          1971          1          -    Covered              
+        bin wb_fpu                                       1197          1          -    Covered              
+        bin mem_fpu                                       990          1          -    Covered              
+    Coverpoint ForwardFloatingAE_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23581          1          -    Covered              
+        bin wb                                           3493          1          -    Covered              
+        bin mem                                          2931          1          -    Covered              
+    Coverpoint ForwardFloatingBE_cg                   100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin none                                        23575          1          -    Covered              
+        bin wb                                           3494          1          -    Covered              
+        bin mem                                          2936          1          -    Covered              
+    Coverpoint StallD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           5486          1          -    Covered              
+        bin hi                                          24519          1          -    Covered              
+    Coverpoint StallF_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           5486          1          -    Covered              
+        bin hi                                          24519          1          -    Covered              
+    Coverpoint FlushE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           7331          1          -    Covered              
+        bin hi                                          22674          1          -    Covered              
+    Coverpoint FlushD_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           7456          1          -    Covered              
+        bin hi                                          22549          1          -    Covered              
+    Coverpoint RegWriteM_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14950          1          -    Covered              
+        bin hi                                          15055          1          -    Covered              
+    Coverpoint RegWriteW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14953          1          -    Covered              
+        bin hi                                          15052          1          -    Covered              
+    Coverpoint FPURegWriteM_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15022          1          -    Covered              
+        bin hi                                          14983          1          -    Covered              
+    Coverpoint FPURegWriteW_cg                        100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14867          1          -    Covered              
+        bin hi                                          15138          1          -    Covered              
+    Coverpoint PCSrcE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15033          1          -    Covered              
+        bin hi                                          14972          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          14990          1          -    Covered              
+        bin hi                                          15015          1          -    Covered              
+    Coverpoint FPUValidE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15069          1          -    Covered              
+        bin hi                                          14936          1          -    Covered              
+    Coverpoint FPUBusyM_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15028          1          -    Covered              
+        bin hi                                          14977          1          -    Covered              
+    Coverpoint ICacheHit_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15068          1          -    Covered              
+        bin hi                                          14937          1          -    Covered              
+    Coverpoint DCacheHit_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                          15075          1          -    Covered              
+        bin hi                                          14930          1          -    Covered              
+    Coverpoint SelectorE_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                          7561          1          -    Covered              
+        bin mem                                          7572          1          -    Covered              
+        bin pc                                           7462          1          -    Covered              
+        bin csr                                          7410          1          -    Covered              
+    Coverpoint MoveOperationE_cg                      100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                  10132          1          -    Covered              
+        bin reg_to_fpu                                   9929          1          -    Covered              
+        bin fpu_to_fpu                                   9944          1          -    Covered              
+    Cross RegWriteM_x_RegWriteW_cx                    100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  7548          1          -    Covered              
+            bin <lo,hi>                                  7504          1          -    Covered              
+            bin <hi,lo>                                  7507          1          -    Covered              
+            bin <lo,lo>                                  7446          1          -    Covered              
+    Cross FPUBusy_x_DCacheHit_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  7433          1          -    Covered              
+            bin <lo,hi>                                  7497          1          -    Covered              
+            bin <hi,lo>                                  7544          1          -    Covered              
+            bin <lo,lo>                                  7531          1          -    Covered              
+    Cross ForwardA_x_ForwardB_cx                      100.00%        100          -    Covered              
+        covered/total bins:                                17         17          -                      
+        missing/total bins:                                 0         17          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <mem_fpu,mem_fpu>                         330          1          -    Covered              
+            bin <wb_fpu,mem_fpu>                          138          1          -    Covered              
+            bin <none,mem_fpu>                            522          1          -    Covered              
+            bin <mem_fpu,wb_fpu>                          133          1          -    Covered              
+            bin <wb_fpu,wb_fpu>                           393          1          -    Covered              
+            bin <none,wb_fpu>                             671          1          -    Covered              
+            bin <mem,mem>                                 610          1          -    Covered              
+            bin <wb,mem>                                  230          1          -    Covered              
+            bin <none,mem>                               1131          1          -    Covered              
+            bin <mem,wb>                                  241          1          -    Covered              
+            bin <wb,wb>                                   753          1          -    Covered              
+            bin <none,wb>                                1410          1          -    Covered              
+            bin <mem_fpu,none>                            519          1          -    Covered              
+            bin <wb_fpu,none>                             678          1          -    Covered              
+            bin <wb,none>                                1356          1          -    Covered              
+            bin <mem,none>                               1061          1          -    Covered              
+            bin <none,none>                             19829          1          -    Covered              
+        Illegal and Ignore Bins:
+            ignore_bin fpu_a_int_b                          0                     -    ZERO                 
+            ignore_bin int_a_fpu_b                          0                     -    ZERO                 
+
+TOTAL COVERGROUP COVERAGE: 100.00%  COVERGROUP TYPES: 1
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/hazard_seq_pkg/hazard_seq/body/main_sequence/immed__27
+                     ../../Verification/Hazard/hazard_seq_pkg.sv(27)
+                                                        0          1
+/hazard_seq_pkg/hazard_directed_seq/body/directed_sequence/immed__56
+                     ../../Verification/Hazard/hazard_seq_pkg.sv(56)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 100.00%
+

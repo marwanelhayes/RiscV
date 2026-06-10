@@ -163,7 +163,11 @@ module csr_file
         TrapIsSet <= 1'b0;
     endfunction:HandleReturn
 
-    function void UpdateCsr(input logic [DATA_WIDTH-1:0] X, input logic [ADDR_WIDTH-1:0] Index);
+    // Index must hold the full 12-bit CSR address (csr_index_t). Using
+    // ADDR_WIDTH (the 10-bit data-address width) here truncated high CSR
+    // addresses (mhartid/mcycle/...), so writes landed in the wrong slot
+    // while the read side used the full CsrIndex - register never updated.
+    function void UpdateCsr(input logic [DATA_WIDTH-1:0] X, input csr_index_t Index);
         if(Index == mstatus)
             CsrFile[Index] <= X & `mstatus_mask;
         else if(Index == mtvec)

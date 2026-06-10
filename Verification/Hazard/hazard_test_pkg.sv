@@ -18,6 +18,7 @@ package hazard_test_pkg;
 
         hazard_env env;
         hazard_seq main_sequence;
+        hazard_directed_seq directed_sequence;
         hazard_config configuration;
 
         function void set_config_params();
@@ -33,6 +34,7 @@ package hazard_test_pkg;
             uvm_config_db #(hazard_config)::set(this,"env","CONFG",configuration);
             env = hazard_env::type_id::create("env",this);
             main_sequence = hazard_seq::type_id::create("main_sequence",this);
+            directed_sequence = hazard_directed_seq::type_id::create("directed_sequence",this);
         endfunction:build_phase
 
         virtual function void end_of_elaboration_phase (uvm_phase phase);
@@ -43,6 +45,7 @@ package hazard_test_pkg;
         virtual task run_phase (uvm_phase phase);
             phase.raise_objection(this);
                 main_sequence.start(env.agent.seq);
+                directed_sequence.start(env.agent.seq);
             phase.drop_objection(this);
         endtask:run_phase
 

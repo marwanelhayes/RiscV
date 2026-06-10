@@ -1,0 +1,186 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /writeback_seq_pkg
+=== Design Unit: work.writeback_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       1         1         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/writeback_seq_pkg/writeback_seq/body/main_sequence/immed__27
+                     ../../Verification/WriteBack/writeback_seq_pkg.sv(27)
+                                                        0          1
+
+=================================================================================
+=== Instance: /writeback_subscriber_pkg
+=== Design Unit: work.writeback_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na   100.00%
+        Coverpoints/Crosses          9        na        na        na
+            Covergroup Bins         25        25         0   100.00%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /writeback_subscriber_pkg/writeback_subscriber/cvr_grp 
+                                                      100.00%        100          -    Covered              
+    covered/total bins:                                    25         25          -                      
+    missing/total bins:                                     0         25          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint SelectorW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                          2368          1          -    Covered              
+        bin mem                                          2487          1          -    Covered              
+        bin pc                                           2480          1          -    Covered              
+        bin csr                                          2426          1          -    Covered              
+    Coverpoint PCSrcE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4870          1          -    Covered              
+        bin hi                                           4891          1          -    Covered              
+    Coverpoint StallF_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4866          1          -    Covered              
+        bin hi                                           4895          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4844          1          -    Covered              
+        bin hi                                           4917          1          -    Covered              
+    Coverpoint ALUOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4883          1          -    Covered              
+    Coverpoint ReadDataW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4841          1          -    Covered              
+    Coverpoint CsrOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4951          1          -    Covered              
+    Cross Selector_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 8          8          -                      
+        missing/total bins:                                 0          8          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csr,hi>                                 1213          1          -    Covered              
+            bin <pc,hi>                                  1238          1          -    Covered              
+            bin <mem,hi>                                 1274          1          -    Covered              
+            bin <alu,hi>                                 1192          1          -    Covered              
+            bin <csr,lo>                                 1213          1          -    Covered              
+            bin <pc,lo>                                  1242          1          -    Covered              
+            bin <mem,lo>                                 1213          1          -    Covered              
+            bin <alu,lo>                                 1176          1          -    Covered              
+    Cross PCSrc_x_Stall_cx                            100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  2471          1          -    Covered              
+            bin <lo,hi>                                  2424          1          -    Covered              
+            bin <hi,lo>                                  2420          1          -    Covered              
+            bin <lo,lo>                                  2446          1          -    Covered              
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /writeback_subscriber_pkg/writeback_subscriber/cvr_grp 
+                                                      100.00%        100          -    Covered              
+    covered/total bins:                                    25         25          -                      
+    missing/total bins:                                     0         25          -                      
+    % Hit:                                            100.00%        100          -                      
+    Coverpoint SelectorW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin alu                                          2368          1          -    Covered              
+        bin mem                                          2487          1          -    Covered              
+        bin pc                                           2480          1          -    Covered              
+        bin csr                                          2426          1          -    Covered              
+    Coverpoint PCSrcE_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4870          1          -    Covered              
+        bin hi                                           4891          1          -    Covered              
+    Coverpoint StallF_cg                              100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4866          1          -    Covered              
+        bin hi                                           4895          1          -    Covered              
+    Coverpoint TrapIsSet_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                           4844          1          -    Covered              
+        bin hi                                           4917          1          -    Covered              
+    Coverpoint ALUOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4883          1          -    Covered              
+    Coverpoint ReadDataW_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4841          1          -    Covered              
+    Coverpoint CsrOutW_cg                             100.00%        100          -    Covered              
+        covered/total bins:                                 1          1          -                      
+        missing/total bins:                                 0          1          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin positive                                     4951          1          -    Covered              
+    Cross Selector_x_Trap_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                 8          8          -                      
+        missing/total bins:                                 0          8          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <csr,hi>                                 1213          1          -    Covered              
+            bin <pc,hi>                                  1238          1          -    Covered              
+            bin <mem,hi>                                 1274          1          -    Covered              
+            bin <alu,hi>                                 1192          1          -    Covered              
+            bin <csr,lo>                                 1213          1          -    Covered              
+            bin <pc,lo>                                  1242          1          -    Covered              
+            bin <mem,lo>                                 1213          1          -    Covered              
+            bin <alu,lo>                                 1176          1          -    Covered              
+    Cross PCSrc_x_Stall_cx                            100.00%        100          -    Covered              
+        covered/total bins:                                 4          4          -                      
+        missing/total bins:                                 0          4          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <hi,hi>                                  2471          1          -    Covered              
+            bin <lo,hi>                                  2424          1          -    Covered              
+            bin <hi,lo>                                  2420          1          -    Covered              
+            bin <lo,lo>                                  2446          1          -    Covered              
+
+TOTAL COVERGROUP COVERAGE: 100.00%  COVERGROUP TYPES: 1
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/writeback_seq_pkg/writeback_seq/body/main_sequence/immed__27
+                     ../../Verification/WriteBack/writeback_seq_pkg.sv(27)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 100.00%
+

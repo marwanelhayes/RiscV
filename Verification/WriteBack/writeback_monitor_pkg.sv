@@ -15,7 +15,7 @@ package writeback_monitor_pkg;
         endfunction:new
 
         uvm_analysis_port #(writeback_item) mon_port;
-        writeback_item mon_item;
+        writeback_item mon_item, cloned_item;
         virtual writeback_interface vif;
 
         virtual function void build_phase (uvm_phase phase);
@@ -29,8 +29,10 @@ package writeback_monitor_pkg;
             forever
             begin:monitoring
                 vif.intf2mon(mon_item);
-                `uvm_info("MON",mon_item.convert2str,UVM_DEBUG)
-                mon_port.write(mon_item);
+                if(!$cast(cloned_item, mon_item.clone()))
+                    `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
+                mon_port.write(cloned_item);
+                `uvm_info("MON",cloned_item.convert2str,UVM_HIGH)
             end:monitoring
         
         endtask:run_phase

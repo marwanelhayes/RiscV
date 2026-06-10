@@ -6,10 +6,11 @@
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do Questa/do/compile.do
+quit -sim
+do ../do/compile.do
 
 # Load simulation
-vsim -t 1ps -voptargs=+acc -lib work mem_top
+vsim -voptargs=+acc mem_top +cover +UVM_VERBOSITY=UVM_HIGH +UVM_MAX_QUIT_COUNT=100
 
 # Add signals to wave
 echo "Adding signals to waveform..."
@@ -17,30 +18,49 @@ echo "Adding signals to waveform..."
 # Main clock and reset
 add wave -noupdate -divider {Clock and Reset}
 add wave sim:/mem_top/clk
-add wave sim:/mem_top/rst
+add wave sim:/mem_top/DUT/rst
 
 # DUT input signals
 add wave -noupdate -divider {DUT Inputs}
-add wave sim:/mem_top/uut/ALUOutM
-add wave sim:/mem_top/uut/WriteDataM
-add wave sim:/mem_top/uut/funct3M
-add wave sim:/mem_top/uut/RegWriteM
-add wave sim:/mem_top/uut/SelectorM
-add wave sim:/mem_top/uut/MemWriteM
+add wave sim:/mem_top/DUT/ALUOutM
+add wave sim:/mem_top/DUT/WriteDataM
+add wave sim:/mem_top/DUT/funct3M
+add wave sim:/mem_top/DUT/RegWriteM
+add wave sim:/mem_top/DUT/SelectorM
+add wave sim:/mem_top/DUT/MemWriteM
 
 # DUT output signals
 add wave -noupdate -divider {DUT Outputs}
-add wave sim:/mem_top/uut/ReadDataW
-add wave sim:/mem_top/uut/RdW
-add wave sim:/mem_top/uut/RegWriteW
-add wave sim:/mem_top/uut/SelectorW
-add wave sim:/mem_top/uut/ALUOutW
+add wave sim:/mem_top/DUT/ReadDataW
+add wave sim:/mem_top/DUT/RdW
+add wave sim:/mem_top/DUT/RegWriteW
+add wave sim:/mem_top/DUT/SelectorW
+add wave sim:/mem_top/DUT/ALUOutW
 
-# Memory interface
-add wave -noupdate -divider {Memory Interface}
-add wave sim:/mem_top/uut/ReadDataM
+# Cache response / internal
+add wave -noupdate -divider {Cache}
+add wave sim:/mem_top/DUT/CacheHitM
+add wave sim:/mem_top/DUT/ReadDataM
+add wave sim:/mem_top/DUT/DCache/*
+
+# AXI stream (DUT master <-> data_memory slave)
+add wave -noupdate -divider {AXI}
+add wave sim:/mem_top/axi_intf/*
+
+# Data memory slave
+add wave -noupdate -divider {Data Memory Slave}
+add wave sim:/mem_top/DataMem/*
+
+#Clear simulation transcript for clear message reading
+catch {.main clear}
 
 # Run simulation
+onfinish stop
 run -all
+
+# Save and report functional coverage
+coverage save mem.ucdb
+coverage report -detail -output mem_cov.txt
+coverage report -summary
 
 echo "Simulation complete!"

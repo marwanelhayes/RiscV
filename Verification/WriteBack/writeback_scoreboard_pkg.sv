@@ -1,3 +1,16 @@
+// =============================================================================
+// writeback_scoreboard_pkg.sv
+// -----------------------------------------------------------------------------
+// UVM Cookbook in-order comparator scoreboard for the Write-back stage.
+// Reference model lives in writeback_predictor_pkg.
+//
+//   - Two uvm_tlm_analysis_fifo's absorb arrival-order skew between the
+//     predictor (expected stream) and the monitor (actual stream).
+//   - run_phase get()s one transaction from each FIFO and compares them using
+//     uvm_object::compare(), which dispatches to writeback_item::do_compare.
+//   - reset_phase flushes both FIFOs so transactions captured before a reset
+//     are not paired with post-reset transactions.
+// =============================================================================
 package writeback_scoreboard_pkg;
 
     import uvm_pkg::*;
@@ -7,13 +20,6 @@ package writeback_scoreboard_pkg;
 
     class writeback_scoreboard extends uvm_scoreboard;
 
-
-        logic [FINAL_DATA_WIDTH-1:0] ResultW;
-        logic [FINAL_ADDR_WIDTH-1:0] PCF;
-
-
-        int success,fail;
-
         //Register the class to the factory
         `uvm_component_utils(writeback_scoreboard)
 
@@ -22,79 +28,58 @@ package writeback_scoreboard_pkg;
             super.new(name,parent);
         endfunction:new
 
-        writeback_item sc_item;
-        uvm_analysis_imp #(writeback_item , writeback_scoreboard) sc_port;
+        // In-order comparator FIFOs
+        uvm_tlm_analysis_fifo #(writeback_item) actual_fifo;
+        uvm_tlm_analysis_fifo #(writeback_item) expected_fifo;
+
+        int success;
+        int fail;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            sc_port = new("sc_port",this);
+            actual_fifo   = new("actual_fifo",   this);
+            expected_fifo = new("expected_fifo", this);
         endfunction:build_phase
 
-        function void ref_model ();
-            
-            if(!sc_item.rst)
+        // ── Cookbook in-order comparator ─────────────────────────────────────
+        virtual task run_phase (uvm_phase phase);
+            writeback_item act;
+            writeback_item exp;
+            forever
             begin
-                PCF = 'b0;
+                actual_fifo.get(act);
+                expected_fifo.get(exp);
+                check_one(act, exp);
             end
-            else if(sc_item.TrapIsSet)
-            begin
-                PCF = sc_item.CsrOutPC;
-            end
-            else if(!sc_item.StallF)
-            begin
-                if(sc_item.PCSrcE)
-                begin
-                    PCF = sc_item.PCBranchE;
-                end
-                else
-                begin
-                    PCF = sc_item.PCPlus4F;
-                end
-            end
+        endtask:run_phase
 
-            case (sc_item.SelectorW)
-                ALUToReg: ResultW = sc_item.ALUOutW; // ALU result
-                MemToReg: ResultW = sc_item.ReadDataW; // Memory read data
-                CSRToReg: ResultW = sc_item.CsrOutW; // CSR read data
-                PCToReg : ResultW = sc_item.PCPlus4W; // PC + 4
-            endcase
-        endfunction:ref_model
+        // Flush both FIFOs on reset so stale items do not cross the boundary.
+        virtual task reset_phase (uvm_phase phase);
+            super.reset_phase(phase);
+            actual_fifo.flush();
+            expected_fifo.flush();
+        endtask:reset_phase
 
-        function void check_output ();
-            ref_model();
-            if(sc_item.ResultW != ResultW || sc_item.PCF != PCF)
+        // Compare actual vs expected via compare() on the sequence item.
+        function void check_one (writeback_item act, writeback_item exp);
+            if(!act.compare(exp))
             begin
-                $display("//////////////////////Error occured in the WriteBack scoreboard//////////////////////");
-                `uvm_info("SCB",sc_item.convert2str,UVM_MEDIUM)
-                if(sc_item.ResultW != ResultW)
-                begin
-                    `uvm_info("SCB",$sformatf("Actual output ResultW = %0h -- ResultW = %0h",sc_item.ResultW,ResultW),UVM_MEDIUM)
-                    fail++;
-                end
-                if(sc_item.PCF != PCF)
-                begin
-                    `uvm_info("SCB",$sformatf("Actual output PCF = %0h -- PCF = %0h",sc_item.PCF,PCF),UVM_MEDIUM)
-                    fail++;
-                end
+                `uvm_error("SCB MISMATCH","Actual and expected items do not match in WriteBack stage!")
+                `uvm_info("SCB MISMATCH",{"\n\t\t",exp.convert2str()},UVM_MEDIUM)
+                fail++;
             end
             else
             begin
                 success++;
             end
-        endfunction
-
-        function void write (writeback_item item);
-            sc_item = item;
-            check_output();
-        endfunction
+        endfunction:check_one
 
         virtual function void report_phase (uvm_phase phase);
             super.report_phase(phase);
             `uvm_info("SCB","WRITEBACK Scoreboard report",UVM_MEDIUM)
-            `uvm_info("SCB",$sformatf("Actual Success count = %0d",success),UVM_MEDIUM)
-            `uvm_info("SCB",$sformatf("Actual Fail count = %0d",fail),UVM_MEDIUM)
-        endfunction
-            
+            `uvm_info("SCB",$sformatf("Physical Success count = %0d",success),UVM_MEDIUM)
+            `uvm_info("SCB",$sformatf("Physical Fail count = %0d",fail),UVM_MEDIUM)
+        endfunction:report_phase
 
     endclass:writeback_scoreboard
 

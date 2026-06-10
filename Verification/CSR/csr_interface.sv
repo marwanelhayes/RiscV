@@ -1,3 +1,8 @@
+// =============================================================================
+// csr_interface.sv
+// -----------------------------------------------------------------------------
+// CSR verification interface. mck=driver, pck=monitor, TEST=verif modport.
+// =============================================================================
 import shared_pkg::*;
 import csr_item_pkg::*;
 
@@ -7,129 +12,95 @@ interface csr_interface
 );
     localparam CLK = (CLK_PERIOD/5.0);
 
-    logic rst;
-    csr_t CsrOperation;
-    gpr_t Rs;
-    traps_t Traps;
-    logic mret;
-    logic [FINAL_ADDR_WIDTH-1:0] PC;
-    logic [FINAL_ADDR_WIDTH-1:0] Address;
-    logic CsrAccess;
-    logic [FINAL_DATA_WIDTH-1:0] CsrIn;
-    logic TimerInterrupt;
-    logic ExternalInterrupt;
-    logic SoftwareInterrupt;
-    csr_index_t CsrIndex;
+    logic                         rst;
+    csr_t                         CsrOperation;
+    gpr_t                         Rs;
+    traps_t                       Traps;
+    logic                         mret;
+    logic [FINAL_ADDR_WIDTH-1:0]  PC;
+    logic [FINAL_ADDR_WIDTH-1:0]  Address;
+    logic                         CsrAccess;
+    logic [FINAL_DATA_WIDTH-1:0]  CsrIn;
+    logic                         TimerInterrupt;
+    logic                         ExternalInterrupt;
+    logic                         SoftwareInterrupt;
+    csr_index_t                   CsrIndex;
 
-    logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
-    logic [FINAL_DATA_WIDTH-1:0] CsrOut;
-    logic TrapIsSet;
-    round_mode_t RoundingMode;
+    logic [FINAL_ADDR_WIDTH-1:0]  CsrOutPC;
+    logic [FINAL_DATA_WIDTH-1:0]  CsrOut;
+    logic                         TrapIsSet;
+    round_mode_t                  RoundingMode;
 
-    clocking cb @(posedge clk);
-        default input #0;
+    clocking mck @(posedge clk);
+        default input #1step output #CLK;
+        output rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn;
+        output TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex;
+        input  CsrOutPC, CsrOut, TrapIsSet, RoundingMode;
+    endclocking:mck
 
-        input #CLK rst;
-        input #CLK CsrOperation;
-        input #CLK Rs;
-        input #CLK Traps;
-        input #CLK mret;
-        input #CLK PC;
-        input #CLK Address;
-        input #CLK CsrAccess;
-        input #CLK CsrIn;
-        input #CLK TimerInterrupt;
-        input #CLK ExternalInterrupt;
-        input #CLK SoftwareInterrupt;
-        input #CLK CsrIndex;
-
-        input CsrOutPC;
-        input CsrOut;
-        input TrapIsSet;
-        input #1step RoundingMode;
-    endclocking:cb
+    clocking pck @(posedge clk);
+        default input #1step;
+        input rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn;
+        input TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex;
+        input CsrOutPC, CsrOut, TrapIsSet, RoundingMode;
+    endclocking:pck
 
     task initialize ();
-        rst <= 'b0;
-        CsrOperation <= csrrw;
-        Rs <= gpr_t'(0);
-        Traps <= NoTraps;
-        mret <= 'b0;
-        PC <= 'b0;
-        Address <= 'b0;
-        CsrAccess <= 'b0;
-        CsrIn <= 'b0;
-        TimerInterrupt <= 'b0;
-        ExternalInterrupt <= 'b0;
-        SoftwareInterrupt <= 'b0;
-        CsrIndex <= mstatus;
-        repeat(5)
-        begin
-            @(cb);
-        end
+        rst               <= 1'b0;
+        CsrOperation      <= csrrw;
+        Rs                <= gpr_t'(0);
+        Traps             <= NoTraps;
+        mret              <= 1'b0;
+        PC                <= '0;
+        Address           <= '0;
+        CsrAccess         <= 1'b0;
+        CsrIn             <= '0;
+        TimerInterrupt    <= 1'b0;
+        ExternalInterrupt <= 1'b0;
+        SoftwareInterrupt <= 1'b0;
+        CsrIndex          <= mstatus;
+        repeat(5) @(posedge clk);
+        rst <= 1'b1;
     endtask:initialize
 
     task drv2intf (csr_item drv);
-        @(cb);
-        CsrOperation <= drv.CsrOperation;
-        Rs <= drv.Rs;
-        Traps <= drv.Traps;
-        mret <= drv.mret;
-        PC <= drv.PC;
-        Address <= drv.Address;
-        CsrAccess <= drv.CsrAccess;
-        CsrIn <= drv.CsrIn;
-        TimerInterrupt <= drv.TimerInterrupt;
-        ExternalInterrupt <= drv.ExternalInterrupt;
-        SoftwareInterrupt <= drv.SoftwareInterrupt;
-        CsrIndex <= drv.CsrIndex;
-        #CLK rst <= drv.rst;
+        @(mck);
+        mck.rst               <= drv.rst;
+        mck.CsrOperation      <= drv.CsrOperation;
+        mck.Rs                <= drv.Rs;
+        mck.Traps             <= drv.Traps;
+        mck.mret              <= drv.mret;
+        mck.PC                <= drv.PC;
+        mck.Address           <= drv.Address;
+        mck.CsrAccess         <= drv.CsrAccess;
+        mck.CsrIn             <= drv.CsrIn;
+        mck.TimerInterrupt    <= drv.TimerInterrupt;
+        mck.ExternalInterrupt <= drv.ExternalInterrupt;
+        mck.SoftwareInterrupt <= drv.SoftwareInterrupt;
+        mck.CsrIndex          <= drv.CsrIndex;
     endtask:drv2intf
 
     task intf2mon (csr_item mon);
-        @(cb);
-        mon.rst = cb.rst;
-        mon.CsrOperation = cb.CsrOperation;
-        mon.Rs = cb.Rs;
-        mon.Traps = cb.Traps;
-        mon.mret = cb.mret;
-        mon.PC = cb.PC;
-        mon.Address = cb.Address;
-        mon.CsrAccess = cb.CsrAccess;
-        mon.CsrIn = cb.CsrIn;
-        mon.TimerInterrupt = cb.TimerInterrupt;
-        mon.ExternalInterrupt = cb.ExternalInterrupt;
-        mon.SoftwareInterrupt = cb.SoftwareInterrupt;
-        mon.CsrIndex = cb.CsrIndex;
-
-        mon.CsrOutPC = cb.CsrOutPC;
-        mon.CsrOut = cb.CsrOut;
-        mon.TrapIsSet = cb.TrapIsSet;
-        mon.RoundingMode = cb.RoundingMode;
+        @(pck);
+        mon.rst               = pck.rst;
+        mon.CsrOperation      = pck.CsrOperation;
+        mon.Rs                = pck.Rs;
+        mon.Traps             = pck.Traps;
+        mon.mret              = pck.mret;
+        mon.PC                = pck.PC;
+        mon.Address           = pck.Address;
+        mon.CsrAccess         = pck.CsrAccess;
+        mon.CsrIn             = pck.CsrIn;
+        mon.TimerInterrupt    = pck.TimerInterrupt;
+        mon.ExternalInterrupt = pck.ExternalInterrupt;
+        mon.SoftwareInterrupt = pck.SoftwareInterrupt;
+        mon.CsrIndex          = pck.CsrIndex;
+        mon.CsrOutPC          = pck.CsrOutPC;
+        mon.CsrOut            = pck.CsrOut;
+        mon.TrapIsSet         = pck.TrapIsSet;
+        mon.RoundingMode      = pck.RoundingMode;
     endtask:intf2mon
 
-    modport DUT
-    (
-        input clk,
-        rst,
-        CsrOperation,
-        Rs,
-        Traps,
-        mret,
-        PC,
-        Address,
-        CsrAccess,
-        CsrIn,
-        TimerInterrupt,
-        ExternalInterrupt,
-        SoftwareInterrupt,
-        CsrIndex,
+    modport RISC (clocking pck);
 
-        output CsrOutPC,
-        CsrOut,
-        TrapIsSet,
-        RoundingMode
-    );
-
-    modport TEST (clocking cb);
 endinterface: csr_interface
