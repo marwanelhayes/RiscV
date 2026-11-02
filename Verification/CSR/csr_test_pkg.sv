@@ -41,6 +41,7 @@ package csr_test_pkg;
         virtual task run_phase (uvm_phase phase);
             phase.raise_objection(this);
                 main_sequence.start(env.agent.seq);
+                env.reg_checker.do_final_sweep();
             phase.drop_objection(this);
         endtask:run_phase
 

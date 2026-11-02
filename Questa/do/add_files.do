@@ -45,6 +45,7 @@ echo "Adding memory modules..."
 project addfile ../../Design/risc_instruction_memory.sv
 project addfile ../../Design/risc_data_memory.sv
 project addfile ../../Design/cache.sv
+project addfile ../../Verification/Memory/cache_sva.sv
 
 # CSR
 echo "Adding CSR modules..."
@@ -83,6 +84,8 @@ project addfile ../../Verification/Fetch/fetch_seq_pkg.sv
 project addfile ../../Verification/Fetch/fetch_agent_pkg.sv
 project addfile ../../Verification/Fetch/fetch_scoreboard_pkg.sv
 project addfile ../../Verification/Fetch/fetch_subscriber_pkg.sv
+project addfile ../../Verification/Fetch/fetch_reg_block_pkg.sv
+project addfile ../../Verification/Fetch/fetch_mem_checker_pkg.sv
 project addfile ../../Verification/Fetch/fetch_predictor_pkg.sv
 project addfile ../../Verification/Fetch/fetch_env_pkg.sv
 project addfile ../../Verification/Fetch/fetch_test_pkg.sv
@@ -92,6 +95,7 @@ project addfile ../../Verification/Fetch/fetch_top.sv
 # Verification packages - Decode stage
 echo "Adding Decode verification..."
 project addfile ../../Verification/Decode/decode_item_pkg.sv
+project addfile ../../Verification/Decode/decode_interface.sv
 project addfile ../../Verification/Decode/decode_config_pkg.sv
 project addfile ../../Verification/Decode/decode_driver_pkg.sv
 project addfile ../../Verification/Decode/decode_monitor_pkg.sv
@@ -99,7 +103,14 @@ project addfile ../../Verification/Decode/decode_seq_pkg.sv
 project addfile ../../Verification/Decode/decode_agent_pkg.sv
 project addfile ../../Verification/Decode/decode_scoreboard_pkg.sv
 project addfile ../../Verification/Decode/decode_subscriber_pkg.sv
+project addfile ../../Verification/Decode/decode_gpr_reg_pkg.sv
+project addfile ../../Verification/Decode/decode_fpr_reg_pkg.sv
+project addfile ../../Verification/Decode/decode_reg_block_pkg.sv
+project addfile ../../Verification/Decode/decode_predictor_pkg.sv
+project addfile ../../Verification/Decode/decode_reg_checker_pkg.sv
 project addfile ../../Verification/Decode/decode_env_pkg.sv
+project addfile ../../Verification/Decode/decode_test_pkg.sv
+project addfile ../../Verification/Decode/decode_top.sv
 
 # Verification packages - Execute stage
 echo "Adding Execute verification..."
@@ -127,6 +138,9 @@ project addfile ../../Verification/Memory/mem_seq_pkg.sv
 project addfile ../../Verification/Memory/mem_agent_pkg.sv
 project addfile ../../Verification/Memory/mem_scoreboard_pkg.sv
 project addfile ../../Verification/Memory/mem_subscriber_pkg.sv
+project addfile ../../Verification/Memory/unused/mem_flat_predictor_pkg.sv
+project addfile ../../Verification/Memory/mem_reg_block_pkg.sv
+project addfile ../../Verification/Memory/mem_ral_checker_pkg.sv
 project addfile ../../Verification/Memory/mem_predictor_pkg.sv
 project addfile ../../Verification/Memory/mem_env_pkg.sv
 project addfile ../../Verification/Memory/mem_test_pkg.sv
@@ -159,6 +173,7 @@ project addfile ../../Verification/FPU/flp_seq_pkg.sv
 project addfile ../../Verification/FPU/flp_agent_pkg.sv
 project addfile ../../Verification/FPU/flp_scoreboard_pkg.sv
 project addfile ../../Verification/FPU/flp_subscriber_pkg.sv
+project addfile ../../Verification/FPU/flp_predictor_pkg.sv
 project addfile ../../Verification/FPU/flp_env_pkg.sv
 project addfile ../../Verification/FPU/flp_test_pkg.sv
 project addfile ../../Verification/FPU/flp_interface.sv
@@ -174,6 +189,9 @@ project addfile ../../Verification/CSR/csr_seq_pkg.sv
 project addfile ../../Verification/CSR/csr_agent_pkg.sv
 project addfile ../../Verification/CSR/csr_scoreboard_pkg.sv
 project addfile ../../Verification/CSR/csr_subscriber_pkg.sv
+project addfile ../../Verification/CSR/csr_reg_block_pkg.sv
+project addfile ../../Verification/CSR/csr_predictor_pkg.sv
+project addfile ../../Verification/CSR/csr_reg_checker_pkg.sv
 project addfile ../../Verification/CSR/csr_env_pkg.sv
 project addfile ../../Verification/CSR/csr_test_pkg.sv
 project addfile ../../Verification/CSR/csr_interface.sv
@@ -189,6 +207,7 @@ project addfile ../../Verification/Hazard/hazard_seq_pkg.sv
 project addfile ../../Verification/Hazard/hazard_agent_pkg.sv
 project addfile ../../Verification/Hazard/hazard_scoreboard_pkg.sv
 project addfile ../../Verification/Hazard/hazard_subscriber_pkg.sv
+project addfile ../../Verification/Hazard/hazard_predictor_pkg.sv
 project addfile ../../Verification/Hazard/hazard_env_pkg.sv
 project addfile ../../Verification/Hazard/hazard_test_pkg.sv
 project addfile ../../Verification/Hazard/hazard_interface.sv
@@ -208,6 +227,7 @@ project addfile ../../Verification/Risc/fetch_wr.sv
 project addfile ../../Verification/Risc/flp_wr.sv
 project addfile ../../Verification/Risc/hazard_wr.sv
 project addfile ../../Verification/Risc/memory_wr.sv
+project addfile ../../Verification/Risc/wb_wr.sv
 project addfile ../../Verification/Risc/risc_interface.sv
 project addfile ../../Verification/Risc/risc_test_pkg.sv
 project addfile ../../Verification/Risc/risc_top.sv

@@ -6,9 +6,13 @@ interface memory_wr
 (
     input clk,
     input rst,
+    input ValidM,
+    input MemReadM,
+    input StallW,
+    input logic CacheHitM,
     input signed [FINAL_DATA_WIDTH-1:0] ALUOutM,
     input signed [FINAL_DATA_WIDTH-1:0] WriteDataM,
-    input [FINAL_ADDR_WIDTH-1:0] PCPlus4M,
+    input [FINAL_DATA_WIDTH-1:0] PCPlus4M,
     input gpr_t RdM,
     input logic [2:0] funct3M,
     input RegWriteM,
@@ -26,11 +30,12 @@ interface memory_wr
     input move_operation_t MoveOperationM,
     input FPURegWriteM,
     
+    input logic ValidW,
     input logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW,
     input gpr_t RdW,
     input logic RegWriteW,
     input selector_t SelectorW,
-    input logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W,
+    input logic [FINAL_DATA_WIDTH-1:0] PCPlus4W,
     input logic [FINAL_DATA_WIDTH-1:0] CsrOutW,
     input logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW,
     input fpr_t RdFW,
@@ -51,6 +56,10 @@ interface memory_wr
     always_comb
     begin
         mem_intf.rst = rst;
+        mem_intf.ValidM = ValidM;
+        mem_intf.MemReadM = MemReadM;
+        mem_intf.StallW = StallW;
+        mem_intf.CacheHitM = CacheHitM;
         mem_intf.ALUOutM = ALUOutM;
         mem_intf.WriteDataM = WriteDataM;
         mem_intf.PCPlus4M = PCPlus4M;
@@ -71,6 +80,7 @@ interface memory_wr
         mem_intf.MoveOperationM = MoveOperationM;
         mem_intf.FPURegWriteM = FPURegWriteM;
 
+        mem_intf.ValidW = ValidW;
         mem_intf.ReadDataW = ReadDataW;
         mem_intf.RdW = RdW;
         mem_intf.RegWriteW = RegWriteW;
@@ -92,7 +102,7 @@ interface memory_wr
 
     initial
     begin
-        uvm_config_db #(virtual mem_interface)::set(null,"","INTF",mem_intf.TEST);
+        uvm_config_db #(virtual mem_interface)::set(null,"","INTF",mem_intf.RISC);
     end
 
 

@@ -46,12 +46,12 @@ module cache_sva #(
     input logic                 CPUWriteEn,
     input logic                 CacheHit,
     input logic [WAY-1:0]       hit_array,
-    input logic                 valid_reg [SETS][WAY],
-    input logic [TAG_W-1:0]     tags_reg  [SETS][WAY],
+    input wire logic            valid_reg [SETS][WAY],
+    input wire logic [TAG_W-1:0] tags_reg [SETS][WAY],
     input logic [IDX_W-1:0]     CpuIdx,
     input logic [TAG_W-1:0]     CpuTag,
     input logic [WAY_W-1:0]     victim_way,
-    input logic [WAY_W-1:0]     lru_way [SETS],
+    input wire logic [WAY_W-1:0] lru_way [SETS],
     input axi_state_t           state
 );
 
@@ -84,32 +84,75 @@ module cache_sva #(
     //     cache.sv gates the hit on state==AXI_IDLE (a hit is intentionally
     //     suppressed while the FSM is busy with another line's refill), so the
     //     qualifier is required - without it this fires on every hit-while-busy.
-    property p_present_implies_hit;
+    property p_idle_hit_matches_tags;
         @(posedge clk) disable iff(!rst)
-            ((CPUReadEn || CPUWriteEn) && (|hit_array) && (state == AXI_IDLE)) |-> CacheHit;
+            ((CPUReadEn || CPUWriteEn) && (state == AXI_IDLE)) |->
+                (CacheHit == (|hit_array));
     endproperty
-    a_present_implies_hit: assert property(p_present_implies_hit)
-        else $error("cache_sva: |hit_array but CacheHit deasserted");
+    a_idle_hit_matches_tags: assert property(p_idle_hit_matches_tags)
+        else $error("cache_sva: CacheHit does not match hit_array");
 
     // ── A4: replacement policy (set-associative only) ────────────────────────
     //     The victim must be an invalid way whenever one exists; if every way
-    //     is valid the victim must be the LRU way. This is the assumption the
-    //     flat predictor relies on but never re-implements.
+    //     is valid it must be the true LRU way. The LRU order is rebuilt here
+    //     independently from observable state only: a way is "used" by a hit
+    //     on an idle access, or when its line changes (a refill). Every way is
+    //     refilled before a set is full, so no knowledge of the DUT's reset
+    //     ordering is needed.
     generate
         if(WAY > 1)
         begin : gen_repl_checks
+            int unsigned ref_age   [SETS][WAY];    // 0 = most recently used
+            logic        prev_valid [SETS][WAY];
+            logic [TAG_W-1:0] prev_tag [SETS][WAY];
+
+            function automatic void ref_touch(int s, int w);
+                for(int j = 0; j < WAY; j++)
+                    if((j != w) && (ref_age[s][j] < ref_age[s][w]))
+                        ref_age[s][j]++;
+                ref_age[s][w] = 0;
+            endfunction
+
+            function automatic int ref_lru(int s);
+                ref_lru = 0;
+                for(int j = 1; j < WAY; j++)
+                    if(ref_age[s][j] > ref_age[s][ref_lru]) ref_lru = j;
+            endfunction
+
             always @(posedge clk)
-                if(rst)
+            begin
+                if(!rst)
                 begin
-                    if(any_invalid(CpuIdx))
-                        assert(!valid_reg[CpuIdx][victim_way])
-                            else $error("cache_sva: victim way %0d valid while an invalid way exists (set %0d)",
-                                        victim_way, CpuIdx);
-                    else
-                        assert(victim_way == lru_way[CpuIdx])
-                            else $error("cache_sva: all ways valid but victim %0d != lru_way %0d (set %0d)",
-                                        victim_way, lru_way[CpuIdx], CpuIdx);
+                    foreach(ref_age[s, w]) ref_age[s][w] = w;
+                    foreach(prev_valid[s, w]) begin prev_valid[s][w] = 1'b0; prev_tag[s][w] = '0; end
                 end
+                else
+                begin
+                    // Refills that completed at the previous edge (already applied
+                    // by the DUT), then the miss check, then this edge's hit.
+                    foreach(valid_reg[s, w])
+                        if(valid_reg[s][w] && (!prev_valid[s][w] || (tags_reg[s][w] != prev_tag[s][w])))
+                            ref_touch(s, w);
+
+                    if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !(|hit_array))
+                    begin
+                        if(any_invalid(CpuIdx))
+                            assert(!valid_reg[CpuIdx][victim_way])
+                                else $error("cache_sva: victim way %0d valid while an invalid way exists (set %0d)",
+                                            victim_way, CpuIdx);
+                        else
+                            assert(victim_way == ref_lru(CpuIdx))
+                                else $error("cache_sva: all ways valid but victim %0d != true-LRU way %0d (set %0d)",
+                                            victim_way, ref_lru(CpuIdx), CpuIdx);
+                    end
+
+                    if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && (|hit_array))
+                        for(int w = 0; w < WAY; w++)
+                            if(hit_array[w]) ref_touch(CpuIdx, w);
+
+                    foreach(valid_reg[s, w]) begin prev_valid[s][w] = valid_reg[s][w]; prev_tag[s][w] = tags_reg[s][w]; end
+                end
+            end
         end
     endgenerate
 

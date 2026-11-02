@@ -32,11 +32,11 @@ package risc_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-5);
-        localparam string PROGRAM_INFO_PATH = "C:/Ain_shams/RiscV/Python/program_info.txt";
-        localparam int PROGRAM_EXIT_DRAIN_CYCLES = 4;
+        localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-2);          // 32-bit instruction words
+        localparam string PROGRAM_INFO_PATH = "../../Python/program_info.txt"; // relative to Questa/Scratch
+        localparam int PROGRAM_EXIT_DRAIN_CYCLES = 64;    // covers a D-cache write-back + refill
         localparam int PROGRAM_SAFETY_MARGIN_CYCLES = 64;
-        localparam int PROGRAM_MAX_CYCLE_FACTOR = 8;
+        localparam int PROGRAM_MAX_CYCLE_FACTOR = 16;
 
         //Configuration objects for all pipeline stages
         mem_config MemoryConfiguration;
@@ -138,6 +138,7 @@ package risc_test_pkg;
             load_program_metadata();
             
             uvm_config_db #(mem_config)::set(this,"MemoryEnvironment","CONFG",MemoryConfiguration);
+            uvm_config_db #(string)::set(this,"MemoryEnvironment.predictor","BKDR_PATH","risc_top.DataMem.mem");
             uvm_config_db #(fetch_config)::set(this,"FetchEnvironment","CONFG",FetchConfiguration);
             uvm_config_db #(decode_config)::set(this,"DecodeEnvironment","CONFG",DecodeConfiguration);
             uvm_config_db #(execute_config)::set(this,"ExecuteEnvironment","CONFG",ExecuteConfiguration);
@@ -153,71 +154,70 @@ package risc_test_pkg;
                 
         endfunction:build_phase
 
+        // Stage RAL models default to their stand-alone *_top roots; re-root
+        // their backdoor paths into the full core.
+        virtual function void connect_phase (uvm_phase phase);
+            super.connect_phase(phase);
+            FetchEnvironment.reg_block.set_hdl_path_root("risc_top.InstrMem");
+            DecodeEnvironment.reg_block.set_hdl_path_root("risc_top.DUT.Decode");
+            MemoryEnvironment.reg_block.set_hdl_path_root("risc_top.DataMem");
+        endfunction:connect_phase
+
         virtual function void end_of_elaboration_phase (uvm_phase phase);
             super.end_of_elaboration_phase(phase);
             uvm_top.print_topology();
         endfunction:end_of_elaboration_phase
         
-        virtual task run_phase (uvm_phase phase);
-            int program_end_pc;
-            int cycles_after_program;
-            int elapsed_cycles;
-
-            phase.raise_objection(this);
-            //Initialize the clocking block
-            intf.initialize();
-            program_end_pc = program_words * 4;
-            cycles_after_program = 0;
-            elapsed_cycles = 0;
-            `uvm_info(
-                "TEST",
-                $sformatf(
-                    "Starting the test with program_words = %0d, program_end_pc = %0d and safety_wait_cycles = %0d",
-                    program_words,
-                    program_end_pc,
-                    wait_cycles
-                ),
-                UVM_LOW
-            )
-
+        // Random short pulses on one interrupt line. A pulse is shorter than
+        // the trap handler, so a taken interrupt is not re-taken; one that
+        // arrives while MIE is clear is simply not taken (level-sensitive).
+        task drive_interrupts();
             forever
             begin
-                @(posedge intf.clk);
-                elapsed_cycles++;
-
-                if (FetchConfiguration.vif.PCF >= program_end_pc)
-                    cycles_after_program++;
-                else
-                    cycles_after_program = 0;
-
-                if (cycles_after_program >= PROGRAM_EXIT_DRAIN_CYCLES)
-                begin
-                    `uvm_info(
-                        "TEST",
-                        $sformatf(
-                            "Stopping after PCF left the program image for %0d consecutive cycles at PCF = %0d after %0d cycles",
-                            cycles_after_program,
-                            FetchConfiguration.vif.PCF,
-                            elapsed_cycles
-                        ),
-                        UVM_LOW
-                    )
-                    break;
-                end
-
-                if (elapsed_cycles >= wait_cycles)
-                begin
-                    `uvm_warning(
-                        "TEST",
-                        $sformatf(
-                            "Reached the safety cycle limit (%0d) before PCF exited the program image; stopping at PCF = %0d",
-                            wait_cycles,
-                            FetchConfiguration.vif.PCF
-                        )
-                    )
-                    break;
-                end
+                repeat($urandom_range(40, 200)) @(intf.cb);
+                case($urandom_range(0, 2))
+                    0: intf.cb.ExternalInterrupt <= 1;
+                    1: intf.cb.TimerInterrupt    <= 1;
+                    2: intf.cb.SoftwareInterrupt <= 1;
+                endcase
+                repeat($urandom_range(1, 3)) @(intf.cb);
+                intf.cb.ExternalInterrupt <= 0;
+                intf.cb.TimerInterrupt    <= 0;
+                intf.cb.SoftwareInterrupt <= 0;
             end
+        endtask:drive_interrupts
+
+        // The program ends at a self-loop. commit_checker triggers ISS_DONE
+        // when the ISS commits it; the pipeline is then drained and ISS_FINAL
+        // makes the checker verify that every expected write was seen. Not
+        // reaching the end within the cycle budget is a failure (V7).
+        virtual task run_phase (uvm_phase phase);
+            uvm_event done_ev  = uvm_event_pool::get_global("ISS_DONE");
+            uvm_event final_ev = uvm_event_pool::get_global("ISS_FINAL");
+
+            phase.raise_objection(this);
+            intf.initialize();
+            `uvm_info("TEST", $sformatf("Starting the test: program_words = %0d, cycle budget = %0d",
+                                        program_words, wait_cycles), UVM_LOW)
+            fork
+                drive_interrupts();
+            join_none
+            fork
+                done_ev.wait_trigger();
+                begin
+                    repeat(wait_cycles) @(posedge intf.clk);
+                    `uvm_error("TEST", $sformatf("program end not reached within %0d cycles", wait_cycles))
+                end
+            join_any
+            disable fork;
+
+            disable drive_interrupts;
+            intf.cb.ExternalInterrupt <= 0;
+            intf.cb.TimerInterrupt    <= 0;
+            intf.cb.SoftwareInterrupt <= 0;
+            repeat(PROGRAM_EXIT_DRAIN_CYCLES) @(posedge intf.clk);
+            final_ev.trigger();
+            @(posedge intf.clk);
             phase.drop_objection(this);
         endtask:run_phase
 

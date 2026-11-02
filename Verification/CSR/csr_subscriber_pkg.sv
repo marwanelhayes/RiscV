@@ -45,26 +45,20 @@ package csr_subscriber_pkg;
                 ignore_bins not_under_access = {system}; // never reachable when CsrAccess
             }
 
-            // CSR index - read-only registers are excluded under access
-            // (WritableCsrSelection constraint).
+            // CSR index - every implemented CSR plus unknown addresses (illegal)
             CsrIndex_cg: coverpoint sub_item.CsrIndex iff(sub_item.rst && sub_item.CsrAccess)
             {
-                bins fflags_idx   = {fflags};
-                bins frm_idx      = {frm};
-                bins fcsr_idx     = {fcsr};
-                bins mstatus_idx  = {mstatus};
-                bins medeleg_idx  = {medeleg};
-                bins mideleg_idx  = {mideleg};
-                bins mie_idx      = {mie};
-                bins mtvec_idx    = {mtvec};
-                bins mscratch_idx = {mscratch};
-                bins mepc_idx     = {mepc};
-                bins mcause_idx   = {mcause};
-                bins mbadaddr_idx = {mbadaddr};
-                bins mcycle_idx   = {mcycle};
-                bins mhartid_idx  = {mhartid};
-                ignore_bins read_only = {misa, mvendorid, mip}; // excluded under access
+                bins fp_idx[]      = {fflags, frm, fcsr};
+                bins status_idx[]  = {mstatus, mstatush, misa, mie, mip, medeleg, mideleg};
+                bins trap_idx[]    = {mtvec, mscratch, mepc, mcause, mtval};
+                bins counter_idx[] = {mcycle, minstret, mcycleh, minstreth, cycle, instret, cycleh, instreth};
+                bins id_idx[]      = {mvendorid, marchid, mimpid, mhartid};
+                bins hpm_idx       = {[12'hB03:12'hB1F], [12'h323:12'h33F]};
+                bins unknown_idx   = default;
             }
+
+            TrapTaken_cg: coverpoint sub_item.TrapTaken iff(sub_item.rst) { bins no = {0}; bins yes = {1}; }
+            Commit_cg: coverpoint sub_item.Commit iff(sub_item.rst)       { bins no = {0}; bins yes = {1}; }
 
             // Trap cause stimulus (all thirteen encodings).
             Traps_cg: coverpoint sub_item.Traps iff(sub_item.rst)

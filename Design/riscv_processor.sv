@@ -22,8 +22,8 @@ import shared_pkg::*;
 
 module riscv_processor
 #(
-    parameter int   DATA_WIDTH = 32,
-    parameter int   ADDR_WIDTH = 8,
+    parameter int   DATA_WIDTH = FINAL_DATA_WIDTH,   // XLEN: 32 or 64
+    parameter int   ADDR_WIDTH = FINAL_ADDR_WIDTH,   // Physical address width
     parameter int   ALU_SUB_CONTROL_WIDTH = 2,
     parameter int   STAGES = 4,
     parameter int   CACHE_TOTAL_LINES  = 32,                          
@@ -114,33 +114,44 @@ module riscv_processor
     input  logic                  DMRRValid
 );
 
+    localparam int FLP_WIDTH = FINAL_FLP_WIDTH;   // FLEN
+
     // ─── IF stage interconnects ───────────────────────────────────────────────
-    wire [ADDR_WIDTH-1:0] PCF;             // Program counter (fetch)
-    wire [ADDR_WIDTH-1:0] PCPlus4F;        // PC + 4 (next sequential)
+    wire [DATA_WIDTH-1:0] PCF;             // Program counter (fetch)
+    wire [DATA_WIDTH-1:0] PCPlus4F;        // PC + 4 (next sequential)
     wire CacheHitF;                     // Cache hit signal for stalling logic
+    wire StallF;                        // Hold the PC
 
     // ─── ID stage interconnects ───────────────────────────────────────────────
-    wire [ADDR_WIDTH-1:0] PCPlus4D;        // PC+4 to decode
-    wire [DATA_WIDTH-1:0] InstructionD;  // Fetched instruction
+    wire [DATA_WIDTH-1:0] PCPlus4D;        // PC+4 to decode
+    wire [INSTR_WIDTH-1:0] InstructionD;   // Fetched instruction
+    wire ValidD;                            // IF/ID holds a real instruction
     wire StallD;                            // Stall decode stage
     wire FlushD;                            // Flush decode stage
     gpr_t Rs1D;                             // Source register 1 (decode)
     gpr_t Rs2D;                             // Source register 2 (decode)
 
     // ─── EX stage interconnects ───────────────────────────────────────────────
+    wire ValidE;                            // ID/EX holds a real instruction
     wire signed [DATA_WIDTH-1:0] RD1E;     // GPR rs1 value
     wire signed [DATA_WIDTH-1:0] RD2E;     // GPR rs2 value
     wire signed [DATA_WIDTH-1:0] SignImmE; // Sign-extended immediate
-    wire [ADDR_WIDTH-1:0] PCBranchE;      // Branch target address
-    wire [ADDR_WIDTH-1:0] PCPlus4E;        // PC+4 to execute
+    wire [DATA_WIDTH-1:0] PCBranchE;      // PC + immediate
+    wire [DATA_WIDTH-1:0] PCTargetE;      // Branch/jump target (JALR included)
+    wire [DATA_WIDTH-1:0] PCPlus4E;        // PC+4 to execute
     wire JumpE;                             // Jump instruction flag
+    wire JalrE;                             // Jump target from rs1
     wire ALUSrcE;                           // ALU operand B select
+    wire AuipcE;                            // ALU operand A is the PC
+    wire WordOpE;                           // RV64 32-bit operation
     wire [2:0] ForwardAE;                  // Forwarding select A
     wire [2:0] ForwardBE;                  // Forwarding select B
+    wire StallE;                            // Hold execute stage
     wire FlushE;                            // Flush execute stage
     wire RegWriteE;                        // Register write enable
     selector_t SelectorE;                  // Write-back select
     wire MemWriteE;                        // Memory write enable
+    wire MemReadE;                         // Memory read enable
     gpr_t Rs1E;                             // Source register 1 (execute)
     gpr_t Rs2E;                             // Source register 2 (execute)
     gpr_t RdE;                              // Destination register
@@ -156,8 +167,8 @@ module riscv_processor
     wire EcallE;                            // ECALL instruction flag
     wire EbreakE;                           // EBREAK instruction flag
     fpr_t RdFE;                             // FPR destination index
-    wire [DATA_WIDTH-1:0] RD1FE;          // FPR rs1 value
-    wire [DATA_WIDTH-1:0] RD2FE;          // FPR rs2 value
+    wire [FLP_WIDTH-1:0] RD1FE;           // FPR rs1 value
+    wire [FLP_WIDTH-1:0] RD2FE;           // FPR rs2 value
     fpu_operation_t FPUControlE;           // FPU operation type
     round_mode_t RoundModeE;               // Rounding mode
     wire FPURegWriteE;                     // FPR write enable
@@ -167,16 +178,23 @@ module riscv_processor
     wire [1:0] ForwardFloatingAE;          // FPU forwarding select A
     wire [1:0] ForwardFloatingBE;          // FPU forwarding select B
     wire FPUValidE;                        // Valid FPU operation
+    wire FPUBusyE;                         // FPU busy flag
+    wire FPUDoneE;                         // FPU result valid
 
     // ─── MEM stage interconnects ──────────────────────────────────────────────
+    wire ValidM;                              // EX/MEM holds a real instruction
+    wire StallM;                              // Hold EX/MEM
+    wire FlushM;                              // Bubble into EX/MEM
     wire signed [DATA_WIDTH-1:0] ALUOutM;    // ALU result
     wire signed [DATA_WIDTH-1:0] WriteDataM; // Data to store
     wire [2:0] funct3M;                        // funct3 field
     gpr_t RdM;                                // Destination register
     wire RegWriteM;                           // Register write enable
+    wire MemWriteM;                           // Memory write enable
+    wire MemReadM;                            // Memory read enable
     wire [DATA_WIDTH-1:0] CsrOutM;           // CSR read data
     selector_t SelectorM;                     // Write-back select
-    wire [ADDR_WIDTH-1:0] PCPlus4M;           // PC+4 to memory
+    wire [DATA_WIDTH-1:0] PCPlus4M;           // PC+4 to memory
     fpr_t RdFM;                               // FPR destination
     wire OverflowM;                           // FPU overflow flag
     wire UnderflowM;                          // FPU underflow flag
@@ -184,14 +202,14 @@ module riscv_processor
     wire InfM;                               // FPU infinity flag
     wire ZeroM;                              // FPU zero flag
     wire InvalidDivM;                         // Invalid division flag
-    wire [DATA_WIDTH-1:0] FPUOutM;           // FPU result
+    wire [FLP_WIDTH-1:0] FPUOutM;            // FPU result
     wire FPURegWriteM;                        // FPR write enable
     move_operation_t MoveOperationM;          // FPU move operation
-    wire FPUBusyM;                            // FPU busy flag
-    wire FPUDoneM;                            // FPU done flag
     wire CacheHitM;                           // Cache hit signal for stalling logic
 
     // ─── WB stage interconnects ───────────────────────────────────────────────
+    wire ValidW;                              // MEM/WB holds a real instruction
+    wire StallW;                              // Hold MEM/WB
     wire signed [DATA_WIDTH-1:0] ReadDataW;    // Loaded data from memory
     wire signed [DATA_WIDTH-1:0] ALUOutW;     // ALU result to WB
     wire signed [DATA_WIDTH-1:0] ResultW;     // Final write-back result
@@ -199,15 +217,21 @@ module riscv_processor
     gpr_t RdW;                                // Destination register
     selector_t SelectorW;                     // Write-back select
     wire RegWriteW;                           // Register write enable
-    wire [ADDR_WIDTH-1:0] PCPlus4W;           // PC+4 to WB
+    wire [DATA_WIDTH-1:0] PCPlus4W;           // PC+4 to WB
     fpr_t RdFW;                               // FPR destination
-    wire [DATA_WIDTH-1:0] FPUOutW;            // FPU result to WB
+    wire [FLP_WIDTH-1:0] FPUOutW;             // FPU result to WB
     move_operation_t MoveOperationW;          // FPU move operation
     wire FPURegWriteW;                        // FPR write enable
+    wire OverflowW;                           // FPU overflow flag
+    wire UnderflowW;                          // FPU underflow flag
+    wire NaNW;                                // FPU NaN flag
+    wire InfW;                                // FPU infinity flag
+    wire ZeroW;                               // FPU zero flag
+    wire InvalidDivW;                         // Invalid division flag
 
     // ─── Trap and control interconnects ──────────────────────────────────────
-    wire TrapIsSet;                           // Trap pending flag
-    wire [ADDR_WIDTH-1:0] CsrOutPC;           // Trap vector address
+    wire TrapIsSet;                           // Trap/MRET redirect this cycle
+    wire [DATA_WIDTH-1:0] CsrOutPC;           // Trap vector or mepc
 
     // ─── riscv_processor: fetch_stage ─────────────────────────────────────────
     fetch_stage #(
@@ -228,6 +252,7 @@ module riscv_processor
         .StallD(StallD),
         .PCPlus4D(PCPlus4D),
         .InstructionD(InstructionD),
+        .ValidD(ValidD),
         .PCPlus4F(PCPlus4F),
         .CacheHitF(CacheHitF),
         .MAWAddr(IMAWAddr),
@@ -265,7 +290,9 @@ module riscv_processor
         .rst(rst),
         .PCPlus4D(PCPlus4D),
         .InstructionD(InstructionD),
+        .ValidD(ValidD),
         .FlushE(FlushE),
+        .StallE(StallE),
         .RegWriteW(RegWriteW),
         .RdW(RdW),
         .BranchE(BranchE),
@@ -284,19 +311,23 @@ module riscv_processor
         .RegWriteE(RegWriteE),
         .SelectorE(SelectorE),
         .MemWriteE(MemWriteE),
+        .MemReadE(MemReadE),
         .PCBranchE(PCBranchE),
         .PCPlus4E(PCPlus4E),
+        .ValidE(ValidE),
         .JumpE(JumpE),
+        .JalrE(JalrE),
         .CsrOperationE(CsrOperationE),
         .CsrAccessE(CsrAccessE),
         .ALUSrcE(ALUSrcE),
+        .AuipcE(AuipcE),
+        .WordOpE(WordOpE),
         .MRetE(MRetE),
         .EcallE(EcallE),
         .EbreakE(EbreakE),
         .IllegaleInstructionE(IllegaleInstructionE),
         .RdFW(RdFW),
         .FPUOutW(FPUOutW),
-        .MoveOperationW(MoveOperationW),
         .FPURegWriteW(FPURegWriteW),
         .RdFE(RdFE),
         .RD1FE(RD1FE),
@@ -316,6 +347,7 @@ module riscv_processor
     (
         .clk(clk),
         .rst(rst),
+        .ValidE(ValidE),
         .RD1E(RD1E),
         .RD2E(RD2E),
         .SignImmE(SignImmE),
@@ -324,8 +356,13 @@ module riscv_processor
         .funct3E(funct3E),
         .BranchE(BranchE),
         .PCPlus4E(PCPlus4E),
+        .PCBranchE(PCBranchE),
         .PCSrcE(PCSrcE),
+        .PCTargetE(PCTargetE),
         .JumpE(JumpE),
+        .JalrE(JalrE),
+        .AuipcE(AuipcE),
+        .WordOpE(WordOpE),
         .ForwardAE(ForwardAE),
         .ForwardBE(ForwardBE),
         .Rs1E(Rs1E),
@@ -342,11 +379,16 @@ module riscv_processor
         .TrapIsSet(TrapIsSet),
         .IllegaleInstructionE(IllegaleInstructionE),
         .CsrOperationE(CsrOperationE),
+        .StallE(StallE),
+        .StallM(StallM),
+        .FlushM(FlushM),
+        .ValidM(ValidM),
         .funct3M(funct3M),
         .RegWriteE(RegWriteE),
         .CsrIndexE(CsrIndexE),
         .SelectorE(SelectorE),
         .MemWriteE(MemWriteE),
+        .MemReadE(MemReadE),
         .ALUOutM(ALUOutM),
         .WriteDataM(WriteDataM),
         .RdM(RdM),
@@ -355,6 +397,7 @@ module riscv_processor
         .RegWriteM(RegWriteM),
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
+        .MemReadM(MemReadM),
         .FPUOutW(FPUOutW),
         .RdFE(RdFE),
         .RD1FE(RD1FE),
@@ -378,16 +421,25 @@ module riscv_processor
         .ForwardFloatingAE(ForwardFloatingAE),
         .ForwardFloatingBE(ForwardFloatingBE),
         .FPUValidE(FPUValidE),
-        .FPUBusyM(FPUBusyM),
-        .FPUDoneM(FPUDoneM)
+        .FPUBusyE(FPUBusyE),
+        .FPUDoneE(FPUDoneE)
     );
 
     // ─── riscv_processor: memory_stage ─────────────────────────────────────────
-    memory_stage #(.DATA_WIDTH(DATA_WIDTH),.ADDR_WIDTH(ADDR_WIDTH)) 
+    memory_stage #(
+        .DATA_WIDTH(DATA_WIDTH),
+        .ADDR_WIDTH(ADDR_WIDTH),
+        .CACHE_TOTAL_LINES(CACHE_TOTAL_LINES),
+        .CACHE_WAY(CACHE_WAY),
+        .CACHE_LINE_WORDS(CACHE_LINE_WORDS),
+        .CACHE_READ_ONLY(DCACHE_READ_ONLY),
+        .CACHE_AXI_SIZE(CACHE_AXI_SIZE)
+    ) 
     Memory
     (
         .clk(clk),
         .rst(rst),
+        .ValidM(ValidM),
         .ALUOutM(ALUOutM),
         .funct3M(funct3M),
         .WriteDataM(WriteDataM),
@@ -398,7 +450,10 @@ module riscv_processor
         .RegWriteM(RegWriteM),
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
+        .MemReadM(MemReadM),
+        .StallW(StallW),
         .CacheHitM(CacheHitM),
+        .ValidW(ValidW),
         .ReadDataW(ReadDataW),
         .RdW(RdW),
         .PCPlus4W(PCPlus4W),
@@ -462,7 +517,7 @@ module riscv_processor
         .PCPlus4W(PCPlus4W),
         .PCPlus4F(PCPlus4F),
         .CsrOutW(CsrOutW),
-        .PCBranchE(PCBranchE),
+        .PCBranchE(PCTargetE),
         .ALUOutW(ALUOutW),
         .ReadDataW(ReadDataW),
         .CsrOutPC(CsrOutPC),
@@ -489,14 +544,17 @@ module riscv_processor
         .TrapIsSet(TrapIsSet),
         .ForwardAE(ForwardAE),
         .ForwardBE(ForwardBE),
-        .StallD(StallD),
         .StallF(StallF),
-        .FlushE(FlushE),
-        .SelectorE(SelectorE),
+        .StallD(StallD),
+        .StallE(StallE),
+        .StallM(StallM),
+        .StallW(StallW),
         .FlushD(FlushD),
+        .FlushE(FlushE),
+        .FlushM(FlushM),
+        .SelectorE(SelectorE),
         .ForwardFloatingAE(ForwardFloatingAE),
         .ForwardFloatingBE(ForwardFloatingBE),
-        .MoveOperationE(MoveOperationE),
         .RdFM(RdFM),
         .RdFW(RdFW),
         .Rs1FE(Rs1FE),
@@ -504,7 +562,7 @@ module riscv_processor
         .FPURegWriteM(FPURegWriteM),
         .FPURegWriteW(FPURegWriteW),
         .FPUValidE(FPUValidE),
-        .FPUBusyM(FPUBusyM)
+        .FPUDoneE(FPUDoneE)
     );
 
 endmodule

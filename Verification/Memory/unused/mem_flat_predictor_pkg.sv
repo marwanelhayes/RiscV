@@ -13,11 +13,13 @@
 //   by white-box SVA bound into cache.sv (see cache_sva.sv).
 //
 // What this models:
-//   - ReadDataW: last value written to the accessed word (write-back coherent
-//     view). A load returns mem_ref[addr]; a store both drives ReadDataW (the
-//     cache echoes CPUWriteData on a write) and commits mem_ref[addr].
+//   - Loads and stores from the ISA: SB/SH/SW(/SD) write only their bytes,
+//     LB/LH/LW(/LD) sign-extend and LBU/LHU(/LWU) zero-extend the addressed
+//     bytes of the last values written. ReadDataW is compared for loads only.
 //   - All other *W outputs are plain MEM/WB pipeline-register passthroughs of
 //     the *M inputs, shadowed with emit-before-update exactly like the DUT.
+//   - StallW (any cache miss freezes the pipeline) holds MEM/WB, and the
+//     access commits in the cycle MEM advances.
 //
 // Reset (the one place a flat model needs help):
 //   A write-back cache can hold a dirty line whose store has NOT yet reached
@@ -48,14 +50,17 @@ package mem_flat_predictor_pkg;
         uvm_analysis_port #(mem_item) exp_port;
         mem_item exp, exp_clone, shadow_inputs;
 
-        localparam int DEPTH = (2**(FINAL_ADDR_WIDTH-2));
+        localparam int DATA_BYTES = FINAL_DATA_WIDTH / 8;
+        localparam int BYTE_OFF_W = $clog2(DATA_BYTES);
+        localparam int DEPTH      = 2**(FINAL_ADDR_WIDTH - BYTE_OFF_W);
+        typedef logic [FINAL_DATA_WIDTH-1:0] x_t;
 
         // Hierarchical path to the data_memory array for backdoor resync on
         // reset. Parameterised so it can be retargeted via config_db if the TB
         // instance names change.
         string bkdr_path = "mem_top.DataMem.mem";
 
-        // Flat architectural memory image (word-addressable).
+        // Flat architectural memory image (one entry per XLEN word).
         logic signed [FINAL_DATA_WIDTH-1:0] mem_ref [DEPTH];
 
         // Track rst to resync once per reset pulse (on the falling edge), not
@@ -63,11 +68,13 @@ package mem_flat_predictor_pkg;
         logic prev_rst = 1'b1;
 
         // ── MEM/WB pipeline-register shadows (emit-before-update) ────────────
+        logic                               q_ValidW;
+        logic                               q_LoadW;
         logic signed [FINAL_DATA_WIDTH-1:0] q_ReadDataW;
         gpr_t                               q_RdW;
         logic                               q_RegWriteW;
         selector_t                          q_SelectorW;
-        logic [FINAL_ADDR_WIDTH-1:0]        q_PCPlus4W;
+        logic [FINAL_DATA_WIDTH-1:0]        q_PCPlus4W;
         logic [FINAL_DATA_WIDTH-1:0]        q_CsrOutW;
         logic signed [FINAL_DATA_WIDTH-1:0] q_ALUOutW;
         fpr_t                               q_RdFW;
@@ -98,6 +105,8 @@ package mem_flat_predictor_pkg;
 
         // Mirror the memory_stage MEM/WB reset block (output defaults only).
         function void reset_shadow ();
+            q_ValidW         = 1'b0;
+            q_LoadW          = 1'b0;
             q_RdW            = zero;
             q_RegWriteW      = 1'b0;
             q_SelectorW      = ALUToReg;
@@ -129,32 +138,39 @@ package mem_flat_predictor_pkg;
             end
         endfunction:resync_from_memory
 
-        // Architectural ReadDataW + store commit. Serviced cycle only.
+        // Architectural load/store (ISA semantics). Called when MEM advances.
         function void flat_predict (mem_item t);
-            logic [FINAL_ADDR_WIDTH-3:0] word_addr;
-            word_addr   = t.ALUOutM[FINAL_ADDR_WIDTH-1:2];
+            logic [FINAL_ADDR_WIDTH-1:0] byte_addr;
+            int unsigned word_addr, off, size;
+            x_t v;
+            byte_addr = t.ALUOutM[FINAL_ADDR_WIDTH-1:0];
+            word_addr = byte_addr >> BYTE_OFF_W;
+            off       = byte_addr % DATA_BYTES;
+            size      = 1 << t.funct3M[1:0];
+            q_LoadW   = t.MemReadM;
             q_ReadDataW = '0;
-            if(t.CacheHitM)
+            if(t.MemWriteM)
+                for(int i = 0; i < size; i++)
+                    mem_ref[word_addr][8*(off+i) +: 8] = t.WriteDataM[8*i +: 8];
+            if(t.MemReadM)
             begin
-                if(t.MemWriteM)
-                begin
-                    // Cache echoes CPUWriteData on a write; commit the store to
-                    // the coherent image (word store - matches the DUT cache,
-                    // which writes a full word with MWStrb = all-ones).
-                    q_ReadDataW        = t.WriteDataM;
-                    mem_ref[word_addr] = t.WriteDataM;
-                end
-                else
-                begin
-                    q_ReadDataW = mem_ref[word_addr];
-                end
+                v = x_t'(mem_ref[word_addr]) >> (8*off);
+                case(load_store_t'(t.funct3M))
+                    B:       q_ReadDataW = x_t'(signed'(v[7:0]));
+                    HW:      q_ReadDataW = x_t'(signed'(v[15:0]));
+                    W:       q_ReadDataW = x_t'(signed'(v[31:0]));
+                    BU:      q_ReadDataW = x_t'(v[7:0]);
+                    HWU:     q_ReadDataW = x_t'(v[15:0]);
+                    WU:      q_ReadDataW = x_t'(v[31:0]);
+                    default: q_ReadDataW = v;                   // LD
+                endcase
             end
-            // else: cache miss / stall -> DUT drives ReadDataM = 0 this cycle.
         endfunction:flat_predict
 
         // Compute the NEXT-cycle *W passthrough shadow from this cycle's *M
         // inputs (identical to the registered MEM/WB passthrough in the DUT).
         function void update_shadow (mem_item t);
+            q_ValidW         = t.ValidM;
             q_RdW            = t.RdM;
             q_RegWriteW      = t.RegWriteM;
             q_SelectorW      = t.SelectorM;
@@ -188,6 +204,8 @@ package mem_flat_predictor_pkg;
 
             // Emit the *W shadow built last cycle (= what the DUT registered at
             // the most recent posedge and the monitor sampled this cycle).
+            exp.ValidW         = q_ValidW;
+            exp.chk_readdata   = q_LoadW;
             exp.ReadDataW      = q_ReadDataW;
             exp.RdW            = q_RdW;
             exp.RegWriteW      = q_RegWriteW;
@@ -205,8 +223,6 @@ package mem_flat_predictor_pkg;
             exp.FPUOutW        = q_FPUOutW;
             exp.MoveOperationW = q_MoveOperationW;
             exp.FPURegWriteW   = q_FPURegWriteW;
-            foreach(exp.memory[i])
-                exp.memory[i] = mem_ref[i];
 
             // Stamp the matching cycle's inputs for readable messaging.
             if(!(shadow_inputs == null))
@@ -218,8 +234,8 @@ package mem_flat_predictor_pkg;
             else
                 exp_port.write(exp_clone);
 
-            // Advance the model from this cycle's *M inputs (out of reset).
-            if(t.rst)
+            // Advance the model from this cycle's *M inputs when MEM advances.
+            if(t.rst && !t.StallW)
             begin
                 update_shadow(t);
                 flat_predict(t);

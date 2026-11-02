@@ -38,7 +38,7 @@ package writeback_predictor_pkg;
         writeback_item exp, exp_clone, shadow_inputs;
 
         // ── PCF pipeline-register shadow ─────────────────────────────────────
-        logic [FINAL_ADDR_WIDTH-1:0] q_PCF;
+        logic [FINAL_DATA_WIDTH-1:0] q_PCF;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -70,16 +70,16 @@ package writeback_predictor_pkg;
 
         // Advance PCF shadow with this cycle's inputs - this is the value the
         // DUT will latch at the next posedge and the monitor will sample then.
+        // Pipeline contract: EX raises a redirect only when it advances, so a
+        // redirect is never lost to a fetch stall. Trap/MRET > taken branch >
+        // sequential fetch (held by StallF).
         function void update_shadow(writeback_item t);
             if(t.TrapIsSet)
                 q_PCF = t.CsrOutPC;
+            else if(t.PCSrcE)
+                q_PCF = t.PCBranchE;
             else if(!t.StallF)
-            begin
-                if(t.PCSrcE)
-                    q_PCF = t.PCBranchE;
-                else
-                    q_PCF = t.PCPlus4F;
-            end
+                q_PCF = t.PCPlus4F;
         endfunction:update_shadow
 
         // ── Emit-before-update reference model ───────────────────────────────
@@ -99,7 +99,7 @@ package writeback_predictor_pkg;
                 exp.copy_inputs(shadow_inputs);
 
             // Clone before publishing so the FIFO never holds the mutating exp.
-            if(!$cast(exp_clone, exp))
+            if(!$cast(exp_clone, exp.clone()))
                 `uvm_fatal("WB_PRED", "Failed to clone expected item - check for non-cloneable fields")
             else
                 exp_port.write(exp_clone);
@@ -108,7 +108,7 @@ package writeback_predictor_pkg;
             // latched into PCF at the next posedge and emitted then.
             if(t.rst)
                 update_shadow(t);
-            if(!$cast(shadow_inputs, t))
+            if(!$cast(shadow_inputs, t.clone()))
                 `uvm_fatal("WB_PRED", "Failed to copy inputs to shadow - check for non-cloneable fields")
         endfunction:write
 

@@ -21,10 +21,9 @@ do ../do/compile.do
 set flp_dpi_dir [file normalize ../../Verification/FPU/dpi]
 if {[file exists $flp_dpi_dir/libfpu_ref.so]} {
     setenv FLP_DPI_DIR $flp_dpi_dir
-    vsim -voptargs=+acc flp_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100 \
-        -sv_lib $flp_dpi_dir/libfpu_ref
+    vsim -64 -sv_lib $flp_dpi_dir/libfpu_ref -voptargs=+acc flp_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100 +FLP_DPI   
 } else {
-    vsim -voptargs=+acc flp_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
+    vsim -64 -voptargs=+acc flp_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
 }
 
 # Add signals to wave

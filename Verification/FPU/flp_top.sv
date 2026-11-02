@@ -20,6 +20,7 @@ module flp_top;
         .clk(intf.clk),
         .rst(intf.rst),
         .valid(intf.valid),
+        .hold(1'b0),                  // stand-alone: the result is always taken
         .InA(intf.InA),
         .InB(intf.InB),
         .RdF(intf.RdF),

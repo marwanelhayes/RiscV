@@ -16,15 +16,31 @@ package mem_subscriber_pkg;
         // ── Functional coverage model ────────────────────────────────────────
         // Samples while out of reset. Covers the cache-hit response, access
         // controls, selectors, FP status pass-through and the data busses
-        // (sign partition). funct3M is constrained to word (OnlyWord).
+        // (sign partition), plus every load/store size on every legal lane.
         covergroup cvr_grp();
 
-            // Access size - constrained to word only.
-            funct3M_cg: coverpoint sub_item.funct3M iff(sub_item.rst)
+            // Access size and byte lane of the serviced (MEM advancing) access.
+            // LWU/LD/SD exist only on RV64; misaligned lanes are excluded
+            // because EX traps a misaligned access before MEM.
+            LoadSize_cg: coverpoint load_store_t'(sub_item.funct3M) iff(sub_item.rst && sub_item.MemReadM && !sub_item.StallW)
             {
-                bins word = {W};
-                ignore_bins others = {B, HW, BU, HWU, 3'b011, 3'b110, 3'b111}; // OnlyWord constraint
+                bins lb = {B}; bins lh = {HW}; bins lw = {W}; bins lbu = {BU}; bins lhu = {HWU};
+                bins lwu = {WU} with (FINAL_DATA_WIDTH == 64);
+                bins ld  = {D}  with (FINAL_DATA_WIDTH == 64);
             }
+            StoreSize_cg: coverpoint load_store_t'(sub_item.funct3M) iff(sub_item.rst && sub_item.MemWriteM && !sub_item.StallW)
+            {
+                bins sb = {B}; bins sh = {HW}; bins sw = {W};
+                bins sd = {D} with (FINAL_DATA_WIDTH == 64);
+            }
+            Lane_cg: coverpoint sub_item.ALUOutM[$clog2(FINAL_DATA_WIDTH/8)-1:0] iff(sub_item.rst && !sub_item.StallW)
+            {
+                bins lane[] = {[0:(FINAL_DATA_WIDTH/8)-1]};
+            }
+
+            ValidM_cg: coverpoint sub_item.ValidM iff(sub_item.rst)     { bins lo = {0}; bins hi = {1}; }
+            MemReadM_cg: coverpoint sub_item.MemReadM iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
+            StallW_cg: coverpoint sub_item.StallW iff(sub_item.rst)     { bins lo = {0}; bins hi = {1}; }
 
             // Cache response.
             CacheHitM_cg: coverpoint sub_item.CacheHitM iff(sub_item.rst)
@@ -94,6 +110,19 @@ package mem_subscriber_pkg;
             // ── Crosses ──────────────────────────────────────────────────────
             MemWrite_x_CacheHit_cx: cross MemWriteM_cg, CacheHitM_cg;
             Selector_x_RegWrite_cx: cross SelectorM_cg, RegWriteM_cg;
+            MemRead_x_CacheHit_cx:  cross MemReadM_cg, CacheHitM_cg;
+            LoadLane_cx:  cross LoadSize_cg, Lane_cg
+            {
+                ignore_bins half = binsof(LoadSize_cg) intersect {HW, HWU} && binsof(Lane_cg) intersect {1, 3, 5, 7};
+                ignore_bins word = binsof(LoadSize_cg) intersect {W, WU}   && binsof(Lane_cg) intersect {[1:3], [5:7]};
+                ignore_bins dbl  = binsof(LoadSize_cg) intersect {D}       && binsof(Lane_cg) intersect {[1:7]};
+            }
+            StoreLane_cx: cross StoreSize_cg, Lane_cg
+            {
+                ignore_bins half = binsof(StoreSize_cg) intersect {HW} && binsof(Lane_cg) intersect {1, 3, 5, 7};
+                ignore_bins word = binsof(StoreSize_cg) intersect {W}  && binsof(Lane_cg) intersect {[1:3], [5:7]};
+                ignore_bins dbl  = binsof(StoreSize_cg) intersect {D}  && binsof(Lane_cg) intersect {[1:7]};
+            }
 
         endgroup:cvr_grp
 

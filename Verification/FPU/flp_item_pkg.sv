@@ -3,7 +3,9 @@
 // -----------------------------------------------------------------------------
 // FPU sequence item package for UVM verification.
 // Adds do_compare / do_copy to support the fetch-style in-order FIFO
-// scoreboard (cloned-actual vs cloned-expected comparison).
+// scoreboard (cloned-actual vs cloned-expected comparison). Results are
+// compared bit-exactly: IEEE 754 / RISC-V F results are correctly rounded,
+// so any tolerance would hide real rounding errors.
 // =============================================================================
 package flp_item_pkg;
 
@@ -63,48 +65,6 @@ package flp_item_pkg;
                 Overflow, Underflow, NaN, Inf, Zero, InvalidDiv, Result, RdFOut.name(), RegWriteOut, MoveOperationOut.name());
         endfunction: getoutputs
 
-        virtual function bit compare_ints_5_percent(int a, int b);
-            int diff, max_val, abs_a, abs_b;
-            bit err;
-            err     = 1'b0;
-            abs_a   = (a < 0) ? -a : a;
-            abs_b   = (b < 0) ? -b : b;
-            diff    = (a > b) ? (a - b) : (b - a);
-            if(diff == 0) return err;
-            max_val = (abs_a > abs_b) ? abs_a : abs_b;
-            if(!((diff * 100) <= (max_val * 5))) err = 1'b1;
-            return err;
-        endfunction:compare_ints_5_percent
-
-        virtual function bit compare_shortreal_rel_error(shortreal a, shortreal b, shortreal tol);
-            shortreal diff, denom, rel_err, epsilon;
-            logic     is_zero_a, is_zero_b, is_inf_a, is_inf_b, is_nan_a, is_nan_b;
-            logic [FINAL_DATA_WIDTH-1:0] a_bits, b_bits;
-            bit err;
-            a_bits    = $shortrealtobits(a);
-            b_bits    = $shortrealtobits(b);
-            is_zero_a = (a_bits[FINAL_DATA_WIDTH-2:0] == 0);
-            is_zero_b = (b_bits[FINAL_DATA_WIDTH-2:0] == 0);
-            is_inf_a  = (a_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (a_bits[FINAL_FLP_FRAC_BITS-1:0] == 0);
-            is_inf_b  = (b_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (b_bits[FINAL_FLP_FRAC_BITS-1:0] == 0);
-            is_nan_a  = (a_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (a_bits[FINAL_FLP_FRAC_BITS-1:0] != 0);
-            is_nan_b  = (b_bits[FINAL_FLP_WIDTH-2 -: FINAL_FLP_EXP_BITS] == 8'hFF) && (b_bits[FINAL_FLP_FRAC_BITS-1:0] != 0);
-            diff      = (a - b);
-            diff      = (diff < 0.0) ? -diff : diff;
-            denom     = (b < 0.0) ? -b : b;
-            epsilon   = 1e-3;
-            err       = 1'b0;
-            if(is_nan_a || is_nan_b || is_inf_a || is_inf_b || is_zero_a || is_zero_b)
-            begin
-                if(a_bits !== b_bits) err = 1'b1;
-                return err;
-            end
-            else if(denom <= epsilon) rel_err = diff;
-            else                      rel_err = diff / denom;
-            if(rel_err > tol) err = 1'b1;
-            return err;
-        endfunction:compare_shortreal_rel_error
-
         virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
             flp_item other;
             bit ok;
@@ -118,11 +78,8 @@ package flp_item_pkg;
             end
 
             super_ok  = super.do_compare(rhs, comparer);
-            if((this.operation == FCVT_W_S) || (this.operation == FCVT_WU_S))
-                result_err = compare_ints_5_percent(this.Result, other.Result);
-            else
-                result_err = compare_shortreal_rel_error($bitstoshortreal(this.Result),
-                                                         $bitstoshortreal(other.Result), 5e-2);
+            // RISC-V F requires correctly rounded results: bit-exact compare.
+            result_err = (this.Result !== other.Result);
             ok = super_ok
                 && !result_err
                 && (this.Overflow         === other.Overflow)

@@ -1,14 +1,19 @@
 // =============================================================================
 // csr_file.sv
 // -----------------------------------------------------------------------------
-// Control and Status Register (CSR) file for RISC-V processor.
+// Control and Status Register (CSR) file for RISC-V processor (M-mode only).
 //
 // Responsibilities:
-//   - Manage machine-mode CSRs (mstatus, mie, mtvec, mepc, mcause, etc.)
-//   - Handle trap entry and return (MRET)
+//   - Hold the machine-mode CSRs as explicit registers (no CSR array)
+//   - Read any implemented CSR combinationally; flag unknown CSRs as illegal
+//   - Take traps (exceptions and interrupts) and MRET in the same cycle the
+//     instruction is in EX, so the trapping instruction never commits
 //   - Process CSR read/write operations (CSRRW, CSRRS, CSRRC, etc.)
-//   - Manage interrupt detection and pending flags
+//   - Count cycles and retired instructions (64-bit on RV32 and RV64)
 //   - Provide rounding mode for FPU operations
+//
+// Every state update happens only on Commit (a valid EX instruction that
+// advances this cycle), so a stalled pipeline never repeats a side effect.
 // =============================================================================
 import shared_pkg::*;
 `include "csr_defs.sv"
@@ -17,7 +22,7 @@ module csr_file
 #(
     parameter int DATA_WIDTH = 32,
     parameter int ADDR_WIDTH = 32
-) 
+)
 (
     // ─── Clock and reset ───────────────────────────────────────────────────────
     input clk,
@@ -25,13 +30,14 @@ module csr_file
 
     // ─── CSR operation interface ─────────────────────────────────────────────
     input csr_t CsrOperation,             // CSR operation type
-    input gpr_t Rs,                       // Source register for CSR ops
-    input traps_t Traps,                  // Trap cause code
+    input gpr_t Rs,                       // rs1 index (uimm for the immediate forms)
+    input traps_t Traps,                  // Synchronous exception of the EX instruction
     input mret,                           // MRET instruction flag
-    input [ADDR_WIDTH-1:0] PC,            // Current PC (for mepc)
-    input [ADDR_WIDTH-1:0] Address,       // Fault address (for mbadaddr)
+    input [DATA_WIDTH-1:0] PC,            // PC of the EX instruction (for mepc)
+    input [DATA_WIDTH-1:0] Address,       // Trap value for the exception (for mtval)
     input CsrAccess,                      // CSR access enable
-    input [DATA_WIDTH-1:0] CsrIn,        // CSR write data
+    input [DATA_WIDTH-1:0] CsrIn,         // CSR write data (forwarded rs1)
+    input Commit,                         // Valid EX instruction that advances this cycle
 
     // ─── Interrupt inputs ─────────────────────────────────────────────────────
     input TimerInterrupt,                 // Timer interrupt
@@ -40,261 +46,288 @@ module csr_file
 
     // ─── CSR register index ───────────────────────────────────────────────────
     input csr_index_t CsrIndex,           // CSR address
-    
+
     // ─── Outputs ───────────────────────────────────────────────────────────────
-    output logic [ADDR_WIDTH-1:0] CsrOutPC,   // Trap return vector
+    output logic [DATA_WIDTH-1:0] CsrOutPC,   // Redirect target: trap vector or mepc
     output logic [DATA_WIDTH-1:0] CsrOut,     // CSR read data
-    output logic TrapIsSet,                   // Trap pending flag
+    output logic TrapIsSet,                   // Redirect now: trap taken or MRET
+    output logic TrapTaken,                   // Exception or interrupt taken: squash EX
     output round_mode_t RoundingMode          // FPU rounding mode
 );
 
-    (* ram_style = "block" *) logic [DATA_WIDTH-1:0] CsrFile [4096]; // CSR file with 4096 entries, each 32 bits wide
-    localparam logic [DATA_WIDTH-1:0] AlignMask = `align_mask;
-    wire InterruptSet;
-    wire TimerInterruptPending;
-    wire ExternalInterruptPending;
-    wire SoftwareInterruptPending;
-    wire TimerInterruptEnabled;
-    wire ExternalInterruptEnabled;
-    wire SoftwareInterruptEnabled;
-    wire TimerInterruptSet;
-    wire ExternalInterruptSet;
-    wire SoftwareInterruptSet;
-    wire TrapsNotZero;
-    wire RsNotZero;
+    localparam bit IS_RV64 = (DATA_WIDTH == 64);
+    localparam logic [1:0] MXL = IS_RV64 ? 2'd2 : 2'd1;
+    localparam logic [DATA_WIDTH-1:0] MISA_VALUE = {MXL, {(DATA_WIDTH-2){1'b0}}}
+                                                 | (DATA_WIDTH'(1) << `MISA_I)
+                                                 | (DATA_WIDTH'(1) << `MISA_M)
+                                                 | (DATA_WIDTH'(1) << `MISA_F);
+    localparam logic [DATA_WIDTH-1:0] MVENDORID_VALUE = DATA_WIDTH'(32'h48_41_4E_4F);
 
-    assign TimerInterruptPending = TimerInterrupt | CsrFile[mip][`MT_I];
-    assign ExternalInterruptPending = ExternalInterrupt | CsrFile[mip][`ME_I];
-    assign SoftwareInterruptPending = SoftwareInterrupt | CsrFile[mip][`MS_I];
+    // ─── Architectural state ──────────────────────────────────────────────────
+    logic                  MStatusMIE;      // mstatus.MIE
+    logic                  MStatusMPIE;     // mstatus.MPIE
+    logic                  MieMEIE;         // mie.MEIE
+    logic                  MieMTIE;         // mie.MTIE
+    logic                  MieMSIE;         // mie.MSIE
+    logic [DATA_WIDTH-1:0] Mtvec;           // mtvec (bit 1 always 0)
+    logic [DATA_WIDTH-1:0] Mscratch;        // mscratch
+    logic [DATA_WIDTH-1:0] Mepc;            // mepc (bits 1:0 always 0)
+    logic [DATA_WIDTH-1:0] Mcause;          // mcause
+    logic [DATA_WIDTH-1:0] Mtval;           // mtval
+    logic [63:0]           Mcycle;          // mcycle (+ mcycleh on RV32)
+    logic [63:0]           Minstret;        // minstret (+ minstreth on RV32)
+    logic [4:0]            Fflags;          // fflags
+    logic [2:0]            Frm;             // frm
 
-    assign TimerInterruptEnabled = CsrFile[mie][`MT_I];
-    assign ExternalInterruptEnabled = CsrFile[mie][`ME_I];
-    assign SoftwareInterruptEnabled = CsrFile[mie][`MS_I];
-
-    assign TimerInterruptSet = CsrFile[mstatus][`MIE] & TimerInterruptEnabled & TimerInterruptPending;
-    assign ExternalInterruptSet = CsrFile[mstatus][`MIE] & ExternalInterruptEnabled & ExternalInterruptPending;
-    assign SoftwareInterruptSet = CsrFile[mstatus][`MIE] & SoftwareInterruptEnabled & SoftwareInterruptPending;
-
-    assign InterruptSet = ExternalInterruptSet | SoftwareInterruptSet | TimerInterruptSet;
-
-    assign TrapsNotZero = |(Traps);
-    assign RsNotZero = |int'(Rs);
-
-    function void ResetCsrFile;
-        CsrFile[mstatus] <= 0;
-        CsrFile[misa] <= 32'h40_00_01_00;
-        CsrFile[medeleg] <= 0;
-        CsrFile[mideleg] <= 0;
-        CsrFile[mie] <= 0;
-        CsrFile[mtvec] <= 0;
-        CsrFile[mscratch] <= 0;
-        CsrFile[mepc] <= 0;
-        CsrFile[mcause] <= 0;
-        CsrFile[mbadaddr] <= 0;
-        CsrFile[mip] <= 0;
-        CsrFile[mcycle] <= 0;
-        CsrFile[mhartid] <= 0;
-        CsrFile[mvendorid] <= 32'h48_41_4E_4F;
-        CsrFile[fflags] <= 0;
-        CsrFile[frm] <= 0;
-        CsrFile[fcsr] <= 0;
-        CsrOut <= 0;
-        CsrOutPC <= 0;
-        TrapIsSet <= 1'b0;
-    endfunction:ResetCsrFile
+    // ─── Internal wires ───────────────────────────────────────────────────────
+    logic [DATA_WIDTH-1:0] MStatusValue;    // mstatus as read
+    logic [DATA_WIDTH-1:0] MieValue;        // mie as read
+    logic [DATA_WIDTH-1:0] MipValue;        // mip as read
+    logic                  CsrExists;       // CsrIndex names an implemented CSR
+    logic                  CsrIllegal;      // CSR access to an unknown CSR
+    logic                  CsrWrite;        // This CSR instruction writes its CSR
+    logic [DATA_WIDTH-1:0] CsrWriteData;    // Value written by the CSR instruction
+    logic [DATA_WIDTH-1:0] Uimm;            // Zero-extended immediate operand
+    logic                  ExceptionValid;  // Synchronous exception of the EX instruction
+    logic [DATA_WIDTH-1:0] ExceptionCause;  // mcause code of the exception
+    logic                  InterruptPending;// Enabled interrupt waiting
+    logic [DATA_WIDTH-1:0] InterruptCause;  // mcause code of the interrupt
+    logic                  MretTaken;       // MRET commits this cycle
+    logic                  Retire;          // Instruction retires (minstret)
+    logic                  CounterWrite;    // This cycle's CSR instruction writes its CSR
 
     function automatic logic [DATA_WIDTH-1:0] TrapCause(input traps_t TrapCode);
         case(TrapCode)
-            InstructionAddressMisalignedOrUserSoftwareInterrupt: TrapCause = 32'd0;
-            InstructionAccessFaultOrSupervisorSoftwareInterrupt: TrapCause = 32'd1;
-            IllegalInstructionOrHypervisorSoftwareInterrupt: TrapCause = 32'd2;
-            BreakpointOrMachineSoftwareInterrupt: TrapCause = 32'd3;
-            LoadAddressMisalignedOrUserSoftwareInterrupt: TrapCause = 32'd4;
-            LoadAddressFaultOrSupervisorTimerInterrupt: TrapCause = 32'd5;
-            StoreAddressMisalignedOrHyperVisorTimerInterrupt: TrapCause = 32'd6;
-            StoreAddressFaultOrMachineTimerInterrupt: TrapCause = 32'd7;
-            EcallUOrUserExternalInterrupt: TrapCause = 32'd8;
-            EcallSOrSupervisorExternalInterrupt: TrapCause = 32'd9;
-            EcallHOrHypervisorExternalInterrupt: TrapCause = 32'd10;
-            EcallMOrMachineExternalInterrupt: TrapCause = 32'd11;
-            default: TrapCause = 32'd0;
+            InstructionAddressMisalignedOrUserSoftwareInterrupt: TrapCause = DATA_WIDTH'(0);
+            InstructionAccessFaultOrSupervisorSoftwareInterrupt: TrapCause = DATA_WIDTH'(1);
+            IllegalInstructionOrHypervisorSoftwareInterrupt: TrapCause = DATA_WIDTH'(2);
+            BreakpointOrMachineSoftwareInterrupt: TrapCause = DATA_WIDTH'(3);
+            LoadAddressMisalignedOrUserSoftwareInterrupt: TrapCause = DATA_WIDTH'(4);
+            LoadAddressFaultOrSupervisorTimerInterrupt: TrapCause = DATA_WIDTH'(5);
+            StoreAddressMisalignedOrHyperVisorTimerInterrupt: TrapCause = DATA_WIDTH'(6);
+            StoreAddressFaultOrMachineTimerInterrupt: TrapCause = DATA_WIDTH'(7);
+            EcallUOrUserExternalInterrupt: TrapCause = DATA_WIDTH'(8);
+            EcallSOrSupervisorExternalInterrupt: TrapCause = DATA_WIDTH'(9);
+            EcallHOrHypervisorExternalInterrupt: TrapCause = DATA_WIDTH'(10);
+            EcallMOrMachineExternalInterrupt: TrapCause = DATA_WIDTH'(11);
+            default: TrapCause = DATA_WIDTH'(0);
         endcase
     endfunction:TrapCause
 
-    function automatic logic [ADDR_WIDTH-1:0] TrapVector(input logic Interrupt, input logic [DATA_WIDTH-1:0] Cause);
-        TrapVector = {CsrFile[mtvec][ADDR_WIDTH-1:2], 2'b00};
-        if(Interrupt && (CsrFile[mtvec][`MTVEC_MODE_END:`MTVEC_MODE_START] == `MTVEC_VECTORED))
-            TrapVector = {CsrFile[mtvec][ADDR_WIDTH-1:2], 2'b00} + (Cause[ADDR_WIDTH-1:0] << 2);
-    endfunction:TrapVector
-
-    function void HandleTrapEntry(input logic [DATA_WIDTH-1:0] Cause, input logic Interrupt);
-        CsrFile[mepc] <= PC & AlignMask;
-        TrapIsSet <= 1'b1;
-        CsrFile[mstatus][`MPIE] <= CsrFile[mstatus][`MIE];
-        CsrFile[mstatus][`MIE] <= 1'b0;
-        CsrFile[mcause] <= {Interrupt, Cause[DATA_WIDTH-2:0]};
-        CsrOutPC <= TrapVector(Interrupt, Cause);
-    endfunction:HandleTrapEntry
-
-    function void HandleException;
-        HandleTrapEntry(TrapCause(Traps), 1'b0);
-        CsrFile[mbadaddr] <= Address;
-    endfunction:HandleException
-
-    function void HandleExternalInterrupt;
-        HandleTrapEntry(`MACHINE_EXTERNAL_INTERRUPT_CAUSE, 1'b1);
-        CsrFile[mip][`ME_I] <= ExternalInterrupt;
-    endfunction:HandleExternalInterrupt
-
-    function void HandleSoftwareInterrupt;
-        HandleTrapEntry(`MACHINE_SOFTWARE_INTERRUPT_CAUSE, 1'b1);
-        CsrFile[mip][`MS_I] <= SoftwareInterrupt;
-    endfunction:HandleSoftwareInterrupt
-
-    function void HandleTimerInterrupt;
-        HandleTrapEntry(`MACHINE_TIMER_INTERRUPT_CAUSE, 1'b1);
-        CsrFile[mip][`MT_I] <= TimerInterrupt;
-    endfunction:HandleTimerInterrupt
-
-    function void HandleReturn;
-        CsrOutPC <= CsrFile[mepc][ADDR_WIDTH-1:0] & AlignMask;
-        CsrFile[mstatus][`MIE] <= CsrFile[mstatus][`MPIE];
-        CsrFile[mstatus][`MPIE] <= 1'b1;
-        TrapIsSet <= 1'b0;
-    endfunction:HandleReturn
-
-    // Index must hold the full 12-bit CSR address (csr_index_t). Using
-    // ADDR_WIDTH (the 10-bit data-address width) here truncated high CSR
-    // addresses (mhartid/mcycle/...), so writes landed in the wrong slot
-    // while the read side used the full CsrIndex - register never updated.
-    function void UpdateCsr(input logic [DATA_WIDTH-1:0] X, input csr_index_t Index);
-        if(Index == mstatus)
-            CsrFile[Index] <= X & `mstatus_mask;
-        else if(Index == mtvec)
-            CsrFile[Index] <= X & `mtvec_mask;
-        else if(Index == mepc)
-            CsrFile[Index] <= X & `align_mask;
-        else if(Index == mscratch)
-            CsrFile[Index] <= X;
-        else if(Index == mie)
-            CsrFile[Index] <= X & `mie_mask;
-        else if(Index == mcause)
-            CsrFile[Index] <= X & `mcause_mask;
-        else if (Index == fflags)
-        begin
-            CsrFile[Index][4:0] <= X;
-            CsrFile[fcsr][4:0] <= X;
-        end
-        else if( Index == frm)
-        begin
-            CsrFile[Index][2:0] <= X;
-            CsrFile[fcsr][7:5] <= X;
-        end
-        else if( Index == fcsr)
-        begin
-            CsrFile[Index][7:0] <= X;
-            CsrFile[fflags][4:0] <= X;
-            CsrFile[frm][2:0] <= X[7:5];
-        end
-        else if(Index != misa && Index != mvendorid && Index != mip)
-            CsrFile[Index] <= X;
-    endfunction:UpdateCsr
-
-    function void UpdateInterruptPending;
-        CsrFile[mip][`MT_I] <= TimerInterrupt;
-        CsrFile[mip][`ME_I] <= ExternalInterrupt;
-        CsrFile[mip][`MS_I] <= SoftwareInterrupt;
-    endfunction:UpdateInterruptPending
-
-    initial 
+    // ─── Read views ───────────────────────────────────────────────────────────
+    always_comb
     begin
-        foreach (CsrFile[i]) 
+        MStatusValue = '0;
+        MStatusValue[`MIE] = MStatusMIE;
+        MStatusValue[`MPIE] = MStatusMPIE;
+        MStatusValue[`MPPE:`MPPS] = 2'b11;          // M-only: MPP is always M
+        MStatusValue[`FSE:`FSS] = 2'b11;            // FPU always on: FS = Dirty
+        MStatusValue[DATA_WIDTH-1] = 1'b1;          // SD = (FS == Dirty)
+
+        MieValue = '0;
+        MieValue[`ME_I] = MieMEIE;
+        MieValue[`MT_I] = MieMTIE;
+        MieValue[`MS_I] = MieMSIE;
+
+        MipValue = '0;                              // Pending bits follow the lines
+        MipValue[`ME_I] = ExternalInterrupt;
+        MipValue[`MT_I] = TimerInterrupt;
+        MipValue[`MS_I] = SoftwareInterrupt;
+    end
+
+    // ─── CSR read mux ─────────────────────────────────────────────────────────
+    always_comb
+    begin
+        CsrOut = '0;
+        CsrExists = 1'b1;
+        case(CsrIndex)
+            fflags:     CsrOut = DATA_WIDTH'(Fflags);
+            frm:        CsrOut = DATA_WIDTH'(Frm);
+            fcsr:       CsrOut = DATA_WIDTH'({Frm, Fflags});
+            mstatus:    CsrOut = MStatusValue;
+            misa:       CsrOut = MISA_VALUE;
+            medeleg:    CsrOut = '0;                // M-only: nothing to delegate
+            mideleg:    CsrOut = '0;
+            mie:        CsrOut = MieValue;
+            mtvec:      CsrOut = Mtvec;
+            mscratch:   CsrOut = Mscratch;
+            mepc:       CsrOut = Mepc;
+            mcause:     CsrOut = Mcause;
+            mtval:      CsrOut = Mtval;
+            mip:        CsrOut = MipValue;
+            mcycle,
+            cycle:      CsrOut = Mcycle[DATA_WIDTH-1:0];
+            minstret,
+            instret:    CsrOut = Minstret[DATA_WIDTH-1:0];
+            mvendorid:  CsrOut = MVENDORID_VALUE;
+            marchid,
+            mimpid,
+            mhartid:    CsrOut = '0;
+            mstatush:   CsrExists = !IS_RV64;       // RV32 only, reads zero
+            mcycleh,
+            cycleh:     begin
+                            CsrOut = DATA_WIDTH'(Mcycle[63:32]);
+                            CsrExists = !IS_RV64;
+                        end
+            minstreth,
+            instreth:   begin
+                            CsrOut = DATA_WIDTH'(Minstret[63:32]);
+                            CsrExists = !IS_RV64;
+                        end
+            default:    begin
+                            // mhpmcounter3-31 (+h on RV32) and mhpmevent3-31 read zero
+                            CsrExists = ((CsrIndex >= 12'hB03) && (CsrIndex <= 12'hB1F)) ||
+                                        ((CsrIndex >= 12'h323) && (CsrIndex <= 12'h33F)) ||
+                                        (!IS_RV64 && (CsrIndex >= 12'hB83) && (CsrIndex <= 12'hB9F));
+                        end
+        endcase
+    end
+
+    // ─── CSR write data ───────────────────────────────────────────────────────
+    always_comb
+    begin
+        Uimm = DATA_WIDTH'(Rs);
+        CsrWrite = 1'b0;
+        CsrWriteData = CsrOut;
+        case(CsrOperation)
+            csrrw:  begin
+                        CsrWrite = 1'b1;
+                        CsrWriteData = CsrIn;
+                    end
+            csrrs:  begin
+                        CsrWrite = (Rs != zero);
+                        CsrWriteData = CsrOut | CsrIn;
+                    end
+            csrrc:  begin
+                        CsrWrite = (Rs != zero);
+                        CsrWriteData = CsrOut & ~CsrIn;
+                    end
+            csrrwi: begin
+                        CsrWrite = 1'b1;
+                        CsrWriteData = Uimm;
+                    end
+            csrrsi: begin
+                        CsrWrite = (Rs != zero);
+                        CsrWriteData = CsrOut | Uimm;
+                    end
+            csrrci: begin
+                        CsrWrite = (Rs != zero);
+                        CsrWriteData = CsrOut & ~Uimm;
+                    end
+            default:CsrWrite = 1'b0;
+        endcase
+    end
+
+    // ─── Trap decision (combinational, same cycle) ───────────────────────────
+    always_comb
+    begin
+        CsrIllegal = CsrAccess && !CsrExists;
+        ExceptionValid = (Traps != NoTraps) || CsrIllegal;
+        ExceptionCause = CsrIllegal ? DATA_WIDTH'(2) : TrapCause(Traps);
+
+        // Priority MEI > MSI > MTI, gated by mstatus.MIE
+        InterruptPending = MStatusMIE && ((MieMEIE && ExternalInterrupt) ||
+                                          (MieMSIE && SoftwareInterrupt) ||
+                                          (MieMTIE && TimerInterrupt));
+        if(MieMEIE && ExternalInterrupt)
+            InterruptCause = DATA_WIDTH'(`MACHINE_EXTERNAL_INTERRUPT_CAUSE);
+        else if(MieMSIE && SoftwareInterrupt)
+            InterruptCause = DATA_WIDTH'(`MACHINE_SOFTWARE_INTERRUPT_CAUSE);
+        else
+            InterruptCause = DATA_WIDTH'(`MACHINE_TIMER_INTERRUPT_CAUSE);
+
+        TrapTaken = Commit && (InterruptPending || ExceptionValid);
+        MretTaken = Commit && mret && !TrapTaken;
+        TrapIsSet = TrapTaken || MretTaken;
+        Retire    = Commit && !TrapTaken;
+        CounterWrite = Commit && !TrapTaken && !mret && CsrAccess && CsrWrite;
+
+        CsrOutPC = Mepc;
+        if(TrapTaken)
         begin
-            CsrFile[i] = 0;
+            CsrOutPC = {Mtvec[DATA_WIDTH-1:2], 2'b00};
+            if(InterruptPending && (Mtvec[`MTVEC_MODE_END:`MTVEC_MODE_START] == `MTVEC_VECTORED))
+                CsrOutPC = {Mtvec[DATA_WIDTH-1:2], 2'b00} + (InterruptCause << 2);
         end
     end
 
-    always_ff @(posedge clk or negedge rst) 
+    // ─── State update ─────────────────────────────────────────────────────────
+    always_ff @(posedge clk or negedge rst)
     begin:CSR_File
-        if (!rst) 
+        if (!rst)
         begin:Reset
-            ResetCsrFile();
+            MStatusMIE  <= 1'b0;
+            MStatusMPIE <= 1'b0;
+            MieMEIE     <= 1'b0;
+            MieMTIE     <= 1'b0;
+            MieMSIE     <= 1'b0;
+            Mtvec       <= '0;
+            Mscratch    <= '0;
+            Mepc        <= '0;
+            Mcause      <= '0;
+            Mtval       <= '0;
+            Mcycle      <= '0;
+            Minstret    <= '0;
+            Fflags      <= '0;
+            Frm         <= '0;
         end:Reset
         else
-        begin 
-            UpdateInterruptPending();
-            if (TrapsNotZero)
-            begin:Exception_Handling
-                HandleException();
-            end:Exception_Handling
-            else if(mret)
+        begin
+            // Counters. A CSR write to either half of a counter replaces that
+            // cycle's increment (Zicsr: "the write is done instead of the
+            // increment"), so the increment is suppressed for both halves.
+            if(!(CounterWrite && ((CsrIndex == mcycle) || (CsrIndex == mcycleh))))
+                Mcycle <= Mcycle + 1'b1;
+            if(Retire && !(CounterWrite && ((CsrIndex == minstret) || (CsrIndex == minstreth))))
+                Minstret <= Minstret + 1'b1;
+
+            if(TrapTaken)
+            begin:Trap_Entry
+                Mepc        <= {PC[DATA_WIDTH-1:2], 2'b00};
+                Mcause      <= InterruptPending ? {1'b1, InterruptCause[DATA_WIDTH-2:0]}
+                                                : ExceptionCause;
+                Mtval       <= (InterruptPending || CsrIllegal) ? '0 : Address;
+                MStatusMPIE <= MStatusMIE;
+                MStatusMIE  <= 1'b0;
+            end:Trap_Entry
+            else if(MretTaken)
             begin:Return_From_Trap
-                HandleReturn();
+                MStatusMIE  <= MStatusMPIE;
+                MStatusMPIE <= 1'b1;
             end:Return_From_Trap
-            else if(InterruptSet)
-            begin:Interrupt_Handling
-                if(ExternalInterruptSet)
-                begin:External_Interrupt
-                    HandleExternalInterrupt();
-                end:External_Interrupt
-                else if(SoftwareInterruptSet)
-                begin:Software_Interrupt
-                    HandleSoftwareInterrupt();
-                end:Software_Interrupt
-                else if(TimerInterruptSet)
-                begin:Timer_Interrupt
-                    HandleTimerInterrupt();
-                end:Timer_Interrupt
-            end:Interrupt_Handling
-            else if (CsrAccess) 
+            else if(Commit && CsrAccess && CsrWrite)
             begin:CSR_Access
-                CsrOut <= CsrFile[CsrIndex];
-                TrapIsSet <= 1'b0;
-                case(CsrOperation)   
-                    csrrw: 
-                    begin:CSR_RW
-                        UpdateCsr((CsrIn), CsrIndex);
-                    end:CSR_RW
-                    
-                    csrrs: 
-                    begin:CSR_Set
-                        if(RsNotZero)
-                            UpdateCsr((CsrIn | CsrFile[CsrIndex]), CsrIndex);
-                    end:CSR_Set
-                    
-                    csrrc: 
-                    begin:CSR_Clear
-                        if(RsNotZero)
-                            UpdateCsr(~CsrIn & CsrFile[CsrIndex], CsrIndex);
-                    end:CSR_Clear
-                    
-                    csrrwi: 
-                    begin:Write_Immediate
-                        UpdateCsr({27'b0, Rs}, CsrIndex);
-                    end:Write_Immediate
-                    
-                    csrrsi: 
-                    begin:Set_Immediate
-                        if(RsNotZero)
-                            UpdateCsr(CsrFile[CsrIndex] | {27'b0, Rs}, CsrIndex);
-                    end:Set_Immediate
-                    
-                    csrrci: 
-                    begin:Clear_Immediate
-                        if(RsNotZero)
-                            UpdateCsr(CsrFile[CsrIndex] & ~{27'b0, Rs}, CsrIndex);
-                    end:Clear_Immediate
+                case(CsrIndex)
+                    fflags:     Fflags <= CsrWriteData[4:0];
+                    frm:        Frm <= CsrWriteData[2:0];
+                    fcsr:       {Frm, Fflags} <= CsrWriteData[7:0];
+                    mstatus:    begin
+                                    MStatusMIE  <= CsrWriteData[`MIE];
+                                    MStatusMPIE <= CsrWriteData[`MPIE];
+                                end
+                    mie:        begin
+                                    MieMEIE <= CsrWriteData[`ME_I];
+                                    MieMTIE <= CsrWriteData[`MT_I];
+                                    MieMSIE <= CsrWriteData[`MS_I];
+                                end
+                    mtvec:      Mtvec <= {CsrWriteData[DATA_WIDTH-1:2], 1'b0, CsrWriteData[0]};
+                    mscratch:   Mscratch <= CsrWriteData;
+                    mepc:       Mepc <= {CsrWriteData[DATA_WIDTH-1:2], 2'b00};
+                    mcause:     Mcause <= CsrWriteData;
+                    mtval:      Mtval <= CsrWriteData;
+                    mcycle:     Mcycle[DATA_WIDTH-1:0] <= CsrWriteData;
+                    minstret:   Minstret[DATA_WIDTH-1:0] <= CsrWriteData;
+                    mcycleh:    if(!IS_RV64) Mcycle[63:32] <= CsrWriteData[31:0];
+                    minstreth:  if(!IS_RV64) Minstret[63:32] <= CsrWriteData[31:0];
+                    // misa (WARL, fixed), mip (driven by the lines), medeleg,
+                    // mideleg, mstatush and the mhpm* registers ignore writes.
+                    // Writes to the read-only space trap in decode.
+                    default:    ;
                 endcase
             end:CSR_Access
-            else
-            begin:No_Operation
-                CsrOut <= 'b0;
-                TrapIsSet <= 1'b0;
-            end:No_Operation
         end
     end:CSR_File
 
-    assign RoundingMode = round_mode_t'(CsrFile[frm][2:0]);
-
+    assign RoundingMode = round_mode_t'(Frm);
 
 endmodule

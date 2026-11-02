@@ -47,6 +47,7 @@ package fetch_test_pkg;
         
         virtual task run_phase (uvm_phase phase);
             phase.raise_objection(this);
+                env.mem_checker.check_image();
                 main_sequence.start(env.agent.seq);
             phase.drop_objection(this);
         endtask:run_phase
@@ -56,4 +57,4 @@ package fetch_test_pkg;
 
 
 
-endpackage:fetch_test_pkg
+endpackage:fetch_test_pkg

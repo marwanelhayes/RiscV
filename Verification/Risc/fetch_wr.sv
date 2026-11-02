@@ -5,13 +5,14 @@ interface fetch_wr
 (
     input clk,
     input rst,
-    input [FINAL_ADDR_WIDTH-1:0] PCF,
+    input [FINAL_DATA_WIDTH-1:0] PCF,
     input StallD,
     input FlushD,
     
-    input logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D,
-    input logic [FINAL_DATA_WIDTH-1:0] InstructionD,
-    input logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F
+    input logic [FINAL_DATA_WIDTH-1:0] PCPlus4D,
+    input logic [INSTR_WIDTH-1:0] InstructionD,
+    input logic ValidD,
+    input logic [FINAL_DATA_WIDTH-1:0] PCPlus4F
 );
 
     fetch_interface fetch_intf 
@@ -24,14 +25,17 @@ interface fetch_wr
         fetch_intf.PCF = PCF;
         fetch_intf.StallD = StallD;
         fetch_intf.FlushD = FlushD;
+        fetch_intf.StallBit = StallD;     // in the core the request is the pin
+        fetch_intf.FlushBit = FlushD;
         fetch_intf.PCPlus4D = PCPlus4D ;
         fetch_intf.InstructionD = InstructionD ;
+        fetch_intf.ValidD = ValidD ;
         fetch_intf.PCPlus4F = PCPlus4F ;
     end
 
     initial
     begin
-        uvm_config_db #(virtual fetch_interface)::set(null,"","INTF",fetch_intf.TEST);
+        uvm_config_db #(virtual fetch_interface)::set(null,"","INTF",fetch_intf);
     end
 
 endinterface

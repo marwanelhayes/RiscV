@@ -1,7 +1,11 @@
 // =============================================================================
 // risc_instruction_memory.sv
 // -----------------------------------------------------------------------------
-// Instruction memory (ROM) with direct read and AXI4 slave read interface.
+// Instruction memory (ROM) with an AXI4 slave read interface.
+//
+// The program image (one 32-bit instruction per line, binary) is loaded from
+// INIT_FILE. With DATA_WIDTH = 64 each memory word packs two consecutive
+// instructions, the lower address in the low half (little endian).
 // =============================================================================
 import shared_pkg::*;
 
@@ -9,7 +13,8 @@ module risc_instruction_memory
 #(
     parameter int DATA_WIDTH = 32,
     parameter int ADDR_WIDTH = 32,
-    parameter int AXI_SIZE   = 4
+    parameter int AXI_SIZE   = 4,
+    parameter string INIT_FILE = INSTR_MEM_PATH     // Program image ($readmemb format)
 )
 (
     input  logic                  clk,
@@ -51,26 +56,33 @@ module risc_instruction_memory
     output logic                  MRRValid
 );
 
-    localparam int DEPTH = 2**(ADDR_WIDTH-2);
+    localparam int BYTE_OFF_W = $clog2(DATA_WIDTH/8);
+    localparam int DEPTH = 2**(ADDR_WIDTH-BYTE_OFF_W);
+    localparam int INSTR_PER_WORD = DATA_WIDTH / INSTR_WIDTH;
 
     logic [DATA_WIDTH-1:0] mem [DEPTH];
-    logic [ADDR_WIDTH-3:0] word_aligned_addr;
-    logic [ADDR_WIDTH-3:0] raddr, raddr_next;
+    logic [INSTR_WIDTH-1:0] image [DEPTH*INSTR_PER_WORD];
+    logic [ADDR_WIDTH-BYTE_OFF_W-1:0] word_aligned_addr;
+    logic [ADDR_WIDTH-BYTE_OFF_W-1:0] raddr, raddr_next;
     logic [AXI_SIZE-1:0]   rsize;
     axi_burst_t            rburst;
     logic [7:0]            rlen, rcnt, wlen, wcnt;
     logic                  read_active, write_active;
 
-    assign raddr_next = (rburst == FIXED) ? raddr : (raddr + ((1 << rsize) >> 2));
+    assign raddr_next = (rburst == FIXED) ? raddr : (raddr + ((1 << rsize) >> BYTE_OFF_W));
     assign MARReady = !read_active;
     assign MAWReady = !write_active && !MBValid;
     assign MWReady  = write_active;
     assign MBResp   = AXI_SLVERR;
-    assign word_aligned_addr = MARAddr[ADDR_WIDTH-1:2];
+    assign word_aligned_addr = MARAddr[ADDR_WIDTH-1:BYTE_OFF_W];
 
     initial
     begin
-        $readmemb("/home/marwan-ahmed/Work/RiscV/Python/binary1.txt", mem);
+        foreach (image[i]) image[i] = '0;
+        $readmemb(INIT_FILE, image);
+        foreach (mem[i])
+            for(int k = 0; k < INSTR_PER_WORD; k++)
+                mem[i][INSTR_WIDTH*k +: INSTR_WIDTH] = image[INSTR_PER_WORD*i + k];
     end
 
     always_ff @(posedge clk or negedge rst)

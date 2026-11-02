@@ -20,7 +20,7 @@ package decode_subscriber_pkg;
         // constrained instruction stream; encodings ruled out become ignore_bins.
         covergroup cvr_grp();
 
-            // Instruction opcode (nine implemented types per ValidInstructions).
+            // Instruction opcode: every claimed opcode space plus everything else (illegal).
             opcode_cg: coverpoint sub_item.InstructionD[6:0] iff(sub_item.rst)
             {
                 bins r_type      = {R_TYPE};
@@ -30,8 +30,14 @@ package decode_subscriber_pkg;
                 bins i_type      = {I_TYPE};
                 bins jal         = {JAL};
                 bins jalr        = {JALR};
+                bins lui         = {LUI};
+                bins auipc       = {AUIPC};
+                bins misc_mem    = {MISC_MEM};
+                bins op_imm_32   = {OP_IMM_32};
+                bins op_32       = {OP_32};
                 bins csr         = {CSR};
                 bins floating_pt = {FLOATING_PT};
+                bins other       = default;
             }
 
             // Decoded ALU operation (all eighteen).
@@ -58,7 +64,7 @@ package decode_subscriber_pkg;
             CsrIndexE_cg: coverpoint sub_item.CsrIndexE iff(sub_item.rst)
             {
                 bins idx[] = {fflags, frm, fcsr, mstatus, misa, medeleg, mideleg, mie,
-                              mtvec, mscratch, mepc, mcause, mbadaddr, mip, mcycle,
+                              mtvec, mscratch, mepc, mcause, mtval, mip, mcycle, cycle,
                               mhartid, mvendorid};
             }
 
@@ -103,9 +109,10 @@ package decode_subscriber_pkg;
             EcallE_cg: coverpoint sub_item.EcallE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }
             EbreakE_cg: coverpoint sub_item.EbreakE iff(sub_item.rst)           { bins lo = {0}; bins hi = {1}; }
             MRetE_cg: coverpoint sub_item.MRetE iff(sub_item.rst)               { bins lo = {0}; bins hi = {1}; }
-            // ValidInstructions generates only legal opcodes, so an illegal
-            // instruction is never produced - the high bin is unreachable.
-            IllegaleInstructionE_cg: coverpoint sub_item.IllegaleInstructionE iff(sub_item.rst) { bins lo = {0}; ignore_bins never_illegal = {1}; }
+            // Reserved encodings must be seen and flagged illegal
+            IllegaleInstructionE_cg: coverpoint sub_item.IllegaleInstructionE iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
+            StallE_cg: coverpoint sub_item.StallE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }
+            ValidE_cg: coverpoint sub_item.ValidE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }
             FlushE_cg: coverpoint sub_item.FlushE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }
             FPUValidE_cg: coverpoint sub_item.FPUValidE iff(sub_item.rst)       { bins lo = {0}; bins hi = {1}; }
             RegWriteW_cg: coverpoint sub_item.RegWriteW iff(sub_item.rst)       { bins lo = {0}; bins hi = {1}; }
@@ -117,12 +124,6 @@ package decode_subscriber_pkg;
             RdW_cg: coverpoint sub_item.RdW iff(sub_item.rst)
             {
                 ignore_bins x0 = {zero};
-            }
-            MoveOperationW_cg: coverpoint sub_item.MoveOperationW iff(sub_item.rst)
-            {
-                bins fpu_to_reg = {FPUToReg};
-                bins reg_to_fpu = {RegToFPU};
-                bins fpu_to_fpu = {FPUToFPU};
             }
 
             // ── Crosses ──────────────────────────────────────────────────────

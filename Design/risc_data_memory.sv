@@ -51,7 +51,8 @@ module risc_data_memory
     output logic                  MRRValid
 );
 
-    localparam int DEPTH = 2**(ADDR_WIDTH - 2); // Assuming word-addressable memory
+    localparam int BYTE_OFF_W = $clog2(DATA_WIDTH/8);
+    localparam int DEPTH = 2**(ADDR_WIDTH - BYTE_OFF_W); // One entry per DATA_WIDTH word
     localparam int STRB_WIDTH = DATA_WIDTH / 8;
 
     logic [DATA_WIDTH-1:0] mem [DEPTH];
@@ -100,7 +101,7 @@ module risc_data_memory
             begin
                 read_active <= 1'b1;
                 MRRValid <= 1'b1;
-                MRRData <= mem[MARAddr[ADDR_WIDTH-1:2]];
+                MRRData <= mem[MARAddr[ADDR_WIDTH-1:BYTE_OFF_W]];
                 MRRResp <= AXI_OKAY;
                 MRRLast <= (MARLen == '0);
                 raddr <= MARAddr;
@@ -121,7 +122,7 @@ module risc_data_memory
                 begin
                     rcnt <= rcnt + 1'b1;
                     raddr <= raddr_next;
-                    MRRData <= mem[raddr_next[ADDR_WIDTH-1:2]];
+                    MRRData <= mem[raddr_next[ADDR_WIDTH-1:BYTE_OFF_W]];
                     MRRResp <= AXI_OKAY;
                     MRRLast <= ((rcnt + 1'b1) == rlen);
                 end
@@ -140,7 +141,7 @@ module risc_data_memory
             begin
                 for(int i = 0; i < STRB_WIDTH; i = i + 1)
                     if(MWStrb[i])
-                        mem[waddr[ADDR_WIDTH-1:2]][8*i +: 8] <= MWData[8*i +: 8];
+                        mem[waddr[ADDR_WIDTH-1:BYTE_OFF_W]][8*i +: 8] <= MWData[8*i +: 8];
                 wcnt <= wcnt + 1'b1;
                 waddr <= (wburst == FIXED) ? waddr : waddr + (1 << wsize);
                 if(MWLast || (wcnt == wlen))

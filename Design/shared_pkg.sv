@@ -12,6 +12,11 @@
 //   - Define pipeline state machine types for FPU operations
 //   - Provide global design parameters (data width, address width, precision)
 // =============================================================================
+// XLEN is chosen at compile time: vlog +define+XLEN=64 builds the RV64 core.
+`ifndef XLEN
+    `define XLEN 32
+`endif
+
 package shared_pkg;
     typedef enum logic [6:0] 
     { 
@@ -22,6 +27,11 @@ package shared_pkg;
         I_TYPE       = 7'b001_0011 , 
         JAL          = 7'b110_1111 , 
         JALR         = 7'b110_0111 , 
+        LUI          = 7'b011_0111 ,
+        AUIPC        = 7'b001_0111 ,
+        MISC_MEM     = 7'b000_1111 ,   // FENCE (FENCE.I needs Zifencei)
+        OP_IMM_32    = 7'b001_1011 ,   // RV64 only: ADDIW, SLLIW, SRLIW, SRAIW
+        OP_32        = 7'b011_1011 ,   // RV64 only: ADDW ... REMUW
         CSR          = 7'b111_0011 ,
         FLOATING_PT  = 7'b101_0011
     } opcode_t;
@@ -127,11 +137,21 @@ package shared_pkg;
         mscratch    = 12'h340 ,
         mepc        = 12'h341 ,
         mcause      = 12'h342 ,
-        mbadaddr    = 12'h343 ,
+        mtval       = 12'h343 ,
         mip         = 12'h344 , 
-        mcycle      = 12'hC00 ,  
-        mhartid     = 12'hF14 ,
-        mvendorid   = 12'hF11
+        mstatush    = 12'h310 ,  // RV32 only, reads zero
+        mcycle      = 12'hB00 ,
+        minstret    = 12'hB02 ,
+        mcycleh     = 12'hB80 ,  // RV32 only
+        minstreth   = 12'hB82 ,  // RV32 only
+        cycle       = 12'hC00 ,  // read-only alias of mcycle
+        instret     = 12'hC02 ,  // read-only alias of minstret
+        cycleh      = 12'hC80 ,  // RV32 only, read-only alias of mcycleh
+        instreth    = 12'hC82 ,  // RV32 only, read-only alias of minstreth
+        mvendorid   = 12'hF11 ,
+        marchid     = 12'hF12 ,
+        mimpid      = 12'hF13 ,
+        mhartid     = 12'hF14
     } csr_index_t;
 
     typedef enum logic [2:0] 
@@ -139,8 +159,10 @@ package shared_pkg;
         B   = 3'b000 , 
         HW  = 3'b001 , 
         W   = 3'b010 , 
+        D   = 3'b011 ,   // RV64 only
         BU  = 3'b100 , 
-        HWU = 3'b101
+        HWU = 3'b101 ,
+        WU  = 3'b110     // RV64 only
     } load_store_t;
 
     typedef enum logic [1:0] 
@@ -301,11 +323,9 @@ package shared_pkg;
     {
         SQRT_INIT    = 3'b000,
         SQRT_IDLE    = 3'b001,
-        SQRT_MUL1    = 3'b010,
-        SQRT_MUL2    = 3'b011,
-        SQRT_ADD_SUB = 3'b100,
-        SQRT_MUL3    = 3'b101,
-        SQRT_MUL4    = 3'b110,
+        SQRT_NORM    = 3'b010,     // normalise and scale the radicand
+        SQRT_ITER    = 3'b011,     // one root bit per cycle
+        SQRT_ROUND   = 3'b100,     // final rounding
         SQRT_DONE    = 3'b111
     } flp_sqrt_state_t;
 
@@ -340,8 +360,9 @@ package shared_pkg;
     // You can modify these parameters to change the design specifications
     // These parameters are used across the design and verification packages, so changing them here will reflect in all the relevant files     
     parameter int   ALU_OP                  = 4;
-    parameter int   FINAL_DATA_WIDTH        = 32;
-    parameter int   FINAL_ADDR_WIDTH        = 10;
+    parameter int   INSTR_WIDTH             = 32;       // Instructions are 32-bit at any XLEN
+    parameter int   FINAL_DATA_WIDTH        = `XLEN;    // XLEN: 32 or 64
+    parameter int   FINAL_ADDR_WIDTH        = 12;       // Physical address width (4 KiB per memory)
     parameter flp_t FINAL_PRECISION         = SINGLE;
     parameter int   FINAL_FLP_WIDTH         = (FINAL_PRECISION == SINGLE) ? 32 : 64;
     parameter int   FINAL_FLP_EXP_BITS      = (FINAL_PRECISION == SINGLE) ? 8  : 11;
@@ -356,8 +377,9 @@ package shared_pkg;
     parameter int   CACHE_AXI_SIZE          = 4;
 
     // ── Verification reference image path ─────────────────────────────────
-    // Used by predictor and scoreboard so memory contents stay in sync with
-    // the design's instruction-memory ROM image.
-    parameter string INSTR_MEM_PATH         = "/home/marwan-ahmed/Work/RiscV/Python/binary1.txt";
+    // Used by the instruction-memory model, predictors and scoreboards so
+    // they all load the same program image. Relative to the simulation
+    // working directory (Questa/Scratch).
+    parameter string INSTR_MEM_PATH         = "../../Python/binary1.txt";
 
 endpackage:shared_pkg

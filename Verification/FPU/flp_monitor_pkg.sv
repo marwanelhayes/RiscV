@@ -18,6 +18,7 @@ package flp_monitor_pkg;
         flp_item mon_item, cloned_item , decoupled_item , decoupled_item_clone;
         flp_item monitor_queue[$];
         virtual flp_interface vif;
+        bit done_prev;      // done is held high while the consumer stalls (hold)
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -35,6 +36,7 @@ package flp_monitor_pkg;
                     if(!$cast(cloned_item, mon_item.clone()))
                         `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
                     monitor_queue.delete();
+                    done_prev = 0;
                     mon_port.write(cloned_item);
                 end
                 else
@@ -46,7 +48,8 @@ package flp_monitor_pkg;
                         monitor_queue.push_back(cloned_item);
                         `uvm_info("MON", {$sformatf("Valid item received and stored in queue. Queue size: %0d", monitor_queue.size()), cloned_item.convert2str()}, UVM_HIGH)
                     end
-                    if(vif.checkifdone(mon_item))
+                    // One completion per operation: the rising edge of done
+                    if(vif.checkifdone(mon_item) && !done_prev)
                     begin
                         if(monitor_queue.size() == 0)
                             `uvm_fatal("QUEUE_UNDERFLOW","Monitor queue is empty when a done item is received - possible missing valid item - Major Design Flaw")
@@ -57,6 +60,7 @@ package flp_monitor_pkg;
                         `uvm_info("MON", {$sformatf("Done item received and stored in queue. Queue size: %0d", monitor_queue.size()), decoupled_item_clone.convert2str(),decoupled_item_clone.getoutputs()}, UVM_HIGH)
                         mon_port.write(decoupled_item_clone);
                     end
+                    done_prev = vif.checkifdone(mon_item);
                 end
             end:monitoring
         endtask:run_phase

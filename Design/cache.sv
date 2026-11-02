@@ -5,8 +5,8 @@
 //
 // WAY model:
 //   - WAY = 1                 -> direct-mapped cache
-//   - 1 < WAY < TOTAL_LINES           -> set-WAYiative cache
-//   - WAY = TOTAL_LINES               -> fully WAYiative cache
+//   - 1 < WAY < TOTAL_LINES           -> set-associative cache
+//   - WAY = TOTAL_LINES               -> fully associative cache
 //
 // Geometry defaults:
 //   TOTAL_LINES       = 32
@@ -20,13 +20,22 @@
 //
 // Data cache policy: write-back, write-allocate
 //   - Read hit:    return word immediately
-//   - Read miss:   AXI burst read, allocate/fill selected victim way
-//   - Write hit:   update cache word, AXI single write
-//   - Write miss:  AXI single write only, line allocation
+//   - Read-through: the cycle after the missed word arrives during a refill,
+//                  CacheHit is raised for exactly one cycle with that word (the
+//                  refill may still be running); any later cycle looks the line
+//                  up normally once the refill is complete
+//   - Read miss:   if the victim line is dirty, AXI burst write-back first;
+//                  then AXI burst read to fill the victim way
+//   - Write hit:   merge the enabled store bytes into the cached word and
+//                  mark the line dirty (no AXI traffic)
+//   - Write miss:  same refill as a read miss, then merge the enabled store
+//                  bytes into the filled line and mark it dirty
 //
 // Replacement policy for WAY > 1:
 //   - invalid way first
-//   - otherwise last recently used per set
+//   - otherwise the true least recently used way of the set: each set keeps
+//     an age rank per way (0 = most recent, WAY-1 = least recent), updated
+//     on every hit and on every completed refill
 //
 // I-cache: set READ_ONLY=1 to ignore/synthesize away write behavior.
 // =============================================================================
@@ -50,6 +59,7 @@ module cache
     // ── CPU-side interface ────────────────────────────────────────────────────
     input  logic [ADDR_WIDTH-1:0] CPUAddr,
     input  logic [DATA_WIDTH-1:0] CPUWriteData,
+    input  logic [(DATA_WIDTH/8)-1:0] CPUByteEn,  // Bytes written by a store
     input  logic                  CPUWriteEn,
     input  logic                  CPUReadEn,
     output logic [DATA_WIDTH-1:0] CPUReadData,
@@ -106,6 +116,15 @@ module cache
     localparam int WORD_W      = (WORD_W_RAW  > 0)  ? WORD_W_RAW          : 1;
     localparam int TAG_W       = ADDR_WIDTH - OFF_W - IDX_W_RAW;
 
+    // The cache must be smaller than the address space it caches
+    // (elaboration-time check).
+    generate
+        if(TAG_W < 1)
+        begin:gen_bad_geometry
+            $error("cache: ADDR_WIDTH leaves no tag bits for this line size and set count");
+        end:gen_bad_geometry
+    endgenerate
+
     logic valid_reg [SETS][WAY];  // valid bits
     logic valid [SETS][WAY];
     logic [TAG_W-1:0] tags_reg [SETS][WAY];  // tags
@@ -118,6 +137,7 @@ module cache
     logic [WAY_W-1:0] lru_way_empty [SETS];
     logic pending_write;
     logic [DATA_WIDTH-1:0] pending_write_data;
+    logic [(DATA_WIDTH/8)-1:0] pending_write_be;
     logic [ADDR_WIDTH-1:0] miss_line_addr;
     logic [WAY_W-1:0] hit_way;
     logic [WAY_W-1:0] victim_way;
@@ -155,14 +175,24 @@ module cache
     axi_burst_t            MARBurst_next;
     logic                  MARValid_next;
 
-    logic [3:0] lru_counter [SETS][WAY];
     logic [WAY_W-1:0] lru_way [SETS];
-    logic [WAY_W-1:0] lru_min_way;
 
     logic and_valid_bits;
 
 
     axi_state_t state, next_state;
+
+    // Byte-wise merge of a store into a cached word
+    function automatic logic [DATA_WIDTH-1:0] MergeBytes(
+        input logic [DATA_WIDTH-1:0]     OldWord,
+        input logic [DATA_WIDTH-1:0]     NewWord,
+        input logic [(DATA_WIDTH/8)-1:0] ByteEn
+    );
+        MergeBytes = OldWord;
+        for(int b = 0; b < DATA_WIDTH/8; b++)
+            if(ByteEn[b])
+                MergeBytes[8*b +: 8] = NewWord[8*b +: 8];
+    endfunction:MergeBytes
 
     always_comb
     begin
@@ -243,7 +273,7 @@ module cache
             begin
                 if(read_through_hit_reg)
                 begin
-                    CPUReadData = data_reg[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1 : 2]];
+                    CPUReadData = data_reg[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1 : BYTE_OFF_W]];
                 end
                 else if(CPUWriteEn && CacheHit)
                 begin
@@ -251,7 +281,7 @@ module cache
                 end
                 else if(CacheHit)
                 begin
-                    CPUReadData = data_reg[CpuIdx][0][CpuOffset[OFF_W-1 : 2]];
+                    CPUReadData = data_reg[CpuIdx][0][CpuOffset[OFF_W-1 : BYTE_OFF_W]];
                 end
                 else
                 begin
@@ -297,13 +327,39 @@ module cache
                         end
                         else
                         begin
-                            CPUReadData = data_reg[CpuIdx][i][CpuOffset[OFF_W-1 : 2]];
+                            CPUReadData = data_reg[CpuIdx][i][CpuOffset[OFF_W-1 : BYTE_OFF_W]];
                         end
                     end
                     else if(read_through_hit_reg)
                     begin
-                        CPUReadData = data_reg[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1 : 2]];
+                        CPUReadData = data_reg[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1 : BYTE_OFF_W]];
                     end
+                end
+            end
+
+            // True LRU: per-set age ranks, kept as a permutation of
+            // 0..WAY-1 (0 = most recently used). A way is "used" by a hit on an
+            // idle access or by a successful refill into it.
+            logic [WAY_W-1:0] lru_age [SETS][WAY];
+            logic             lru_touch;
+            logic [IDX_W-1:0] lru_touch_idx;
+            logic [WAY_W-1:0] lru_touch_way;
+
+            always_comb
+            begin
+                lru_touch = 1'b0;
+                lru_touch_idx = CpuIdx;
+                lru_touch_way = hit_way;
+                if((state == AXI_RD_DATA) && MRRValid && MRReady && MRRLast &&
+                   (MRRResp == AXI_OKAY) && !refill_error_reg)
+                begin
+                    lru_touch = 1'b1;
+                    lru_touch_idx = CpuIdx_reg;
+                    lru_touch_way = victim_way_reg;
+                end
+                else if((CPUReadEn || CPUWriteEn) && (|hit_array) && (state == AXI_IDLE))
+                begin
+                    lru_touch = 1'b1;
                 end
             end
 
@@ -311,47 +367,29 @@ module cache
             begin
                 if(!rst)
                 begin
-                    foreach (lru_counter[i, j]) lru_counter[i][j] <= '0;
+                    foreach (lru_age[i, j]) lru_age[i][j] <= WAY_W'(j);
                 end
-                else
+                else if(lru_touch)
                 begin
-                    foreach(hit_array[i])
+                    for(int j = 0; j < WAY; j++)
                     begin
-                        if(hit_array[i])
-                        begin
-                            if(lru_counter[CpuIdx][i] < 15)
-                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] + 1'b1;
-                        end
-                        else
-                        begin
-                            if(lru_counter[CpuIdx][i] > 0)
-                                lru_counter[CpuIdx][i] <= lru_counter[CpuIdx][i] - 1'b1;
-                        end
+                        if(WAY_W'(j) == lru_touch_way)
+                            lru_age[lru_touch_idx][j] <= '0;
+                        else if(lru_age[lru_touch_idx][j] < lru_age[lru_touch_idx][lru_touch_way])
+                            lru_age[lru_touch_idx][j] <= lru_age[lru_touch_idx][j] + 1'b1;
                     end
                 end
             end
 
-            // Least-recently-used way = way with the minimum counter (lowest
-            // index wins on a tie). Computed combinationally, registered below.
+            // LRU way of each set = the way with the oldest age rank.
             always_comb
             begin
-                lru_min_way = '0;
-                for(int i = 1; i < WAY; i++)
+                foreach (lru_way[i])
                 begin
-                    if(lru_counter[CpuIdx][i] < lru_counter[CpuIdx][lru_min_way])
-                        lru_min_way = WAY_W'(i);
-                end
-            end
-
-            always_ff @(negedge clk or negedge rst)
-            begin
-                if(!rst)
-                begin
-                    foreach (lru_way[i]) lru_way[i] <= '0;
-                end
-                else
-                begin
-                    lru_way[CpuIdx] <= lru_min_way;
+                    lru_way[i] = '0;
+                    for(int j = 0; j < WAY; j++)
+                        if(lru_age[i][j] == WAY_W'(WAY-1))
+                            lru_way[i] = WAY_W'(j);
                 end
             end
         end:gen_set_associative
@@ -366,6 +404,7 @@ module cache
             CpuOffset_reg <= '0;
             pending_write <= 1'b0;
             pending_write_data <= '0;
+            pending_write_be <= '0;
             miss_line_addr <= '0;
             victim_way_reg <= '0;
         end
@@ -376,6 +415,7 @@ module cache
                 CpuOffset_reg <= CpuOffset;
                 pending_write <= CPUWriteEn;
                 pending_write_data <= CPUWriteData;
+                pending_write_be <= CPUByteEn;
                 miss_line_addr <= {CPUAddr[ADDR_WIDTH-1:OFF_W], {OFF_W{1'b0}}};
                 victim_way_reg <= victim_way;
                 if(WAY == TOTAL_LINES)
@@ -486,7 +526,7 @@ module cache
                 MARValid_next = MARValid;
                 counter = counter_reg;
                 lru_way_empty = lru_way_empty_reg;
-                read_through_hit = read_through_hit_reg;
+                read_through_hit = 1'b0;          // one-cycle pulse: set only when the missed word arrives
                 refill_error = refill_error_reg;
 
                 case(state)
@@ -569,7 +609,7 @@ module cache
                                 begin
                                     refill_error = 1'b1;
                                 end
-                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:2])))
+                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:BYTE_OFF_W])))
                                 begin
                                     read_through_hit = 1'b1;
                                 end
@@ -602,7 +642,7 @@ module cache
                                 begin
                                     refill_error = 1'b1;
                                 end
-                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:2])))
+                                if((MRRResp == AXI_OKAY) && (counter == (CpuOffset_reg[OFF_W-1:BYTE_OFF_W])))
                                 begin
                                     read_through_hit = 1'b1;
                                 end
@@ -680,7 +720,7 @@ module cache
                 MARValid_next = MARValid;
                 counter = counter_reg;
                 lru_way_empty = lru_way_empty_reg;
-                read_through_hit = read_through_hit_reg;
+                read_through_hit = 1'b0;          // one-cycle pulse: set only when the missed word arrives
                 refill_error = refill_error_reg;
                 dirty = dirty_reg;
 
@@ -770,12 +810,12 @@ module cache
                             read_through_hit = 1'b0;
                             if(WAY == 1)
                             begin:direct_mapped_write
-                                data[CpuIdx][0][CpuOffset[OFF_W-1:2]] = CPUWriteData;
+                                data[CpuIdx][0][CpuOffset[OFF_W-1:BYTE_OFF_W]] = MergeBytes(data_reg[CpuIdx][0][CpuOffset[OFF_W-1:BYTE_OFF_W]], CPUWriteData, CPUByteEn);
                                 dirty[CpuIdx][0] = 1'b1;
                             end:direct_mapped_write
                             else                            
                             begin:set_associative_write
-                                data[CpuIdx][hit_way][CpuOffset[OFF_W-1:2]] = CPUWriteData;
+                                data[CpuIdx][hit_way][CpuOffset[OFF_W-1:BYTE_OFF_W]] = MergeBytes(data_reg[CpuIdx][hit_way][CpuOffset[OFF_W-1:BYTE_OFF_W]], CPUWriteData, CPUByteEn);
                                 dirty[CpuIdx][hit_way] = 1'b1;
                             end:set_associative_write
                         end
@@ -962,7 +1002,7 @@ module cache
                                     refill_error = 1'b1;
                                 end
                                 if((MRRResp == AXI_OKAY) && !pending_write &&
-                                   (counter == (CpuOffset_reg[OFF_W-1:2])))
+                                   (counter == (CpuOffset_reg[OFF_W-1:BYTE_OFF_W])))
                                 begin
                                     read_through_hit = 1'b1;
                                 end
@@ -977,7 +1017,7 @@ module cache
                                     begin
                                         if(pending_write)
                                         begin
-                                            data[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1:2]] = pending_write_data;
+                                            data[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1:BYTE_OFF_W]] = MergeBytes(data[CpuIdx_reg][0][CpuOffset_reg[OFF_W-1:BYTE_OFF_W]], pending_write_data, pending_write_be);
                                             dirty[CpuIdx_reg][0] = 1'b1;
                                         end
                                         else
@@ -1005,7 +1045,7 @@ module cache
                                     refill_error = 1'b1;
                                 end
                                 if((MRRResp == AXI_OKAY) && !pending_write &&
-                                   (counter == (CpuOffset_reg[OFF_W-1:2])))
+                                   (counter == (CpuOffset_reg[OFF_W-1:BYTE_OFF_W])))
                                 begin
                                     read_through_hit = 1'b1;
                                 end
@@ -1021,7 +1061,7 @@ module cache
                                     begin
                                         if(pending_write)
                                         begin
-                                            data[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1:2]] = pending_write_data;
+                                            data[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1:BYTE_OFF_W]] = MergeBytes(data[CpuIdx_reg][victim_way_reg][CpuOffset_reg[OFF_W-1:BYTE_OFF_W]], pending_write_data, pending_write_be);
                                             dirty[CpuIdx_reg][victim_way_reg] = 1'b1;
                                         end
                                         else

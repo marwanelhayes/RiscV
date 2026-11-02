@@ -30,14 +30,34 @@ the others were corrected from `iff(!rst)`, which had been sampling only reset).
 
 | Environment | Functional coverage | Scoreboard | Notes |
 |-------------|--------------------:|-----------:|-------|
-| CSR         | **100.00%** | 0 fail | RTL bug fixed (see below) |
-| Decode      | **100.00%** | 0 fail | |
-| Execute     | **100.00%** | 0 fail | |
-| Hazard      | **100.00%** | 0 fail | |
-| Memory      | **100.00%** | 0 fail | |
+| CSR         | **100.00%** | 0 fail | |
+| Hazard      | **100.00%** | 0 fail | predictor from the PLAN_B §3.4 contract |
+| Memory      | **100.00%** | 0 fail | sub-word loads/stores from the ISA |
 | WriteBack   | **100.00%** | 0 fail | |
-| FPU         | 82.70% | 72 fail | open functional bug + FP-corner stimulus (flagged) |
-| Fetch       | 65.00% | 0 fail | TB connectivity issue (flagged) |
+| Execute     | 99.37% | 0 fail | D32 fixed 2026-10-23 |
+| Decode      | 94.84% | 0 fail | FPUControlE 20/21, EcallE 1/2 (stimulus) |
+| FPU         | 91.17% | 0 fail | D33 fixed 2026-10-23 |
+| Fetch       | **100.00%** | 0 fail | StallBit/FlushBit now sampled (2026-10-23) |
+| risc_top    | — | 0 fail | ISS lock-step: 10 seeds, traps + random interrupts |
+
+Status as of 2026-10-23 (32-bit regression). RTL bugs found by the envs and
+fixed with owner approval on 2026-10-23:
+
+- **D32** `risc_fpu.sv`: `done`/`Result` cleared the cycle after completion, so
+  a cache freeze in the `done` cycle made the FPU re-accept and re-run the held
+  instruction with that cycle's operands. Fix: new input `hold` (= `StallE`
+  from `execute_stage`, tied to 0 in `flp_top`); `done`/`Result` stay until
+  the consumer advances. The FPU monitor now counts one completion per rising
+  edge of `done`. Execute env 40 -> 0 mismatches; a probe saw 128
+  done-during-freeze cycles and 0 re-accepts.
+- **D33** `flp_add_sub.sv` `AlignWithShiftGRS`: at an exponent difference of
+  exactly `FRAC_BITS+2` the hidden bit belongs in the round bit but was folded
+  into sticky; an effective subtraction from a power of two (one-bit left
+  renormalisation) then rounded wrong (`0x34690a4c + 0xc0800000` RNE gave
+  `0xc0800000`, correct `0xc07fffff`). Fix: the in-range alignment branch now
+  covers `FRAC_BITS+2`. The FPU sequence injects binade-edge pairs (5%); on the
+  pre-fix RTL the env now reports 28 mismatches (was 1), a 20k-vector directed
+  run 117.
 
 ### CSR RTL fix
 `Design/csr_file.sv` `UpdateCsr` took the CSR index as `[ADDR_WIDTH-1:0]`
@@ -78,37 +98,38 @@ mismatches. Fixed by widening the parameter to `csr_index_t`.
 - Crosses: `ALUControl × funct3`; `funct3 × Branch`; `ForwardAE × ForwardBE`; `RegWriteE × FPURegWriteE` (`ignore_bins` both-low/both-high — `CantEqualize`)
 
 ### Hazard (`hazard_subscriber_pkg.sv`) — 100%
-- `ForwardAE_cg`/`ForwardBE_cg`: none{0}, wb{1}, mem{2}, wb_fpu{3}, mem_fpu{4}
+- `ForwardAE_cg`/`ForwardBE_cg`: none{0}, wb{1}, mem{2} (FP->integer results ride `ALUOutM`, no FPU forward source)
 - `ForwardFloatingAE_cg`/`BE`: none{0}, wb{1}, mem{2}
-- Stall/flush outputs {0}/{1}: StallD, StallF, FlushE, FlushD
-- Control inputs {0}/{1}: RegWriteM, RegWriteW, FPURegWriteM, FPURegWriteW, PCSrcE, TrapIsSet, FPUValidE, FPUBusyM, ICacheHit, DCacheHit
-- `SelectorE_cg` (4), `MoveOperationE_cg` (3)
-- Crosses: `RegWriteM × RegWriteW`; `FPUBusyM × DCacheHit`; `ForwardAE × ForwardBE` with `ignore_bins` for integer-forward × FPU-forward mixes (both selects share `MoveOperationE`, so 17 of 25 combinations are legal)
+- Stall/flush outputs {0}/{1}: StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM
+- Control inputs {0}/{1}: RegWriteM, RegWriteW, FPURegWriteM, FPURegWriteW, PCSrcE, TrapIsSet, FPUValidE, FPUDoneE, ICacheHit, DCacheHit
+- `SelectorE_cg` (4)
+- Crosses: `RegWriteM × RegWriteW`; `FPUValidE × FPUDoneE × DCacheHit`; `ForwardAE × ForwardBE`; `StallD × StallE` (`ignore_bins` StallE without StallD); `FlushM × StallM` (`ignore_bins` flush while frozen)
+- Stimulus raises a redirect only when EX advances (contract); x0 stays in the register pools so the x0 guards are exercised.
 - Directed sequence `hazard_directed_seq` biases registers into a shared set to exercise all forward sources.
 
 ### Memory (`mem_subscriber_pkg.sv`) — 100%
-- `funct3M_cg`: word{W}; `ignore_bins` others (OnlyWord constraint)
-- `CacheHitM_cg`: miss{0}, hit{1}
-- Controls {0}/{1}: MemWriteM, RegWriteM, FPURegWriteM, RegWriteW
-- `SelectorM_cg`/`SelectorW_cg` (4), `MoveOperationM_cg` (3)
-- FP flags {0}/{1}: OverflowM, UnderflowM, NaNM, InfM, ZeroM, InvalidDivM
+- `LoadSize_cg`: lb, lh, lw, lbu, lhu (+ lwu, ld at XLEN 64); `StoreSize_cg`: sb, sh, sw (+ sd)
+- `Lane_cg`: every byte lane of the access address
+- Crosses: `LoadSize × Lane`, `StoreSize × Lane` (`ignore_bins` misaligned lanes: EX traps them); `MemWriteM × CacheHitM`; `MemReadM × CacheHitM`; `SelectorM × RegWriteM`
+- `CacheHitM_cg`: miss{0}, hit{1}; {0}/{1}: ValidM, MemReadM, MemWriteM, StallW, RegWriteM, FPURegWriteM, RegWriteW
+- `SelectorM_cg`/`SelectorW_cg` (4), `MoveOperationM_cg` (3); FP flags {0}/{1}
 - `RdM_cg` (`ignore_bins` zero); data sign bins {neg,pos}: ALUOutM, ReadDataW, ALUOutW
-- Crosses: `MemWriteM × CacheHitM`; `SelectorM × RegWriteM`
+- Predictor (`unused/mem_flat_predictor_pkg.sv`, the one compiled): flat byte-exact memory, ISA load/store semantics, `ReadDataW` compared for loads only, MEM/WB held while `StallW`.
 
 ### WriteBack (`writeback_subscriber_pkg.sv`) — 100%
 - `SelectorW_cg` (4); `PCSrcE_cg`, `StallF_cg`, `TrapIsSet_cg`: {0}/{1}
 - Data sign bins {neg,pos}: ALUOutW, ReadDataW, CsrOutW
 - Crosses: `SelectorW × TrapIsSet`; `PCSrcE × StallF`
 
-### FPU (`flp_subscriber_pkg.sv`) — 82.70% *(flagged)*
+### FPU (`flp_subscriber_pkg.sv`) — 91.17% *(flagged)*
 - `operation_cg` (21), `round_mode_cg` (6), `MoveOperation_cg` (3), `valid_cg`/`RegWrite_cg` {0}/{1}
 - `InA_class_cg`/`InB_class_cg`: zero, denorm, normal, inf, nan (decoded from exponent/fraction)
 - Status outputs {0}/{1}: busy, done, Overflow, Underflow, NaN, Inf, Zero, InvalidDiv
 - Crosses: `operation × round_mode`; `InA_class × InB_class`
-- **Open items:** 72 scoreboard mismatches (FPU reference-model/RTL functional bug) and the FP-corner output/class bins (inf/zero operands, overflow/inf/zero/invalid-div flags) require directed corner stimulus that is entangled with the functional bug. Left as a separate task.
+- **Open items:** none in the scoreboard (D33 fixed, see above). Both references (SV `flp_ref_pkg`, Python `fpu_golden.py`) treat exact cancellation `x + -x` as an exact zero, not an underflow (fixed 2026-10-23; only `x - x` was exempt). Remaining holes are FP-corner bins that need directed stimulus.
 
-### Fetch (`fetch_subscriber_pkg.sv`) — 65.00% *(flagged)*
+### Fetch (`fetch_subscriber_pkg.sv`) — 100%
 - `rst_cg`: active{0}, idle{1}
-- {0}/{1}: StallD, FlushD, StallBit, FlushBit, CacheHitF; `PCF_align_cg`: aligned{2'b00}
-- Crosses: `StallD × FlushD`; `CacheHitF × FlushD`; `StallBit × FlushBit`
-- **Open items:** TB connectivity — `StallD`/`CacheHitF` are partly `X` (undriven), `CacheHitF` never returns a hit, and `StallBit`/`FlushBit` are interface-only aliases never sampled back. These are testbench wiring issues, not coverage gaps; left as a separate task.
+- {0}/{1}: StallD, FlushD, CacheHitF (pins) and StallBit, FlushBit (driver requests, sampled by the monitor); `PCF_align_cg`: aligned{2'b00}
+- Crosses: `StallD × FlushD` (`ignore_bins` flush while stalled); `CacheHitF × FlushD` (`ignore_bins` flush on a miss); `StallBit × FlushBit`
+- The two ignored bins are impossible by the pipeline contract (a redirect is only raised when EX advances; a stall or miss stops EX), which `fetch_top` enforces with `FlushD = FlushBit & !StallD`.

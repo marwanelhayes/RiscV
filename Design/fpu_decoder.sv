@@ -7,7 +7,8 @@
 //   - Decode RISC-V floating-point instructions (RV32F)
 //   - Generate FPU operation type
 //   - Handle move operations between GPR and FPR
-//   - Generate FPR write enable
+//   - Generate FPR / GPR write enables (compares and FCLASS write the GPR)
+//   - Flag unknown encodings and reserved rounding modes (FPUValidD = 0)
 //
 // Supported operations:
 //   - Arithmetic: FADD.S, FSUB.S, FMUL.S, FDIV.S, FSQRT.S
@@ -59,6 +60,10 @@ module fpu_decoder
     output logic FPUValidD                     // Valid FPU operation flag
 );
 
+    // ─── Internal wires ───────────────────────────────────────────────────────
+    logic UsesRoundMode;                       // Operation has an rm field
+    logic RoundModeReserved;                   // rm is a reserved encoding
+
     // ─── FPU operation decoding ──────────────────────────────────────────────
     always_comb
     begin
@@ -96,8 +101,11 @@ module fpu_decoder
 
                 // ── Floating-point square root ────────────────────────────────
                 7'b0101100: begin
-                                FPUControlD = FSQRT_S;
-                                FPURegWriteD = 1'b1;
+                                if(Rs2 == 5'b00000)
+                                begin
+                                    FPUControlD = FSQRT_S;
+                                    FPURegWriteD = 1'b1;
+                                end
                             end
 
                 // ── Sign manipulation ────────────────────────────────────────
@@ -134,11 +142,17 @@ module fpu_decoder
 
                 // ── Integer conversion (FP to integer) ────────────────────────
                 7'b1100000: begin
-                                MoveOperationD = FPUToReg;
-                                Write = 1'b1;
                                 case(Rs2)
-                                    5'b00000: FPUControlD = FCVT_W_S;
-                                    5'b00001: FPUControlD = FCVT_WU_S;
+                                    5'b00000: begin
+                                                FPUControlD = FCVT_W_S;
+                                                MoveOperationD = FPUToReg;
+                                                Write = 1'b1;
+                                            end
+                                    5'b00001: begin
+                                                FPUControlD = FCVT_WU_S;
+                                                MoveOperationD = FPUToReg;
+                                                Write = 1'b1;
+                                            end
                                 endcase
                             end
 
@@ -154,7 +168,8 @@ module fpu_decoder
                                                 end
                                         3'b001: begin
                                                     FPUControlD = FCLASS_S;
-                                                    FPURegWriteD = 1'b1;
+                                                    MoveOperationD = FPUToReg;
+                                                    Write = 1'b1;    // FCLASS writes the integer rd
                                                 end
                                     endcase
                                 end
@@ -165,15 +180,18 @@ module fpu_decoder
                                 case(funct3)
                                     3'b010: begin
                                                 FPUControlD = FEQ_S;
-                                                FPURegWriteD = 1'b1;
+                                                MoveOperationD = FPUToReg;
+                                                Write = 1'b1;    // Compares write the integer rd
                                             end
                                     3'b001: begin
                                                 FPUControlD = FLT_S;
-                                                FPURegWriteD = 1'b1;
+                                                MoveOperationD = FPUToReg;
+                                                Write = 1'b1;    // Compares write the integer rd
                                             end
                                     3'b000: begin
                                                 FPUControlD = FLE_S;
-                                                FPURegWriteD = 1'b1;
+                                                MoveOperationD = FPUToReg;
+                                                Write = 1'b1;    // Compares write the integer rd
                                             end
                                 endcase
                             end
@@ -195,17 +213,30 @@ module fpu_decoder
 
                 // ── Move to FPR (from GPR) ───────────────────────────────────
                 7'b1111000: begin 
-                                FPUControlD = FMV_S_X;
-                                MoveOperationD = RegToFPU;
-                                FPURegWriteD = 1'b1;
+                                if((Rs2 == 5'b00000) && (funct3 == 3'b000))
+                                begin
+                                    FPUControlD = FMV_S_X;
+                                    MoveOperationD = RegToFPU;
+                                    FPURegWriteD = 1'b1;
+                                end
                             end
             endcase
         end
     end
 
-    // ─── Valid FPU operation flag ───────────────────────────────────────────
+    // ─── Rounding-mode check ────────────────────────────────────────────────
+    // Operations with an rm field reject the reserved encodings 101 and 110.
     always_comb
     begin
-        FPUValidD = FPURegWriteD || Write;
+        UsesRoundMode = (FPUControlD inside {FADD_S, FSUB_S, FMUL_S, FDIV_S, FSQRT_S,
+                                             FCVT_W_S, FCVT_WU_S, FCVT_S_W, FCVT_S_WU});
+        RoundModeReserved = (funct3 == 3'b101) || (funct3 == 3'b110);
+    end
+
+    // ─── Valid FPU operation flag ───────────────────────────────────────────
+    // An FP-opcode instruction that is not valid here is an illegal instruction.
+    always_comb
+    begin
+        FPUValidD = (FPURegWriteD || Write) && !(UsesRoundMode && RoundModeReserved);
     end
 endmodule : fpu_decoder

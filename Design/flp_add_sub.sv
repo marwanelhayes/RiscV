@@ -79,6 +79,7 @@ module flp_add_sub
     logic round_reg, round_next;
     logic sticky_reg, sticky_next;
     logic effective_sub_reg, effective_sub_next;
+    logic ShiftedB_reg, ShiftedB_next;             // B (not A) was aligned right
 
     logic Overflow_reg, Overflow_next;
     logic Underflow_reg, Underflow_next;
@@ -93,13 +94,14 @@ module flp_add_sub
     logic [FRAC_BITS:0] MantA_local;
     logic [FRAC_BITS:0] MantB_local;
     logic [FRAC_BITS+1:0] mant_sum;
-    logic [FRAC_BITS:0] mant_diff;
+    logic [FRAC_BITS+3:0] ext_a;                   // {mantissa, g, r, s} of A
+    logic [FRAC_BITS+3:0] ext_b;                   // {mantissa, g, r, s} of B
+    logic [FRAC_BITS+3:0] ext_diff;                // Extended difference
     logic [EXP_BITS-1:0] exp_local;
     logic sign_local;
     logic guard_local;
     logic round_local;
     logic sticky_local;
-    logic [WIDTH-1:0] pre_round_result;
     logic [WIDTH-1:0] rounded_result;
     logic [3:0] result_class;
 
@@ -134,10 +136,16 @@ module flp_add_sub
         begin
             mant_out = mant_in;
         end
-        else if (sh <= (FRAC_BITS + 1))
+        // Up to FRAC_BITS+2 the leading bit still lands in g or r; at
+        // FRAC_BITS+2 it is the round bit, which an effective subtraction
+        // turns into the guard bit after a one-bit left renormalisation.
+        else if (sh <= (FRAC_BITS + 2))
         begin
             mant_out = mant_in >> sh;
-            g = mant_in[sh-1];
+            if (sh <= (FRAC_BITS + 1))
+            begin
+                g = mant_in[sh-1];
+            end
             if (sh >= 2)
             begin
                 r = mant_in[sh-2];
@@ -162,60 +170,93 @@ module flp_add_sub
         AlignWithShiftGRS = {mant_out, g, r, s};
     endfunction: AlignWithShiftGRS
 
-    function automatic logic [WIDTH-1:0] Rounding
+    // Round a finite, non-zero magnitude and pack it as IEEE 754, including
+    // subnormal results (gradual underflow). exponent_in is the biased
+    // exponent of mantissa[FRAC_BITS]; g/r are the next two bits and s is
+    // the sticky OR of everything below.
+    function automatic logic [WIDTH-1:0] RoundPack
     (
-        input logic [WIDTH-1:0] in,
+        input logic sign,
+        input logic signed [EXP_BITS+1:0] exponent_in,
+        input logic [FRAC_BITS:0] mantissa,
         input logic g,
         input logic r,
         input logic s,
         input round_mode_t mode_in
     );
-        logic lsb;
-        logic tie;
+        logic [FRAC_BITS+3:0] m;            // {mantissa, g, r, s}
+        logic signed [EXP_BITS+1:0] e;
+        logic [FRAC_BITS+1:0] q;
+        logic round_bit;
+        logic sticky;
         logic round_up;
-        logic [FRAC_BITS:0] mantissa_in;
-        logic [FRAC_BITS+1:0] mantissa_out;
-        logic [EXP_BITS-1:0] exponent_in;
-        logic [EXP_BITS-1:0] exponent_out;
-        logic sign;
-        logic inexact;
+        logic to_inf;
 
-        sign = in[WIDTH-1];
-        mantissa_in = {1'b1, in[FRAC_BITS-1:0]};
-        exponent_in = in[WIDTH-2 -: EXP_BITS];
-        exponent_out = exponent_in;
+        m = {mantissa, g, r, s};
+        e = exponent_in;
 
-        lsb = mantissa_in[0];
-        tie = g && !r && !s;
-        inexact = g | r | s;
-        round_up = 1'b0;
+        // Normalise left (cancellation / subnormal operands), stopping at
+        // the minimum normal exponent.
+        for (int i = 0; i < FRAC_BITS + 3; i++)
+        begin
+            if (!m[FRAC_BITS+3] && (e > 1))
+            begin
+                m = {m[FRAC_BITS+2:1], 1'b0, m[0]};
+                e = e - 1'b1;
+            end
+        end
 
+        // Denormalise right below the minimum normal exponent; shifted-out
+        // bits collapse into sticky.
+        for (int i = 0; i < FRAC_BITS + 3; i++)
+        begin
+            if (e < 1)
+            begin
+                m = {1'b0, m[FRAC_BITS+3:2], m[1] | m[0]};
+                e = e + 1'b1;
+            end
+        end
+        if (e < 1)
+        begin
+            e = 1;
+        end
+
+        round_bit = m[2];
+        sticky = m[1] | m[0];
         case (mode_in)
-            RNE: round_up = (g && (r || s)) || (tie && lsb);
             RTZ: round_up = 1'b0;
-            RDN: round_up = inexact && sign;
-            RUP: round_up = inexact && !sign;
-            RMM: round_up = g;
-            default: round_up = (g && (r || s)) || (tie && lsb);
+            RDN: round_up = (round_bit | sticky) && sign;
+            RUP: round_up = (round_bit | sticky) && !sign;
+            RMM: round_up = round_bit;
+            default: round_up = round_bit && (sticky || m[3]);   // RNE
         endcase
 
-        if (round_up)
+        q = {1'b0, m[FRAC_BITS+3:3]} + round_up;
+        if (q[FRAC_BITS+1])
         begin
-            mantissa_out = mantissa_in + 1'b1;
+            q = q >> 1;
+            e = e + 1'b1;
+        end
+
+        // Overflow goes to infinity unless the mode rounds toward zero.
+        to_inf = (mode_in == RTZ) ? 1'b0 :
+                 (mode_in == RDN) ? sign :
+                 (mode_in == RUP) ? !sign : 1'b1;
+
+        if (!q[FRAC_BITS])
+        begin
+            RoundPack = {sign, {EXP_BITS{1'b0}}, q[FRAC_BITS-1:0]};          // subnormal
+        end
+        else if (e >= (2**EXP_BITS - 1))
+        begin
+            RoundPack = to_inf ? {sign, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}}  // infinity
+                               : {sign, {(EXP_BITS-1){1'b1}}, 1'b0, {FRAC_BITS{1'b1}}}; // max finite
         end
         else
         begin
-            mantissa_out = mantissa_in;
+            RoundPack = {sign, e[EXP_BITS-1:0], q[FRAC_BITS-1:0]};
         end
-
-        if (mantissa_out[FRAC_BITS+1])
-        begin
-            mantissa_out = mantissa_out >> 1;
-            exponent_out = exponent_in + 1'b1;
-        end
-
-        Rounding = {sign, exponent_out, mantissa_out[FRAC_BITS-1:0]};
-    endfunction: Rounding
+    endfunction: RoundPack
 
     always_ff @(posedge clk or negedge rst)
     begin
@@ -245,6 +286,7 @@ module flp_add_sub
             round_reg <= 1'b0;
             sticky_reg <= 1'b0;
             effective_sub_reg <= 1'b0;
+            ShiftedB_reg <= 1'b0;
             Overflow_reg <= 1'b0;
             Underflow_reg <= 1'b0;
             NaN_reg <= 1'b0;
@@ -278,6 +320,7 @@ module flp_add_sub
             round_reg <= round_next;
             sticky_reg <= sticky_next;
             effective_sub_reg <= effective_sub_next;
+            ShiftedB_reg <= ShiftedB_next;
             Overflow_reg <= Overflow_next;
             Underflow_reg <= Underflow_next;
             NaN_reg <= NaN_next;
@@ -313,6 +356,7 @@ module flp_add_sub
         round_next = round_reg;
         sticky_next = sticky_reg;
         effective_sub_next = effective_sub_reg;
+        ShiftedB_next = ShiftedB_reg;
         Overflow_next = Overflow_reg;
         Underflow_next = Underflow_reg;
         NaN_next = NaN_reg;
@@ -326,13 +370,14 @@ module flp_add_sub
         MantA_local = '0;
         MantB_local = '0;
         mant_sum = '0;
-        mant_diff = '0;
+        ext_a = '0;
+        ext_b = '0;
+        ext_diff = '0;
         exp_local = '0;
         sign_local = 1'b0;
         guard_local = 1'b0;
         round_local = 1'b0;
         sticky_local = 1'b0;
-        pre_round_result = '0;
         rounded_result = '0;
         result_class = '0;
 
@@ -394,8 +439,9 @@ module flp_add_sub
             begin
                 SignA_next = a_reg[WIDTH-1];
                 SignB_next = b_reg[WIDTH-1];
-                ExpA_next = a_reg[WIDTH-2 -: EXP_BITS];
-                ExpB_next = b_reg[WIDTH-2 -: EXP_BITS];
+                // A subnormal operand has an effective exponent of 1.
+                ExpA_next = (a_reg[WIDTH-2 -: EXP_BITS] == '0) ? EXP_BITS'(1) : a_reg[WIDTH-2 -: EXP_BITS];
+                ExpB_next = (b_reg[WIDTH-2 -: EXP_BITS] == '0) ? EXP_BITS'(1) : b_reg[WIDTH-2 -: EXP_BITS];
                 class_a = classify_value(a_reg[WIDTH-2 -: EXP_BITS], a_reg[FRAC_BITS-1:0]);
                 class_b = classify_value(b_reg[WIDTH-2 -: EXP_BITS], b_reg[FRAC_BITS-1:0]);
                 {AIsSub_next, AIsNan_next, AIsInf_next, AIsZero_next} = class_a;
@@ -450,7 +496,12 @@ module flp_add_sub
                 end
                 else if (class_a[0] && class_b[0])
                 begin
-                    result_next = {a_reg[WIDTH-1] & b_reg[WIDTH-1], {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                    // Equal effective signs keep the sign; opposite signs give
+                    // +0, or -0 when rounding down (IEEE 754 6.3).
+                    if (a_reg[WIDTH-1] == (b_reg[WIDTH-1] ^ (mode_reg == SUB_FLP)))
+                        result_next = {a_reg[WIDTH-1], {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                    else
+                        result_next = {(round_mode_reg == RDN), {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
                     Zero_next = 1'b1;
                     state_next = DONE;
                 end
@@ -514,12 +565,14 @@ module flp_add_sub
                     ExpDiff = ExpA_reg - ExpB_reg;
                     {MantB_local, guard_local, round_local, sticky_local} = AlignWithShiftGRS(MantB_local, ExpDiff);
                     ExpRes_next = ExpA_reg;
+                    ShiftedB_next = 1'b1;
                 end
                 else
                 begin
                     ExpDiff = ExpB_reg - ExpA_reg;
                     {MantA_local, guard_local, round_local, sticky_local} = AlignWithShiftGRS(MantA_local, ExpDiff);
                     ExpRes_next = ExpB_reg;
+                    ShiftedB_next = 1'b0;
                 end
 
                 MantA_next = MantA_local;
@@ -547,7 +600,7 @@ module flp_add_sub
                 round_local = round_reg;
                 sticky_local = sticky_reg;
 
-                if (mant_sum[FRAC_BITS+1] && (exp_local != '0))
+                if (mant_sum[FRAC_BITS+1])
                 begin
                     guard_local = mant_sum[0];
                     round_local = guard_reg;
@@ -556,51 +609,51 @@ module flp_add_sub
                     exp_local = exp_local + 1'b1;
                 end
 
-                if (exp_local == {EXP_BITS{1'b1}})
-                begin
-                    result_next = {sign_local, {EXP_BITS{1'b1}}, {FRAC_BITS{1'b0}}};
-                    Overflow_next = 1'b1;
-                    Underflow_next = 1'b0;
-                    NaN_next = 1'b0;
-                    Inf_next = 1'b1;
-                    Zero_next = 1'b0;
-                end
-                else
-                begin
-                    pre_round_result = {sign_local, exp_local, mant_sum[FRAC_BITS-1:0]};
-                    rounded_result = Rounding(pre_round_result, guard_local, round_local, sticky_local, round_mode_reg);
-                    result_class = classify_value(rounded_result[WIDTH-2 -: EXP_BITS], rounded_result[FRAC_BITS-1:0]);
-                    result_next = rounded_result;
-                    Overflow_next = result_class[1] && !result_class[2] && !result_class[0];
-                    Underflow_next = 1'b0;
-                    NaN_next = result_class[2];
-                    Inf_next = result_class[1];
-                    Zero_next = result_class[0];
-                end
+                rounded_result = RoundPack(sign_local, $signed({2'b00, exp_local}), mant_sum[FRAC_BITS:0],
+                                           guard_local, round_local, sticky_local, round_mode_reg);
+                result_class = classify_value(rounded_result[WIDTH-2 -: EXP_BITS], rounded_result[FRAC_BITS-1:0]);
+                result_next = rounded_result;
+                Overflow_next = result_class[1];
+                Underflow_next = result_class[0];
+                NaN_next = 1'b0;
+                Inf_next = result_class[1];
+                Zero_next = result_class[0];
                 state_next = DONE;
             end
 
             TRUESUB:
             begin
+                // The shifted (smaller-exponent) operand still owns its guard,
+                // round and sticky bits, so the difference is formed on the
+                // extended significands {mantissa, g, r, s}: the bits shifted
+                // out are borrowed from, not copied into the result.
                 exp_local = ExpRes_reg;
-                guard_local = guard_reg;
-                round_local = round_reg;
-                sticky_local = sticky_reg;
-
-                if (MantA_reg < MantB_reg)
+                if (ShiftedB_reg)
                 begin
-                    mant_diff = MantB_reg - MantA_reg;
+                    ext_a = {MantA_reg, 3'b000};
+                    ext_b = {MantB_reg, guard_reg, round_reg, sticky_reg};
+                end
+                else
+                begin
+                    ext_a = {MantA_reg, guard_reg, round_reg, sticky_reg};
+                    ext_b = {MantB_reg, 3'b000};
+                end
+
+                if (ext_a < ext_b)
+                begin
+                    ext_diff = ext_b - ext_a;
                     sign_local = ~SignA_reg;
                 end
                 else
                 begin
-                    mant_diff = MantA_reg - MantB_reg;
+                    ext_diff = ext_a - ext_b;
                     sign_local = SignA_reg;
                 end
 
-                if (mant_diff == '0)
+                if (ext_diff == '0)
                 begin
-                    result_next = {1'b0, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+                    // Exact cancellation: +0, or -0 when rounding down
+                    result_next = {(round_mode_reg == RDN), {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
                     Overflow_next = 1'b0;
                     Underflow_next = 1'b0;
                     NaN_next = 1'b0;
@@ -609,36 +662,17 @@ module flp_add_sub
                 end
                 else
                 begin
-                    for (int i = 0; i < FRAC_BITS; i++)
-                    begin
-                        if ((mant_diff[FRAC_BITS] == 1'b0) && (exp_local > '0))
-                        begin
-                            mant_diff = mant_diff << 1;
-                            exp_local = exp_local - 1'b1;
-                        end
-                    end
-
-                    if (exp_local == '0)
-                    begin
-                        result_next = {sign_local, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
-                        Overflow_next = 1'b0;
-                        Underflow_next = 1'b1;
-                        NaN_next = 1'b0;
-                        Inf_next = 1'b0;
-                        Zero_next = 1'b1;
-                    end
-                    else
-                    begin
-                        pre_round_result = {sign_local, exp_local, mant_diff[FRAC_BITS-1:0]};
-                        rounded_result = Rounding(pre_round_result, guard_local, round_local, sticky_local, round_mode_reg);
-                        result_class = classify_value(rounded_result[WIDTH-2 -: EXP_BITS], rounded_result[FRAC_BITS-1:0]);
-                        result_next = rounded_result;
-                        Overflow_next = 1'b0;
-                        Underflow_next = 1'b0;
-                        NaN_next = result_class[2];
-                        Inf_next = result_class[1];
-                        Zero_next = result_class[0];
-                    end
+                    // RoundPack normalises the difference and produces a
+                    // subnormal instead of flushing to zero.
+                    rounded_result = RoundPack(sign_local, $signed({2'b00, exp_local}), ext_diff[FRAC_BITS+3:3],
+                                               ext_diff[2], ext_diff[1], ext_diff[0], round_mode_reg);
+                    result_class = classify_value(rounded_result[WIDTH-2 -: EXP_BITS], rounded_result[FRAC_BITS-1:0]);
+                    result_next = rounded_result;
+                    Overflow_next = 1'b0;
+                    Underflow_next = result_class[0];
+                    NaN_next = 1'b0;
+                    Inf_next = result_class[1];
+                    Zero_next = result_class[0];
                 end
                 state_next = DONE;
             end

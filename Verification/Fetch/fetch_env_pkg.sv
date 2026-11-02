@@ -14,6 +14,8 @@ package fetch_env_pkg;
     import fetch_subscriber_pkg::*;
     import fetch_predictor_pkg::*;
     import fetch_config_pkg::*;
+    import fetch_reg_block_pkg::*;
+    import fetch_mem_checker_pkg::*;
 
     class fetch_env extends uvm_env;
 
@@ -30,16 +32,23 @@ package fetch_env_pkg;
         fetch_subscriber  sub;
         fetch_predictor   predictor;
         fetch_config configuration;
+        fetch_reg_block   reg_block;
+        fetch_mem_checker mem_checker;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             if(! uvm_config_db #(fetch_config)::get(this,"","CONFG",configuration))
                 `uvm_error("ENV","Environment couldn't receive configuration object")
             uvm_config_db #(fetch_config)::set(this,"agent","CONFG",configuration);
+            reg_block = fetch_reg_block::type_id::create("fetch_reg_block");
+            reg_block.build();
+            reg_block.lock_model();
+            uvm_config_db #(fetch_reg_block)::set(this, "mem_checker", "REG_BLOCK", reg_block);
             agent      = fetch_agent     ::type_id::create("agent",this);
             scoreboard = fetch_scoreboard::type_id::create("scoreboard",this);
             sub        = fetch_subscriber::type_id::create("sub",this);
             predictor  = fetch_predictor ::type_id::create("predictor",this);
+            mem_checker = fetch_mem_checker::type_id::create("mem_checker",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);
@@ -54,4 +63,4 @@ package fetch_env_pkg;
         endfunction:connect_phase
 
     endclass:fetch_env
-endpackage:fetch_env_pkg
+endpackage:fetch_env_pkg

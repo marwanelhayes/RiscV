@@ -2,6 +2,10 @@
 // csr_item_pkg.sv
 // -----------------------------------------------------------------------------
 // CSR sequence item package for UVM verification.
+//
+// Stimulus covers every implemented CSR, a few unknown addresses (illegal),
+// all six CSR operations, synchronous exceptions, MRET and the interrupt
+// lines, with Commit (the EX instruction advances) mostly high.
 // =============================================================================
 package csr_item_pkg;
 
@@ -16,39 +20,41 @@ package csr_item_pkg;
         function new (string name = "csr_item");
             super.new(name);
         endfunction: new
-        
+
         rand logic                        rst;
-        rand csr_t                        CsrOperation;
-        rand gpr_t                        Rs;
-        rand traps_t                      Traps;
-        rand logic                        mret;
-        rand logic [FINAL_ADDR_WIDTH-1:0] PC;
-        rand logic [FINAL_ADDR_WIDTH-1:0] Address;
-        rand logic                        CsrAccess;
-        rand logic [FINAL_DATA_WIDTH-1:0] CsrIn;
-        rand logic                        TimerInterrupt;
-        rand logic                        ExternalInterrupt;
-        rand logic                        SoftwareInterrupt;
-        rand csr_index_t                  CsrIndex;
+        rand csr_t                         CsrOperation;
+        rand gpr_t                         Rs;
+        rand traps_t                       Traps;
+        rand logic                         mret;
+        rand logic [FINAL_DATA_WIDTH-1:0]  PC;
+        rand logic [FINAL_DATA_WIDTH-1:0]  Address;
+        rand logic                         CsrAccess;
+        rand logic [FINAL_DATA_WIDTH-1:0]  CsrIn;
+        rand logic                         Commit;
+        rand logic                         TimerInterrupt;
+        rand logic                         ExternalInterrupt;
+        rand logic                         SoftwareInterrupt;
+        rand csr_index_t                   CsrIndex;
+        logic [FINAL_DATA_WIDTH-1:0]       CsrOutPC;
+        logic [FINAL_DATA_WIDTH-1:0]       CsrOut;
+        logic                              TrapIsSet;
+        logic                              TrapTaken;
+        round_mode_t                       RoundingMode;
 
-        logic [FINAL_ADDR_WIDTH-1:0]      CsrOutPC;
-        logic [FINAL_DATA_WIDTH-1:0]      CsrOut;
-        logic                             TrapIsSet;
-        round_mode_t                      RoundingMode;
+        bit chk_csrout = 1;     // CsrOut is predictable (not a cycle-counter read)
 
-        constraint LowResetProb
-        {
-            rst dist {0:=5,1:=400};
-        }
-
+        constraint LowResetProb { rst dist {0:=5,1:=400}; }
+        constraint CommitProb   { Commit dist {0:=15,1:=85}; }
         constraint ValidCsrOperation
         {
             if(CsrAccess)
                 CsrOperation inside {csrrw,csrrs,csrrc,csrrwi,csrrsi,csrrci};
         }
-
+        // One instruction is either a CSR access, an MRET or a trapping one
         constraint DirectedTraffic
         {
+            Traps dist {NoTraps := 80, [InstructionAddressMisalignedOrUserSoftwareInterrupt:EcallMOrMachineExternalInterrupt] :/ 20};
+            $countones(Traps) <= 1;
             if(Traps != NoTraps)
             {
                 CsrAccess == 1'b0;
@@ -56,109 +62,101 @@ package csr_item_pkg;
             }
             if(mret)
                 CsrAccess == 1'b0;
+            mret dist {0:=92, 1:=8};
+            CsrAccess dist {0:=40, 1:=60};
         }
-
-        constraint WritableCsrSelection
+        constraint CsrSelection
         {
-            if(CsrAccess)
-                !(CsrIndex inside {misa,mvendorid,mip});
+            CsrIndex dist {
+                [fflags:fcsr] :/ 6, mstatus := 8, misa := 2, medeleg := 1, mideleg := 1, mie := 6, mtvec := 6,
+                mscratch := 6, mepc := 6, mcause := 6, mtval := 6, mip := 3, mstatush := 1, mcycle := 2,
+                minstret := 4, mcycleh := 1, minstreth := 3, cycle := 1, instret := 2, cycleh := 1, instreth := 1,
+                mvendorid := 1, marchid := 1, mimpid := 1, mhartid := 1,
+                csr_index_t'(12'hB03) := 1, csr_index_t'(12'hB1F) := 1, csr_index_t'(12'h323) := 1,
+                csr_index_t'(12'h7C0) := 2, csr_index_t'(12'h180) := 2, csr_index_t'(12'h100) := 1
+            };
         }
-
         constraint InterruptDistribution
         {
             TimerInterrupt dist {0:=8,1:=1};
             ExternalInterrupt dist {0:=8,1:=1};
             SoftwareInterrupt dist {0:=8,1:=1};
         }
-
-        constraint FrmSelection
-        {
-            if(CsrAccess && (CsrIndex == frm || CsrIndex == fcsr))
-                CsrIn[2:0] inside {0,1,2,3,4,7};
-        }
+        constraint Alignment { PC[1:0] == 2'b00; }
 
         virtual function string convert2str();
-            return $sformatf("\tInputs: rst = %0d | CsrOp = %s | Rs = %s | Traps = %s | mret = %0d | PC = %0h | Addr = %0h |CsrAccess = %0d | CsrIn = %0h | TI = %0d | EI = %0d | SI = %0d | CsrIdx = %s 
-            Outputs: CsrOutPC = %0h | CsrOut = %0h | TrapIsSet = %0d | RoundingMode = %s",
-            rst,CsrOperation.name(),Rs.name(),Traps.name(),mret,PC,Address,CsrAccess,CsrIn,TimerInterrupt,ExternalInterrupt,SoftwareInterrupt,CsrIndex.name(),
-            CsrOutPC,CsrOut,TrapIsSet,RoundingMode.name());
+            return $sformatf("\tInputs: rst = %0d | Commit = %0d | CsrOp = %s | Rs = %s | Traps = %s | mret = %0d | PC = %0h | Addr = %0h | CsrAccess = %0d | CsrIn = %0h | TI = %0d | EI = %0d | SI = %0d | CsrIdx = %s
+            Outputs: CsrOutPC = %0h | CsrOut = %0h | TrapIsSet = %0d | TrapTaken = %0d | RoundingMode = %s",
+            rst,Commit,CsrOperation.name(),Rs.name(),Traps.name(),mret,PC,Address,CsrAccess,CsrIn,TimerInterrupt,ExternalInterrupt,SoftwareInterrupt,CsrIndex.name(),
+            CsrOutPC,CsrOut,TrapIsSet,TrapTaken,RoundingMode.name());
         endfunction: convert2str
 
-        virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
-            csr_item other;
-            bit ok;
-            bit super_ok;
+        function bit chk(string name, logic [63:0] act, logic [63:0] exp);
+            if(act !== exp)
+            begin
+                `uvm_info({name, " Mismatch"}, $sformatf("Expected: %0h Actual: %0h", exp, act), UVM_LOW)
+                return 1'b0;
+            end
+            return 1'b1;
+        endfunction:chk
 
-            if(!$cast(other, rhs))
+        // this = actual, rhs = expected
+        virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+            csr_item e;
+            bit ok;
+            if(!$cast(e, rhs))
             begin
                 `uvm_fatal("do_compare","rhs is not a csr_item")
                 return 1'b0;
             end
-
-            super_ok  = super.do_compare(rhs, comparer);
-            ok = super_ok
-                && (this.CsrOutPC     === other.CsrOutPC)
-                && (this.CsrOut       === other.CsrOut)
-                && (this.TrapIsSet    === other.TrapIsSet)
-                && (this.RoundingMode === other.RoundingMode);
-            
-            if(this.CsrOutPC !== other.CsrOutPC)
-                `uvm_info("CsrOutPC Mismatch", $sformatf("Expected: %0h Actual: %0h", this.CsrOutPC, other.CsrOutPC), UVM_LOW)
-            if(this.CsrOut !== other.CsrOut)
-                `uvm_info("CsrOut Mismatch", $sformatf("Expected: %0h Actual: %0h", this.CsrOut, other.CsrOut), UVM_LOW)
-            if(this.TrapIsSet !== other.TrapIsSet)
-                `uvm_info("TrapIsSet Mismatch", $sformatf("Expected: %0d Actual: %0d", this.TrapIsSet, other.TrapIsSet), UVM_LOW)
-            if(this.RoundingMode !== other.RoundingMode)
-                `uvm_info("RoundingMode Mismatch", $sformatf("Expected: %s Actual: %s", this.RoundingMode.name(), other.RoundingMode.name()), UVM_LOW)
+            ok = super.do_compare(rhs, comparer);
+            ok &= chk("TrapIsSet", TrapIsSet, e.TrapIsSet) & chk("TrapTaken", TrapTaken, e.TrapTaken);
+            ok &= chk("RoundingMode", RoundingMode, e.RoundingMode);
+            if(e.TrapIsSet) ok &= chk("CsrOutPC", CsrOutPC, e.CsrOutPC);
+            if(e.chk_csrout) ok &= chk("CsrOut", CsrOut, e.CsrOut);
             return ok;
         endfunction:do_compare
 
         virtual function void do_copy (uvm_object rhs);
-            csr_item other;
-            if(!$cast(other, rhs)) begin
+            csr_item o;
+            if(!$cast(o, rhs))
+            begin
                 `uvm_fatal("do_copy","rhs is not a csr_item")
                 return;
             end
             super.do_copy(rhs);
-            this.rst               = other.rst;
-            this.CsrOperation      = other.CsrOperation;
-            this.Rs                = other.Rs;
-            this.Traps             = other.Traps;
-            this.mret              = other.mret;
-            this.PC                = other.PC;
-            this.Address           = other.Address;
-            this.CsrAccess         = other.CsrAccess;
-            this.CsrIn             = other.CsrIn;
-            this.TimerInterrupt    = other.TimerInterrupt;
-            this.ExternalInterrupt = other.ExternalInterrupt;
-            this.SoftwareInterrupt = other.SoftwareInterrupt;
-            this.CsrIndex          = other.CsrIndex;
-
-            this.CsrOutPC          = other.CsrOutPC;
-            this.CsrOut            = other.CsrOut;
-            this.TrapIsSet         = other.TrapIsSet;
-            this.RoundingMode      = other.RoundingMode;
+            copy_inputs(rhs);
+            this.CsrOutPC = o.CsrOutPC;
+            this.CsrOut = o.CsrOut;
+            this.TrapIsSet = o.TrapIsSet;
+            this.TrapTaken = o.TrapTaken;
+            this.RoundingMode = o.RoundingMode;
+            this.chk_csrout = o.chk_csrout;
         endfunction:do_copy
 
         virtual function void copy_inputs (uvm_object rhs);
-            csr_item other;
-            if(!$cast(other, rhs)) begin
-                `uvm_fatal("do_copy","rhs is not a csr_item")
+            csr_item o;
+            if(!$cast(o, rhs))
+            begin
+                `uvm_fatal("copy_inputs","rhs is not a csr_item")
                 return;
             end
-            this.rst               = other.rst;
-            this.CsrOperation      = other.CsrOperation;
-            this.Rs                = other.Rs;
-            this.Traps             = other.Traps;
-            this.mret              = other.mret;
-            this.PC                = other.PC;
-            this.Address           = other.Address;
-            this.CsrAccess         = other.CsrAccess;
-            this.CsrIn             = other.CsrIn;
-            this.TimerInterrupt    = other.TimerInterrupt;
-            this.ExternalInterrupt = other.ExternalInterrupt;
-            this.SoftwareInterrupt = other.SoftwareInterrupt;
-            this.CsrIndex          = other.CsrIndex;
+            this.rst = o.rst;
+            this.CsrOperation = o.CsrOperation;
+            this.Rs = o.Rs;
+            this.Traps = o.Traps;
+            this.mret = o.mret;
+            this.PC = o.PC;
+            this.Address = o.Address;
+            this.CsrAccess = o.CsrAccess;
+            this.CsrIn = o.CsrIn;
+            this.Commit = o.Commit;
+            this.TimerInterrupt = o.TimerInterrupt;
+            this.ExternalInterrupt = o.ExternalInterrupt;
+            this.SoftwareInterrupt = o.SoftwareInterrupt;
+            this.CsrIndex = o.CsrIndex;
         endfunction:copy_inputs
+
     endclass: csr_item
+
 endpackage:csr_item_pkg

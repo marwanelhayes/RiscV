@@ -19,12 +19,12 @@ package mem_item_pkg;
             super.new(name);
         endfunction: new
 
-        localparam int DEPTH = (2**(FINAL_ADDR_WIDTH-2)); // Assuming word-addressable memory
-
         rand logic rst;
+        rand logic ValidM;
+        rand logic MemReadM;
         rand logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
         rand logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
-        rand logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
+        rand logic [FINAL_DATA_WIDTH-1:0] PCPlus4M;
         rand gpr_t RdM;
         rand logic [2:0] funct3M;
         rand logic RegWriteM;
@@ -45,12 +45,14 @@ package mem_item_pkg;
         // Cache hit response (DUT output). 0 = cache miss, pipeline stalls and
         // the *M inputs are held until the refill completes (CacheHitM == 1).
         logic CacheHitM;
+        logic StallW;
 
+        logic ValidW;
         logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
         gpr_t RdW;
         logic RegWriteW;
         selector_t SelectorW;
-        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+        logic [FINAL_DATA_WIDTH-1:0] PCPlus4W;
         logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
         logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW;
         fpr_t RdFW;
@@ -64,8 +66,9 @@ package mem_item_pkg;
         move_operation_t MoveOperationW;
         logic FPURegWriteW;
 
-        logic [FINAL_ADDR_WIDTH-1:0] AddrM; // For predictor visibility only, not an actual item field
-        logic signed [FINAL_DATA_WIDTH-1:0] memory [DEPTH]; // For predictor visibility only, not an actual item field
+        // Compare mask set by the predictor: ReadDataW is only architectural
+        // for a load (for any other instruction it is a don't-care).
+        bit chk_readdata = 1;
 
 
         //Insert random resets at random times
@@ -80,20 +83,41 @@ package mem_item_pkg;
             RegWriteM == 1 -> RdM != zero;
         }
 
-        constraint OnlyWord
+        // A bubble has no side effects; a load or store is never both.
+        constraint BubbleIsInert
         {
-            load_store_t'(funct3M) == W; // Only allow word accesses for now to simplify
+            !ValidM -> (!MemReadM && !MemWriteM && !RegWriteM && !FPURegWriteM);
+            !(MemReadM && MemWriteM);
+        }
+
+        // Legal access sizes for the XLEN (LWU/LD/SD are RV64 only), and
+        // naturally aligned addresses: EX traps a misaligned access, so the
+        // MEM stage never sees one.
+        constraint LegalAccess
+        {
+            if(FINAL_DATA_WIDTH == 64)
+            {
+                MemReadM  -> load_store_t'(funct3M) inside {B, HW, W, D, BU, HWU, WU};
+                MemWriteM -> load_store_t'(funct3M) inside {B, HW, W, D};
+            }
+            else
+            {
+                MemReadM  -> load_store_t'(funct3M) inside {B, HW, W, BU, HWU};
+                MemWriteM -> load_store_t'(funct3M) inside {B, HW, W};
+            }
+            (MemReadM || MemWriteM) && (funct3M[1:0] == 2'd1) -> ALUOutM[0]   == 1'b0;
+            (MemReadM || MemWriteM) && (funct3M[1:0] == 2'd2) -> ALUOutM[1:0] == 2'b00;
+            (MemReadM || MemWriteM) && (funct3M[1:0] == 2'd3) -> ALUOutM[2:0] == 3'b000;
+            MemReadM dist {0:=1, 1:=1};
         }
 
         
 
         virtual function string convert2str();
-            AddrM = ALUOutM[FINAL_ADDR_WIDTH-1:0];
-            return $sformatf("Inputs: rst = %0d | CacheHitM = %0d | ALUOutM = %0h | WriteDataM = %0h | RdM = %s | funct3M = %0d | RegWriteM = %0d | SelectorM = %s | MemWriteM = %0d | PCPlus4M = %0h | CsrOutM = %0h | RdFM = %s | OverflowM = %0d | UnderflowM = %0d | NaNM = %0d | InfM = %0d | ZeroM = %0d | InvalidDivM = %0d | FPUOutM = %0h | MoveOperationM = %s | FPURegWriteM = %0d | Addresss %0h
-            Outputs: ReadDataW = %0h | RdW = %s | RegWriteW = %0d | SelectorW = %s | PCPlus4W = %0h | CsrOutW = %0h | ALUOutW = %0h | RdFW = %s | OverflowW = %0d | UnderflowW = %0d | NaNW = %0d | InfW = %0d | ZeroW = %0d | InvalidDivW = %0d | FPUOutW = %0h | MoveOperationW = %s | FPURegWriteW = %0d
-            The Memory value at the address is %0h",
-            rst,CacheHitM,ALUOutM,WriteDataM,RdM.name(),funct3M,RegWriteM,SelectorM.name(),MemWriteM,PCPlus4M,CsrOutM,RdFM.name(),OverflowM,UnderflowM,NaNM,InfM,ZeroM,InvalidDivM,FPUOutM,MoveOperationM.name(),FPURegWriteM,AddrM,
-            ReadDataW,RdW.name(),RegWriteW,SelectorW.name(),PCPlus4W,CsrOutW,ALUOutW,RdFW.name(),OverflowW,UnderflowW,NaNW,InfW,ZeroW,InvalidDivW,FPUOutW,MoveOperationW.name(),FPURegWriteW,memory[AddrM[FINAL_ADDR_WIDTH-1:2]]); // Assuming word-addressable memory
+            return $sformatf({"Inputs: rst=%0d valid=%0d hit=%0d addr=%0h read=%0d write=%0d f3=%0d data=%0h ",
+                              "Outputs: valid=%0d read=%0h rd=%s reg_write=%0d"},
+                rst, ValidM, CacheHitM, ALUOutM, MemReadM, MemWriteM, funct3M, WriteDataM,
+                ValidW, ReadDataW, RdW.name(), RegWriteW);
         endfunction: convert2str
 
         virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
@@ -109,7 +133,8 @@ package mem_item_pkg;
 
             super_ok  = super.do_compare(rhs, comparer);
             ok = super_ok
-                && (this.ReadDataW     === other.ReadDataW)
+                && (this.ValidW       === other.ValidW)
+                && (!other.chk_readdata || (this.ReadDataW === other.ReadDataW))
                 && (this.RdW          === other.RdW)
                 && (this.RegWriteW    === other.RegWriteW)
                 && (this.SelectorW    === other.SelectorW)
@@ -126,7 +151,9 @@ package mem_item_pkg;
                 && (this.FPUOutW      === other.FPUOutW)
                 && (this.MoveOperationW === other.MoveOperationW)
                 && (this.FPURegWriteW === other.FPURegWriteW);
-            if(this.ReadDataW !== other.ReadDataW)
+            if(this.ValidW !== other.ValidW)
+                `uvm_info("ValidW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.ValidW, this.ValidW), UVM_LOW)
+            if(other.chk_readdata && (this.ReadDataW !== other.ReadDataW))
                 `uvm_info("ReadDataW Mismatch", $sformatf("Expected: %0h Actual: %0h", other.ReadDataW, this.ReadDataW), UVM_LOW)
             if(this.RdW !== other.RdW)
                 `uvm_info("RdW Mismatch", $sformatf("Expected: %s Actual: %s", other.RdW.name(), this.RdW.name()), UVM_LOW)
@@ -176,6 +203,9 @@ package mem_item_pkg;
             super.do_copy(rhs);
             // Inputs (*M) + cache response
             this.rst            = other.rst;
+            this.ValidM         = other.ValidM;
+            this.MemReadM       = other.MemReadM;
+            this.StallW         = other.StallW;
             this.CacheHitM      = other.CacheHitM;
             this.ALUOutM        = other.ALUOutM;
             this.WriteDataM     = other.WriteDataM;
@@ -196,8 +226,9 @@ package mem_item_pkg;
             this.FPUOutM        = other.FPUOutM;
             this.MoveOperationM = other.MoveOperationM;
             this.FPURegWriteM   = other.FPURegWriteM;
-            this.AddrM          = other.AddrM;
             // Outputs (*W)
+            this.ValidW         = other.ValidW;
+            this.chk_readdata   = other.chk_readdata;
             this.ReadDataW      = other.ReadDataW;
             this.RdW            = other.RdW;
             this.RegWriteW      = other.RegWriteW;
@@ -215,9 +246,6 @@ package mem_item_pkg;
             this.FPUOutW        = other.FPUOutW;
             this.MoveOperationW = other.MoveOperationW;
             this.FPURegWriteW   = other.FPURegWriteW;
-
-            foreach(this.memory[i])
-                this.memory[i] = other.memory[i];
         endfunction:do_copy
 
         // Copy only the *M inputs (+ rst / CacheHitM). The predictor stamps the
@@ -230,6 +258,9 @@ package mem_item_pkg;
                 return;
             end
             this.rst            = other.rst;
+            this.ValidM         = other.ValidM;
+            this.MemReadM       = other.MemReadM;
+            this.StallW         = other.StallW;
             this.CacheHitM      = other.CacheHitM;
             this.ALUOutM        = other.ALUOutM;
             this.WriteDataM     = other.WriteDataM;
@@ -250,7 +281,6 @@ package mem_item_pkg;
             this.FPUOutM        = other.FPUOutM;
             this.MoveOperationM = other.MoveOperationM;
             this.FPURegWriteM   = other.FPURegWriteM;
-            this.AddrM          = other.AddrM;
         endfunction:copy_inputs
 
 

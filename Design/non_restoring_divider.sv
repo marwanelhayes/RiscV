@@ -15,6 +15,7 @@ module non_restoring_divider #(parameter WIDTH = 32)
     logic signed [WIDTH:0] A;
     logic [WIDTH-1:0] Q;
     logic [WIDTH-1:0] M;
+    logic NegativeQuotient;
     int i;
 
     assign NegativeQuotient = dividend[WIDTH-1] ^ divisor[WIDTH-1];
@@ -60,16 +61,16 @@ module non_restoring_divider #(parameter WIDTH = 32)
         begin : DivByZero
             if(sign)
             begin
-                quotient = -1;
+                quotient = '1;
                 remainder = dividend;
             end
             else
             begin
-                quotient = $unsigned(-1);
+                quotient = '1;
                 remainder = dividend;
             end  
         end : DivByZero
-        else if (sign && (dividend == (1 << (WIDTH-1))) && (divisor == -1)) 
+        else if (sign && (dividend == {1'b1, {(WIDTH-1){1'b0}}}) && (divisor == -1)) 
         begin : Overflow
             quotient  = dividend; 
             remainder = '0;

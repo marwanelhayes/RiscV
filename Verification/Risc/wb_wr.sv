@@ -8,18 +8,18 @@ interface wb_wr
     input rst,
     input PCSrcE,
     input StallF,
-    input [FINAL_ADDR_WIDTH-1:0] PCPlus4F,
-    input [FINAL_ADDR_WIDTH-1:0] PCBranchE,
+    input [FINAL_DATA_WIDTH-1:0] PCPlus4F,
+    input [FINAL_DATA_WIDTH-1:0] PCBranchE,
     input [FINAL_DATA_WIDTH-1:0] ALUOutW,
     input [FINAL_DATA_WIDTH-1:0] ReadDataW,
     input selector_t SelectorW,
-    input logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC,
+    input logic [FINAL_DATA_WIDTH-1:0] CsrOutPC,
     input logic TrapIsSet,
-    input [FINAL_ADDR_WIDTH-1:0] PCPlus4W,
+    input [FINAL_DATA_WIDTH-1:0] PCPlus4W,
     input [FINAL_DATA_WIDTH-1:0] CsrOutW,
     
     input logic [FINAL_DATA_WIDTH-1:0] ResultW,
-    input logic [FINAL_ADDR_WIDTH-1:0] PCF
+    input logic [FINAL_DATA_WIDTH-1:0] PCF
 );
 
 
@@ -27,7 +27,9 @@ interface wb_wr
     (
         .clk(clk)
     );
-    always_comb
+    // always @* (not always_comb): writeback_interface also drives ReadDataW
+    // through its mck clocking block, which always_comb forbids.
+    always @*
     begin
         wb_intf.rst = rst;
         wb_intf.PCSrcE = PCSrcE;
@@ -49,6 +51,6 @@ interface wb_wr
     
     initial
     begin
-        uvm_config_db #(virtual writeback_interface)::set(null,"","INTF",wb_intf.TEST);
+        uvm_config_db #(virtual writeback_interface)::set(null,"","INTF",wb_intf.RISC);
     end
 endinterface

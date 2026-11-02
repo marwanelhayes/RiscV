@@ -9,8 +9,8 @@
 // This interface only carries the *M pipeline inputs, the *W pipeline outputs,
 // and the CacheHitM stall response.
 //
-//   - drv2intf holds the *M inputs on a cache miss (CacheHitM == 0) to mirror
-//     the pipeline stall that freezes the MEM stage during a refill.
+//   - mem_top drives StallW = !CacheHitM (the hazard-unit contract: any miss
+//     freezes the pipeline), and drv2intf holds the *M inputs while StallW.
 //   - intf2mon samples the *M inputs, the *W outputs, and CacheHitM so the
 //     predictor can gate its single-cycle golden model on the hit response.
 // =============================================================================
@@ -25,9 +25,11 @@ interface mem_interface
 
     // ─── DUT input signals (*M) ──────────────────────────────────────────────
     logic rst;
+    logic ValidM;
+    logic MemReadM;
     logic signed [FINAL_DATA_WIDTH-1:0] ALUOutM;
     logic signed [FINAL_DATA_WIDTH-1:0] WriteDataM;
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4M;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4M;
     gpr_t RdM;
     logic [2:0] funct3M;
     logic RegWriteM;
@@ -45,15 +47,17 @@ interface mem_interface
     move_operation_t MoveOperationM;
     logic FPURegWriteM;
 
-    // ─── Cache hit response (DUT output, drives the stall) ───────────────────
+    // ─── Cache hit response (DUT output) and the stall it causes ────────────
     logic CacheHitM;
+    logic StallW;                    // hazard-unit contract, driven by mem_top
 
     // ─── DUT output signals (*W) ─────────────────────────────────────────────
+    logic ValidW;
     logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
     gpr_t RdW;
     logic RegWriteW;
     selector_t SelectorW;
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4W;
     logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
     logic signed [FINAL_DATA_WIDTH-1:0] ALUOutW;
     fpr_t RdFW;
@@ -72,6 +76,8 @@ interface mem_interface
         default input #1step output #CLK;
 
         output rst;
+        output ValidM;
+        output MemReadM;
         output ALUOutM;
         output WriteDataM;
         output PCPlus4M;
@@ -93,6 +99,7 @@ interface mem_interface
         output FPURegWriteM;
 
         input CacheHitM;
+        input ValidW;
         input ReadDataW;
         input RdW;
         input RegWriteW;
@@ -116,6 +123,9 @@ interface mem_interface
         default input #1step;
 
         input rst;
+        input ValidM;
+        input MemReadM;
+        input StallW;
         input ALUOutM;
         input WriteDataM;
         input PCPlus4M;
@@ -137,6 +147,7 @@ interface mem_interface
         input FPURegWriteM;
 
         input CacheHitM;
+        input ValidW;
         input ReadDataW;
         input RdW;
         input RegWriteW;
@@ -159,6 +170,8 @@ interface mem_interface
 
     task initialize;
         rst = 0;
+        ValidM <= 0;
+        MemReadM <= 0;
         ALUOutM <= 0;
         WriteDataM <= 0;
         PCPlus4M <= 0;
@@ -187,16 +200,16 @@ interface mem_interface
     endtask:initialize
 
     // ─── Driver to interface (BFM) ───────────────────────────────────────────
-    // Accept fresh stimulus only when the access is not stalled: during reset
-    // on a cache hit
-    // (CacheHitM == 1) the next request is applied. On a cache miss the *M
-    // inputs are HELD so the address/control freeze for the whole refill,
-    // exactly like the upstream pipeline stall.
+    // Accept fresh stimulus only when MEM advances (StallW == 0). On a cache
+    // miss the *M inputs are HELD so the address/control freeze for the whole
+    // refill, exactly like the upstream pipeline stall.
     task drv2intf (mem_item drv);
         @(mck);
-        rst <= 1'b1;
-        if(pck.CacheHitM)
+        rst <= drv.rst;
+        if(!pck.StallW)
         begin
+            mck.ValidM <= drv.ValidM;
+            mck.MemReadM <= drv.MemReadM;
             mck.ALUOutM <= drv.ALUOutM;
             mck.WriteDataM <= drv.WriteDataM;
             mck.PCPlus4M <= drv.PCPlus4M;
@@ -217,13 +230,16 @@ interface mem_interface
             mck.MoveOperationM <= drv.MoveOperationM;
             mck.FPURegWriteM <= drv.FPURegWriteM;
         end
-        // else: cache miss -> hold *M inputs (pipeline stall during refill)
+        // else: StallW -> hold *M inputs (pipeline stall during refill)
     endtask:drv2intf
 
 
     task intf2mon (mem_item mon);
         @(pck);
         mon.rst = pck.rst;
+        mon.ValidM = pck.ValidM;
+        mon.MemReadM = pck.MemReadM;
+        mon.StallW = pck.StallW;
         mon.ALUOutM = pck.ALUOutM;
         mon.WriteDataM = pck.WriteDataM;
         mon.PCPlus4M = pck.PCPlus4M;
@@ -245,6 +261,7 @@ interface mem_interface
         mon.FPURegWriteM = pck.FPURegWriteM;
 
         mon.CacheHitM = pck.CacheHitM;
+        mon.ValidW = pck.ValidW;
         mon.ReadDataW = pck.ReadDataW;
         mon.RdW = pck.RdW;
         mon.RegWriteW = pck.RegWriteW;

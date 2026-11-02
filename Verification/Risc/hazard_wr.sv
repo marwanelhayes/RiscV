@@ -16,7 +16,6 @@ interface hazard_wr
     input   selector_t SelectorE,
     input   logic PCSrcE,
     input   logic TrapIsSet,
-    input   move_operation_t MoveOperationE,
     input   fpr_t RdFM,
     input   fpr_t RdFW,
     input   fpr_t Rs1FE,
@@ -24,7 +23,9 @@ interface hazard_wr
     input   logic FPURegWriteM,
     input   logic FPURegWriteW,
     input   logic FPUValidE,
-    input   logic FPUBusyM,
+    input   logic FPUDoneE,
+    input   logic ICacheHit,
+    input   logic DCacheHit,
     
     input  logic [2:0] ForwardAE,
     input  logic [2:0] ForwardBE,
@@ -32,6 +33,10 @@ interface hazard_wr
     input  logic StallF,
     input  logic FlushE,
     input  logic FlushD,
+    input  logic StallE,
+    input  logic StallM,
+    input  logic StallW,
+    input  logic FlushM,
     input  logic [1:0] ForwardFloatingAE,
     input  logic [1:0] ForwardFloatingBE 
 );
@@ -53,7 +58,6 @@ interface hazard_wr
         hazard_intf.SelectorE =SelectorE; 
         hazard_intf.PCSrcE =PCSrcE;  
         hazard_intf.TrapIsSet = TrapIsSet;
-        hazard_intf.MoveOperationE = MoveOperationE;
         hazard_intf.RdFM = RdFM;
         hazard_intf.RdFW = RdFW;
         hazard_intf.Rs1FE = Rs1FE;
@@ -61,7 +65,9 @@ interface hazard_wr
         hazard_intf.FPURegWriteM = FPURegWriteM;
         hazard_intf.FPURegWriteW = FPURegWriteW;
         hazard_intf.FPUValidE = FPUValidE;
-        hazard_intf.FPUBusyM = FPUBusyM;
+        hazard_intf.FPUDoneE = FPUDoneE;
+        hazard_intf.ICacheHit = ICacheHit;
+        hazard_intf.DCacheHit = DCacheHit;
     
         hazard_intf.ForwardAE = ForwardAE;
         hazard_intf.ForwardBE = ForwardBE;
@@ -69,6 +75,10 @@ interface hazard_wr
         hazard_intf.StallF = StallF;
         hazard_intf.FlushE = FlushE;
         hazard_intf.FlushD = FlushD;  
+        hazard_intf.StallE = StallE;
+        hazard_intf.StallM = StallM;
+        hazard_intf.StallW = StallW;
+        hazard_intf.FlushM = FlushM;
         hazard_intf.ForwardFloatingAE = ForwardFloatingAE;
         hazard_intf.ForwardFloatingBE = ForwardFloatingBE;
     end
@@ -89,7 +99,7 @@ interface hazard_wr
     
     initial
     begin
-        uvm_config_db #(virtual hazard_interface)::set(null,"","INTF",hazard_intf.TEST);
+        uvm_config_db #(virtual hazard_interface)::set(null,"","INTF",hazard_intf.RISC);
     end
 
 endinterface

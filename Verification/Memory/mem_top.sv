@@ -35,6 +35,7 @@ module mem_top;
     (
         .clk(intf.clk),
         .rst(intf.rst),
+        .ValidM(intf.ValidM),
         .ALUOutM(intf.ALUOutM),
         .WriteDataM(intf.WriteDataM),
         .PCPlus4M(intf.PCPlus4M),
@@ -44,6 +45,9 @@ module mem_top;
         .CsrOutM(intf.CsrOutM),
         .SelectorM(intf.SelectorM),
         .MemWriteM(intf.MemWriteM),
+        .MemReadM(intf.MemReadM),
+        .StallW(intf.StallW),
+        .ValidW(intf.ValidW),
         .ReadDataW(intf.ReadDataW),
         .RdW(intf.RdW),
         .RegWriteW(intf.RegWriteW),
@@ -163,34 +167,34 @@ module mem_top;
         .MRRValid(MRRValid)
     );
 
-    // White-box cache invariants (one-hot hit, no duplicate tags, victim =
-    // invalid-first-else-LRU). Replacement/victim correctness lives here, not
-    // in the reference model.
-    // bind cache cache_sva #(
-    //     .DATA_WIDTH (FINAL_DATA_WIDTH),
-    //     .ADDR_WIDTH (FINAL_ADDR_WIDTH),
-    //     .TOTAL_LINES(CACHE_TOTAL_LINES),
-    //     .WAY        (CACHE_WAY),
-    //     .LINE_WORDS (CACHE_LINE_WORDS)
-    // ) cache_assertions (
-    //     .clk(clk),
-    //     .rst(rst),
-    //     .CPUReadEn(CPUReadEn),
-    //     .CPUWriteEn(CPUWriteEn),
-    //     .CacheHit(CacheHit),
-    //     .hit_array(hit_array),
-    //     .valid_reg(valid_reg),
-    //     .tags_reg(tags_reg),
-    //     .CpuIdx(CpuIdx),
-    //     .CpuTag(CpuTag),
-    //     .victim_way(victim_way),
-    //     .lru_way(lru_way),
-    //     .state(state)
-    // );
+    bind DUT.DCache cache_sva #(
+        .DATA_WIDTH (FINAL_DATA_WIDTH),
+        .ADDR_WIDTH (FINAL_ADDR_WIDTH),
+        .TOTAL_LINES(CACHE_TOTAL_LINES),
+        .WAY        (CACHE_WAY),
+        .LINE_WORDS (CACHE_LINE_WORDS)
+    ) cache_assertions (
+        .clk(clk),
+        .rst(rst),
+        .CPUReadEn(CPUReadEn),
+        .CPUWriteEn(CPUWriteEn),
+        .CacheHit(CacheHit),
+        .hit_array(hit_array),
+        .valid_reg(valid_reg),
+        .tags_reg(tags_reg),
+        .CpuIdx(CpuIdx),
+        .CpuTag(CpuTag),
+        .victim_way(victim_way),
+        .lru_way(lru_way),
+        .state(state)
+    );
 
+    // Hazard-unit contract for a stand-alone MEM stage: a D-cache miss
+    // freezes the pipeline, so MEM/WB holds until the access completes.
     always_comb
     begin
         axi_intf.rst = intf.rst;
+        intf.StallW  = !intf.CacheHitM;
     end
 
     initial
@@ -216,6 +220,8 @@ module mem_top;
         end
 
         uvm_config_db #(virtual mem_interface)::set(null,"","INTF",intf);
+        uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH,
+            CACHE_AXI_SIZE))::set(null,"","AXI_INTF",axi_intf);
         run_test(test_name);
     end
 

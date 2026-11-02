@@ -37,7 +37,6 @@ RiscV/
 │   ├── fp_reg_file.sv             # Floating-point register file
 │   ├── risc_instruction_memory.sv # Instruction ROM
 │   ├── risc_data_memory.sv        # Data memory (RAM)
-│   ├── data_memory.sv             # Data memory wrapper
 │   ├── risc_mem.sv                # Single-port memory cell
 │   │
 │   ├── cache.sv                   # Configurable L1 cache (I-cache and D-cache)
@@ -79,19 +78,22 @@ RiscV/
 │   │   ├── fetch_scoreboard_pkg.sv  # Scoreboard
 │   │   ├── fetch_subscriber_pkg.sv   # Subscriber
 │   │   ├── fetch_config_pkg.sv   # Configuration
+│   │   ├── fetch_predictor_pkg.sv  # Reference model
+│   │   ├── fetch_reg_block_pkg.sv  # RAL model of the instruction ROM
+│   │   ├── fetch_mem_checker_pkg.sv  # RAL backdoor ROM-image check
 │   │   └── fetch_test_pkg.sv     # Test package
 │   │
-│   ├── Decode/                   # Decode stage verification
+│   ├── Decode/                   # Decode stage verification (+ GPR/FPR RAL)
 │   │
 │   ├── Execute/                  # Execute stage verification
 │   │
-│   ├── Memory/                  # Memory stage verification
+│   ├── Memory/                  # Memory stage verification (+ data RAM RAL, cache SVA)
 │   │
 │   ├── WriteBack/               # Write-back stage verification
 │   │
 │   ├── FPU/                    # FPU verification
 │   │
-│   ├── CSR/                    # CSR verification
+│   ├── CSR/                    # CSR verification (+ CSR RAL)
 │   │
 │   └── Hazard/                 # Hazard unit verification
 │
@@ -129,11 +131,11 @@ RiscV/
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | DATA_WIDTH | 32 | Data path width |
-| ADDR_WIDTH | 32 | Address space (configurable) |
+| ADDR_WIDTH | 10 | Address space (`FINAL_ADDR_WIDTH`, configurable) |
 | PRECISION | SINGLE | Floating-point precision |
 | STAGES | 4 | FPU pipeline stages |
 | CACHE_LINES | 32 | L1 cache lines (configurable) |
-| CACHE_WAY | 1 | Cache associativity (1=direct-mapped) |
+| CACHE_WAY | 16 | Cache associativity (1=direct-mapped) |
 | CACHE_WORDS | 4 | Words per cache line |
 
 ## Instruction Extensions
@@ -150,10 +152,11 @@ Each pipeline stage has a complete UVM verification environment with:
 - **Scoreboard**: Expected vs actual comparison
 - **Subscriber**: Coverage collection
 - **Environment**: Integration of all components
+- **UVM RAL**: mirror + backdoor checks of every stage-owned storage (instruction ROM, GPR/FPR files, CSR file, data RAM); see `README.md`
 
 ## Build and Simulation
 
-Refer to individual testbench `*_top.sv` files for simulation setup.
+See `Questa/README.md` (`Questa/do/compile.do` + one `sim_*.do` per environment).
 
 ## Documentation
 

@@ -32,6 +32,7 @@ module fetch_top;
         .FlushD(intf.FlushD), // Flush on control hazard
         .PCPlus4D(intf.PCPlus4D),
         .InstructionD(intf.InstructionD),
+        .ValidD(intf.ValidD),
         .PCPlus4F(intf.PCPlus4F),
         .CacheHitF(intf.CacheHitF),
         .MAWAddr(axi_intf.MAWAddr),
@@ -120,6 +121,28 @@ module fetch_top;
         .MRRResp(MRRResp),
         .MRRLast(MRRLast),
         .MRRValid(MRRValid)
+    );
+
+    bind DUT.ICache cache_sva #(
+        .DATA_WIDTH (FINAL_DATA_WIDTH),
+        .ADDR_WIDTH (FINAL_ADDR_WIDTH),
+        .TOTAL_LINES(CACHE_TOTAL_LINES),
+        .WAY        (CACHE_WAY),
+        .LINE_WORDS (CACHE_LINE_WORDS)
+    ) cache_assertions (
+        .clk(clk),
+        .rst(rst),
+        .CPUReadEn(CPUReadEn),
+        .CPUWriteEn(CPUWriteEn),
+        .CacheHit(CacheHit),
+        .hit_array(hit_array),
+        .valid_reg(valid_reg),
+        .tags_reg(tags_reg),
+        .CpuIdx(CpuIdx),
+        .CpuTag(CpuTag),
+        .victim_way(victim_way),
+        .lru_way(lru_way),
+        .state(state)
     );
 
     always_comb

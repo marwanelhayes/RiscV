@@ -31,7 +31,6 @@ package hazard_item_pkg;
         rand selector_t SelectorE;
         rand logic PCSrcE; 
         rand logic TrapIsSet;
-        rand move_operation_t MoveOperationE;
         rand fpr_t RdFM;
         rand fpr_t RdFW;
         rand fpr_t Rs1FE;
@@ -39,7 +38,7 @@ package hazard_item_pkg;
         rand logic FPURegWriteM;
         rand logic FPURegWriteW;
         rand logic FPUValidE;
-        rand logic FPUBusyM;
+        rand logic FPUDoneE;
         rand logic ICacheHit;
         rand logic DCacheHit;
         
@@ -50,31 +49,33 @@ package hazard_item_pkg;
         logic StallF;
         logic FlushE;
         logic FlushD;
+        logic StallE;
+        logic StallM;
+        logic StallW;
+        logic FlushM;
         logic [1:0] ForwardFloatingAE;
         logic [1:0] ForwardFloatingBE;
 
 
-        //Insert random resets at random times
-        constraint NoZeroReg 
+        // Contract (PLAN_B §2.3/§3.4): EX raises a redirect (taken branch,
+        // jump, trap, MRET) only in a cycle where it advances, so a redirect
+        // never coincides with a cache freeze or an FP instruction waiting in
+        // EX. x0 is left in the register pools so the x0 guards are exercised.
+        constraint RedirectOnlyWhenEAdvances
         {
-            RdE != zero;
-            RdM != zero;
-            RdW != zero;
+            (PCSrcE || TrapIsSet) -> (ICacheHit && DCacheHit && !(FPUValidE && !FPUDoneE));
         }
 
-
-        
-
         virtual function string convert2str();
-            return $sformatf("Inputs: Rs1E = %s | Rs2E = %s | RdE = %s | Rs1D = %s | Rs2D = %s | RdM = %s | RdW = %s | RegWriteM = %0d | RegWriteW = %0d | SelectorE = %s | PCSrcE = %0d | TrapIsSet = %0d | MoveOperationE = %s | RdFM = %s | RdFW = %s | Rs1FE = %s | Rs2FE = %s | FPURegWriteM = %0d | FPURegWriteW = %0d | FPUValidE = %0d | FPUBusyM = %0d | ICacheHit = %0b | DCacheHit = %0b
-            Outputs: ForwardAE = %0b | ForwardBE = %0b | StallD = %0d | StallF = %0d | FlushE = %0d | FlushD = %0d | ForwardFloatingAE = %0b | ForwardFloatingBE = %0b",
-            Rs1E.name(),Rs2E.name(),RdE.name(),Rs1D.name(),Rs2D.name(),RdM.name(),RdW.name(),RegWriteM,RegWriteW,SelectorE.name(),PCSrcE,TrapIsSet,MoveOperationE.name(),RdFM.name(),RdFW.name(),Rs1FE.name(),Rs2FE.name(),FPURegWriteM,FPURegWriteW,FPUValidE,FPUBusyM,
+            return $sformatf("Inputs: Rs1E = %s | Rs2E = %s | RdE = %s | Rs1D = %s | Rs2D = %s | RdM = %s | RdW = %s | RegWriteM = %0d | RegWriteW = %0d | SelectorE = %s | PCSrcE = %0d | TrapIsSet = %0d | RdFM = %s | RdFW = %s | Rs1FE = %s | Rs2FE = %s | FPURegWriteM = %0d | FPURegWriteW = %0d | FPUValidE = %0d | FPUDoneE = %0d | ICacheHit = %0b | DCacheHit = %0b
+            Outputs: ForwardAE = %0b | ForwardBE = %0b | StallD = %0d | StallF = %0d | StallE = %0d | StallM = %0d | StallW = %0d | FlushE = %0d | FlushD = %0d | FlushM = %0d | ForwardFloatingAE = %0b | ForwardFloatingBE = %0b",
+            Rs1E.name(),Rs2E.name(),RdE.name(),Rs1D.name(),Rs2D.name(),RdM.name(),RdW.name(),RegWriteM,RegWriteW,SelectorE.name(),PCSrcE,TrapIsSet,RdFM.name(),RdFW.name(),Rs1FE.name(),Rs2FE.name(),FPURegWriteM,FPURegWriteW,FPUValidE,FPUDoneE,
             ICacheHit,DCacheHit,
-            ForwardAE,ForwardBE,StallD,StallF,FlushE,FlushD,ForwardFloatingAE,ForwardFloatingBE);
+            ForwardAE,ForwardBE,StallD,StallF,StallE,StallM,StallW,FlushE,FlushD,FlushM,ForwardFloatingAE,ForwardFloatingBE);
         endfunction: convert2str
 
         // ── UVM do_compare ───────────────────────────────────────────────
-        // Field-by-field equality on the eight combinational outputs. Used
+        // Field-by-field equality on the twelve combinational outputs. Used
         // by the scoreboard's in-order comparator via uvm_object::compare.
         virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
             hazard_item other;
@@ -95,8 +96,12 @@ package hazard_item_pkg;
                 && (this.ForwardFloatingBE === other.ForwardFloatingBE)
                 && (this.StallD            === other.StallD)
                 && (this.StallF            === other.StallF)
+                && (this.StallE            === other.StallE)
+                && (this.StallM            === other.StallM)
+                && (this.StallW            === other.StallW)
                 && (this.FlushE            === other.FlushE)
-                && (this.FlushD            === other.FlushD);
+                && (this.FlushD            === other.FlushD)
+                && (this.FlushM            === other.FlushM);
             if(this.ForwardAE !== other.ForwardAE)
                 `uvm_info("ForwardAE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.ForwardAE, this.ForwardAE), UVM_LOW)
             if(this.ForwardBE !== other.ForwardBE)
@@ -113,6 +118,14 @@ package hazard_item_pkg;
                 `uvm_info("FlushE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushE, this.FlushE), UVM_LOW)
             if(this.FlushD !== other.FlushD)
                 `uvm_info("FlushD Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushD, this.FlushD), UVM_LOW)
+            if(this.StallE !== other.StallE)
+                `uvm_info("StallE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallE, this.StallE), UVM_LOW)
+            if(this.StallM !== other.StallM)
+                `uvm_info("StallM Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallM, this.StallM), UVM_LOW)
+            if(this.StallW !== other.StallW)
+                `uvm_info("StallW Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallW, this.StallW), UVM_LOW)
+            if(this.FlushM !== other.FlushM)
+                `uvm_info("FlushM Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushM, this.FlushM), UVM_LOW)
             return ok;
         endfunction:do_compare
 
@@ -137,7 +150,6 @@ package hazard_item_pkg;
             this.SelectorE = other.SelectorE;
             this.PCSrcE = other.PCSrcE;
             this.TrapIsSet = other.TrapIsSet;
-            this.MoveOperationE = other.MoveOperationE;
             this.RdFM = other.RdFM;
             this.RdFW = other.RdFW;
             this.Rs1FE = other.Rs1FE;
@@ -145,7 +157,7 @@ package hazard_item_pkg;
             this.FPURegWriteM = other.FPURegWriteM;
             this.FPURegWriteW = other.FPURegWriteW;
             this.FPUValidE = other.FPUValidE;
-            this.FPUBusyM = other.FPUBusyM;
+            this.FPUDoneE = other.FPUDoneE;
             this.ICacheHit = other.ICacheHit;
             this.DCacheHit = other.DCacheHit;
 
@@ -155,6 +167,10 @@ package hazard_item_pkg;
             this.StallF = other.StallF;
             this.FlushE = other.FlushE;
             this.FlushD = other.FlushD;
+            this.StallE = other.StallE;
+            this.StallM = other.StallM;
+            this.StallW = other.StallW;
+            this.FlushM = other.FlushM;
             this.ForwardFloatingAE = other.ForwardFloatingAE;
             this.ForwardFloatingBE = other.ForwardFloatingBE;
         endfunction:do_copy
@@ -179,7 +195,6 @@ package hazard_item_pkg;
             this.SelectorE = other.SelectorE;
             this.PCSrcE = other.PCSrcE;
             this.TrapIsSet = other.TrapIsSet;
-            this.MoveOperationE = other.MoveOperationE;
             this.RdFM = other.RdFM;
             this.RdFW = other.RdFW;
             this.Rs1FE = other.Rs1FE;
@@ -187,7 +202,7 @@ package hazard_item_pkg;
             this.FPURegWriteM = other.FPURegWriteM;
             this.FPURegWriteW = other.FPURegWriteW;
             this.FPUValidE = other.FPUValidE;
-            this.FPUBusyM = other.FPUBusyM;
+            this.FPUDoneE = other.FPUDoneE;
             this.ICacheHit = other.ICacheHit;
             this.DCacheHit = other.DCacheHit;
         endfunction:copy_inputs

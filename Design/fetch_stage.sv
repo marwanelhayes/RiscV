@@ -4,22 +4,22 @@
 // Instruction Fetch stage of the RISC-V 5-stage pipeline.
 //
 // Responsibilities:
-//   - Fetch instructions from instruction memory using PC
+//   - Fetch instructions through the I-cache using PC (XLEN wide)
+//   - Select the 32-bit instruction inside a 64-bit word when XLEN = 64
 //   - Compute next sequential PC (PC + 4)
 //   - Handle pipeline stalls and flushes from hazard unit
 //   - Output instruction and PC to decode stage
 //
 // Instantiates:
 //   - pc_adder: calculates PC+4
-//   - risc_instruction_memory: instruction ROM
 //   - cache: L1 instruction cache
 // =============================================================================
 import shared_pkg::*;
 
 module fetch_stage
 #(
-    parameter int  DATA_WIDTH         = 32,
-    parameter int  ADDR_WIDTH         = 32,
+    parameter int  DATA_WIDTH         = 32,     // XLEN (also the I-cache word width)
+    parameter int  ADDR_WIDTH         = 32,     // Physical address width
     parameter int  CACHE_TOTAL_LINES  = 32,                          
     parameter int  CACHE_WAY          = 1,                          
     parameter int  CACHE_LINE_WORDS   = 4,                           
@@ -32,18 +32,19 @@ module fetch_stage
     input rst,
 
     // ── Program counter from previous stage ──────────────────────────────────
-    input [ADDR_WIDTH-1:0] PCF,
+    input [DATA_WIDTH-1:0] PCF,
 
     // ── Pipeline control from hazard unit ────────────────────────────────────
     input StallD,      // Stall the pipeline (hold current state)
     input FlushD,      // Flush the pipeline (inject NOP)
 
     // ── Outputs to decode stage ──────────────────────────────────────────────
-    output logic [ADDR_WIDTH-1:0] PCPlus4D,      // PC+4 for current instruction
-    output logic [DATA_WIDTH-1:0] InstructionD,  // Fetched instruction
+    output logic [DATA_WIDTH-1:0] PCPlus4D,      // PC+4 for current instruction
+    output logic [INSTR_WIDTH-1:0] InstructionD, // Fetched instruction
+    output logic ValidD,                         // IF/ID holds a real instruction
 
     // ── Outputs to previous stage ────────────────────────────────────────────
-    output wire [ADDR_WIDTH-1:0] PCPlus4F,        // PC+4 for next fetch address
+    output wire [DATA_WIDTH-1:0] PCPlus4F,        // PC+4 for next fetch address
     
     // ── AXI4 master interface: write address channel ─────────────────────────
     output logic [ADDR_WIDTH-1:0] MAWAddr,
@@ -84,11 +85,32 @@ module fetch_stage
     output logic                 CacheHitF                     // Cache hit signal for stalling logic
 );
 
+    localparam logic [INSTR_WIDTH-1:0] NOP = 32'h00_00_00_13;    // ADDI x0, x0, 0
+
     // ─── Internal wires – instruction fetch ───────────────────────────────────
-    logic [DATA_WIDTH-1:0] InstructionF;  // Instruction from memory (combinational)
+    logic [DATA_WIDTH-1:0] CacheWordF;     // Word returned by the I-cache
+    logic [INSTR_WIDTH-1:0] InstructionF;  // Instruction at PCF (combinational)
+
+    // A DATA_WIDTH word holds DATA_WIDTH/32 instructions; PCF picks one.
+    generate
+        if(DATA_WIDTH > INSTR_WIDTH)
+        begin:gen_wide_word
+            always_comb
+            begin
+                InstructionF = CacheWordF[INSTR_WIDTH*PCF[$clog2(DATA_WIDTH/8)-1:2] +: INSTR_WIDTH];
+            end
+        end:gen_wide_word
+        else
+        begin:gen_word
+            always_comb
+            begin
+                InstructionF = CacheWordF[INSTR_WIDTH-1:0];
+            end
+        end:gen_word
+    endgenerate
 
     // ─── fetch_stage: PC+4 calculation ───────────────────────────────────────
-    pc_adder #(.ADDR_WIDTH(ADDR_WIDTH)) P1 
+    pc_adder #(.ADDR_WIDTH(DATA_WIDTH)) P1 
     (
         .PC(PCF),
         .PCPlus4(PCPlus4F)
@@ -107,11 +129,12 @@ module fetch_stage
                     
         .clk(clk),
         .rst(rst),
-        .CPUAddr(PCF),
-        .CPUWriteData('b0),
+        .CPUAddr(PCF[ADDR_WIDTH-1:0]),
+        .CPUWriteData('0),
+        .CPUByteEn('0),
         .CPUWriteEn(1'b0),
         .CPUReadEn(1'b1),
-        .CPUReadData(InstructionF),
+        .CPUReadData(CacheWordF),
         .CacheHit(CacheHitF),    
         .MAWAddr(MAWAddr),
         .MAWLen(MAWLen),
@@ -146,17 +169,20 @@ module fetch_stage
         if (!rst)
         begin
             PCPlus4D <= '0;
-            InstructionD <= 32'h00_00_00_33;    // NOP instruction (ADDI x0, x0, 0)
+            InstructionD <= NOP;                // Bubble
+            ValidD <= 1'b0;
         end
         else if(FlushD)
         begin
             PCPlus4D <= '0;
-            InstructionD <= 32'h00_00_00_33;    // Flush with NOP
+            InstructionD <= NOP;                // Flush with a bubble
+            ValidD <= 1'b0;
         end
         else if(!StallD)
         begin
             PCPlus4D <= PCPlus4F;                // Latch PC+4 on valid cycle
             InstructionD <= InstructionF;        // Latch fetched instruction
+            ValidD <= 1'b1;
         end
     end
 

@@ -10,8 +10,10 @@
 //   - Bus Functional Model (BFM) tasks live in the interface and are invoked
 //     from the driver
 //   - drv2intf holds PCF on cache miss to mirror writeback-stage stall
-//   - FlushD / StallD mutual exclusion is enforced by the sequence item
-//     constraints; the BFM also forces StallD on a cache miss
+//   - The driver issues stall/flush *requests* (StallBit/FlushBit); fetch_top
+//     turns them into the DUT pins: StallD = StallBit | miss, and
+//     FlushD = FlushBit & !StallD (a redirect never meets a stall, as in the
+//     pipeline contract). The monitor samples both requests and pins.
 // =============================================================================
 import shared_pkg::*;
 import fetch_item_pkg::*;
@@ -24,18 +26,19 @@ interface fetch_interface
 
     // ─── DUT input signals ────────────────────────────────────────────────────
     logic rst;
-    logic [FINAL_ADDR_WIDTH-1:0] PCF;
+    logic [FINAL_DATA_WIDTH-1:0] PCF;
     logic                        StallD;
     logic                        FlushD;
 
     // ─── DUT output signals ──────────────────────────────────────────────────
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4D;
-    logic [FINAL_DATA_WIDTH-1:0] InstructionD;
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4D;
+    logic [INSTR_WIDTH-1:0]      InstructionD;
+    logic                        ValidD;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4F;
     logic                        CacheHitF;
-    logic [FINAL_ADDR_WIDTH-1:0] PCF_delay; // also an output for monitoring
+    logic [FINAL_DATA_WIDTH-1:0] PCF_delay; // also an output for monitoring
 
-    logic StallBit, FlushBit;
+    logic StallBit, FlushBit;          // stall / flush requests (driven by the driver)
 
     // ─── Master clocking block (driver view) ─────────────────────────────────
     // Outputs (DUT inputs) use #CLK; inputs (DUT outputs) use #1step.
@@ -47,6 +50,7 @@ interface fetch_interface
         output FlushBit;
         input  PCPlus4D;
         input  InstructionD;
+        input  ValidD;
         input  PCPlus4F;
         input  CacheHitF;
     endclocking:mck
@@ -61,16 +65,19 @@ interface fetch_interface
         input FlushD;
         input PCPlus4D;
         input InstructionD;
+        input ValidD;
         input PCPlus4F;
         input CacheHitF;
+        input StallBit;
+        input FlushBit;
     endclocking:pck
 
     // ─── Initialization task (BFM) ───────────────────────────────────────────
     task initialize;
         rst    <= 1'b0;
         PCF    <= '0;
-        StallD <= 1'b0;
-        FlushD <= 1'b0;
+        StallBit <= 1'b0;
+        FlushBit <= 1'b0;
         PCF_delay <= '0;
         repeat(5) @(posedge clk);
         rst    <= 1'b1;
@@ -105,8 +112,11 @@ interface fetch_interface
         mon.PCF          = pck.PCF;
         mon.StallD       = pck.StallD;
         mon.FlushD       = pck.FlushD;
+        mon.StallBit     = pck.StallBit;
+        mon.FlushBit     = pck.FlushBit;
         mon.PCPlus4D     = pck.PCPlus4D;
         mon.InstructionD = pck.InstructionD;
+        mon.ValidD       = pck.ValidD;
         mon.PCPlus4F     = pck.PCPlus4F;
         mon.CacheHitF    = pck.CacheHitF;
     endtask:intf2mon

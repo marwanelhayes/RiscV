@@ -21,15 +21,16 @@ package fetch_item_pkg;
         endfunction: new
         
         rand logic                          rst;
-        rand logic [FINAL_ADDR_WIDTH-1:0]   PCF;
+        rand logic [FINAL_DATA_WIDTH-1:0]   PCF;
         rand logic                          StallD;
         rand logic                          FlushD;
-        rand logic                          StallBit;
-        rand logic                          FlushBit;
+        logic                               StallBit;   // observed stall request
+        logic                               FlushBit;   // observed flush request
 
-        logic [FINAL_ADDR_WIDTH-1:0]        PCPlus4D;
-        logic [FINAL_DATA_WIDTH-1:0]        InstructionD;
-        logic [FINAL_ADDR_WIDTH-1:0]        PCPlus4F;
+        logic [FINAL_DATA_WIDTH-1:0]        PCPlus4D;
+        logic [INSTR_WIDTH-1:0]             InstructionD;
+        logic                               ValidD;
+        logic [FINAL_DATA_WIDTH-1:0]        PCPlus4F;
         logic                               CacheHitF;
 
 
@@ -73,7 +74,10 @@ package fetch_item_pkg;
             end
             
             super_ok  = super.do_compare(rhs, comparer);
-            ok = super_ok && (this.PCPlus4D == other.PCPlus4D) && (this.InstructionD == other.InstructionD) && (this.PCPlus4F == other.PCPlus4F);
+            ok = super_ok && (this.PCPlus4D == other.PCPlus4D) && (this.InstructionD == other.InstructionD) &&
+                 (this.ValidD === other.ValidD) && (this.PCPlus4F == other.PCPlus4F);
+            if(this.ValidD !== other.ValidD)
+                `uvm_info("ValidD Mismatch", $sformatf("Expected: %0d Actual: %0d", this.ValidD, other.ValidD), UVM_LOW)
 
             if(this.PCPlus4D !== other.PCPlus4D)
                 `uvm_info("PCPlus4D Mismatch", $sformatf("Expected: %0h Actual: %0h", this.PCPlus4D, other.PCPlus4D), UVM_LOW)
@@ -97,11 +101,14 @@ package fetch_item_pkg;
             this.PCF = other.PCF;
             this.StallD = other.StallD;
             this.FlushD = other.FlushD;
+            this.StallBit = other.StallBit;
+            this.FlushBit = other.FlushBit;
 
 
             this.CacheHitF = other.CacheHitF;
             this.PCPlus4D = other.PCPlus4D;
             this.InstructionD = other.InstructionD;
+            this.ValidD = other.ValidD;
             this.PCPlus4F = other.PCPlus4F;
         endfunction:do_copy
 
@@ -116,6 +123,8 @@ package fetch_item_pkg;
             this.PCF = other.PCF;
             this.StallD = other.StallD;
             this.FlushD = other.FlushD;
+            this.StallBit = other.StallBit;
+            this.FlushBit = other.FlushBit;
         endfunction:copy_inputs
 
 

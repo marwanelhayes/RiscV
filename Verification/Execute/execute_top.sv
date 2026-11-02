@@ -19,15 +19,19 @@ module execute_top;
     (
         .clk(intf.clk),
         .rst(intf.rst),
+        .ValidE(intf.ValidE),
         .RD1E(intf.RD1E),
         .RD2E(intf.RD2E),
         .SignImmE(intf.SignImmE),
-        .ResultW(intf.ResultW),
         .PCPlus4E(intf.PCPlus4E),
+        .PCBranchE(intf.PCBranchE),
         .ALUControlE(intf.ALUControlE),
         .funct3E(intf.funct3E),
         .BranchE(intf.BranchE),
         .JumpE(intf.JumpE),
+        .JalrE(intf.JalrE),
+        .AuipcE(intf.AuipcE),
+        .WordOpE(intf.WordOpE),
         .ForwardAE(intf.ForwardAE),
         .ForwardBE(intf.ForwardBE),
         .Rs1E(intf.Rs1E),
@@ -39,25 +43,11 @@ module execute_top;
         .SelectorE(intf.SelectorE),
         .ALUSrcE(intf.ALUSrcE),
         .MemWriteE(intf.MemWriteE),
+        .MemReadE(intf.MemReadE),
         .MRetE(intf.MRetE),
         .EcallE(intf.EcallE),
         .EbreakE(intf.EbreakE),
         .IllegaleInstructionE(intf.IllegaleInstructionE),
-        .TimerInterrupt(intf.TimerInterrupt),
-        .SoftwareInterrupt(intf.SoftwareInterrupt),
-        .ExternalInterrupt(intf.ExternalInterrupt),
-        .ALUOutM(intf.ALUOutM),
-        .WriteDataM(intf.WriteDataM),
-        .RdM(intf.RdM),
-        .PCSrcE(intf.PCSrcE),
-        .RegWriteM(intf.RegWriteM),
-        .PCPlus4M(intf.PCPlus4M),
-        .SelectorM(intf.SelectorM),
-        .funct3M(intf.funct3M),
-        .CsrOutM(intf.CsrOutM),
-        .MemWriteM(intf.MemWriteM),
-        .TrapIsSet(intf.TrapIsSet),
-        .CsrOutPC(intf.CsrOutPC),
         .RdFE(intf.RdFE),
         .RD1FE(intf.RD1FE),
         .RD2FE(intf.RD2FE),
@@ -66,11 +56,33 @@ module execute_top;
         .FPURegWriteE(intf.FPURegWriteE),
         .FPUValidE(intf.FPUValidE),
         .MoveOperationE(intf.MoveOperationE),
-        .FPUOutW(intf.FPUOutW),
         .ForwardFloatingAE(intf.ForwardFloatingAE),
         .ForwardFloatingBE(intf.ForwardFloatingBE),
         .Rs1FE(intf.Rs1FE),
         .Rs2FE(intf.Rs2FE),
+        .ResultW(intf.ResultW),
+        .FPUOutW(intf.FPUOutW),
+        .TimerInterrupt(intf.TimerInterrupt),
+        .ExternalInterrupt(intf.ExternalInterrupt),
+        .SoftwareInterrupt(intf.SoftwareInterrupt),
+        .StallE(intf.StallE),
+        .StallM(intf.StallM),
+        .FlushM(intf.FlushM),
+        .ValidM(intf.ValidM),
+        .ALUOutM(intf.ALUOutM),
+        .WriteDataM(intf.WriteDataM),
+        .RdM(intf.RdM),
+        .PCSrcE(intf.PCSrcE),
+        .PCTargetE(intf.PCTargetE),
+        .RegWriteM(intf.RegWriteM),
+        .PCPlus4M(intf.PCPlus4M),
+        .SelectorM(intf.SelectorM),
+        .funct3M(intf.funct3M),
+        .CsrOutM(intf.CsrOutM),
+        .MemWriteM(intf.MemWriteM),
+        .MemReadM(intf.MemReadM),
+        .TrapIsSet(intf.TrapIsSet),
+        .CsrOutPC(intf.CsrOutPC),
         .RdFM(intf.RdFM),
         .OverflowM(intf.OverflowM),
         .UnderflowM(intf.UnderflowM),
@@ -81,9 +93,33 @@ module execute_top;
         .FPUOutM(intf.FPUOutM),
         .FPURegWriteM(intf.FPURegWriteM),
         .MoveOperationM(intf.MoveOperationM),
-        .FPUBusyM(intf.FPUBusyM),
-        .FPUDoneM(intf.FPUDoneM)
-        );
+        .FPUBusyE(intf.FPUBusyE),
+        .FPUDoneE(intf.FPUDoneE)
+    );
+
+    // ── Hazard-unit contract for a stand-alone EX stage ──────────────────────
+    // A cache freeze (MemStallBit) holds EX and EX/MEM; an FP instruction
+    // holds EX until the FPU is done and leaves a bubble in EX/MEM; a trap
+    // squashes the EX instruction.
+    logic FPUWait;
+    always_comb
+    begin
+        FPUWait     = intf.FPUValidE && intf.ValidE && !intf.FPUDoneE;
+        intf.StallE = intf.MemStallBit || FPUWait;
+        intf.StallM = intf.MemStallBit;
+        intf.FlushM = !intf.MemStallBit && (intf.TrapIsSet || FPUWait);
+    end
+
+    // Passive FPU and CSR sub-env taps (bound here, not inside the RTL).
+    bind DUT.FPU flp_wr FPU_bind
+    (
+        .*
+    );
+
+    bind DUT.CSR csr_wr CSR_bind
+    (
+        .*
+    );
 
     initial 
     begin

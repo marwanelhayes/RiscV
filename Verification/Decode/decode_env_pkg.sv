@@ -14,6 +14,8 @@ package decode_env_pkg;
     import decode_subscriber_pkg::*;
     import decode_predictor_pkg::*;
     import decode_config_pkg::*;
+    import decode_reg_block_pkg::*;
+    import decode_reg_checker_pkg::*;
 
     class decode_env extends uvm_env;
 
@@ -28,16 +30,24 @@ package decode_env_pkg;
         decode_subscriber  sub;
         decode_predictor   predictor;
         decode_config      configuration;
+        decode_reg_block   reg_block;
+        decode_reg_checker reg_checker;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             if(! uvm_config_db #(decode_config)::get(this,"","CONFG",configuration))
                 `uvm_error("ENV","Environment couldn't receive configuration object")
             uvm_config_db #(decode_config)::set(this,"agent","CONFG",configuration);
+            reg_block = decode_reg_block::type_id::create("decode_reg_block");
+            reg_block.build();
+            reg_block.lock_model();
+            uvm_config_db #(decode_reg_block)::set(this,"predictor","REG_BLOCK",reg_block);
+            uvm_config_db #(decode_reg_block)::set(this,"reg_checker","REG_BLOCK",reg_block);
             agent      = decode_agent     ::type_id::create("agent",this);
             scoreboard = decode_scoreboard::type_id::create("scoreboard",this);
             sub        = decode_subscriber::type_id::create("sub",this);
             predictor  = decode_predictor ::type_id::create("predictor",this);
+            reg_checker = decode_reg_checker::type_id::create("reg_checker",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);

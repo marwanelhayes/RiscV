@@ -9,18 +9,18 @@ interface writeback_interface
     logic rst;
     logic PCSrcE;
     logic StallF;
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F;
-    logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4F;
+    logic [FINAL_DATA_WIDTH-1:0] PCBranchE;
     logic [FINAL_DATA_WIDTH-1:0] ALUOutW;
     logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW;
     selector_t SelectorW;
-    logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
+    logic [FINAL_DATA_WIDTH-1:0] CsrOutPC;
     logic TrapIsSet;
     logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
-    logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+    logic [FINAL_DATA_WIDTH-1:0] PCPlus4W;
     
     logic [FINAL_DATA_WIDTH-1:0] ResultW;
-    logic [FINAL_ADDR_WIDTH-1:0] PCF;
+    logic [FINAL_DATA_WIDTH-1:0] PCF;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking mck @(posedge clk);

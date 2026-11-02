@@ -5,9 +5,8 @@
 //   - Two uvm_tlm_analysis_fifo's absorb arrival-order skew between the
 //     predictor (expected stream) and the monitor (actual stream).
 //   - The reference model lives in flp_predictor_pkg (emit-before-update).
-//   - Numeric comparison uses a 5% relative tolerance to absorb the rounding
-//     differences between the bit-accurate DUT and the shortreal reference.
-//     Exact equality is enforced on enum / status / register-write fields.
+//   - Every field, the numeric Result included, must match bit-exactly: the
+//     reference (flp_ref_pkg) is itself exact in every rounding mode.
 // =============================================================================
 package flp_scoreboard_pkg;
 

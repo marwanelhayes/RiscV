@@ -18,7 +18,6 @@ interface hazard_interface
     selector_t SelectorE;
     logic PCSrcE;
     logic TrapIsSet;
-    move_operation_t MoveOperationE;
     fpr_t RdFM;
     fpr_t RdFW;
     fpr_t Rs1FE;
@@ -26,7 +25,7 @@ interface hazard_interface
     logic FPURegWriteM;
     logic FPURegWriteW;
     logic FPUValidE;
-    logic FPUBusyM;
+    logic FPUDoneE;
     logic ICacheHit;
     logic DCacheHit; 
     
@@ -36,6 +35,10 @@ interface hazard_interface
     logic StallF;
     logic FlushE;
     logic FlushD;
+    logic StallE;
+    logic StallM;
+    logic StallW;
+    logic FlushM;
     logic [1:0] ForwardFloatingAE;
     logic [1:0] ForwardFloatingBE; 
 
@@ -55,7 +58,6 @@ interface hazard_interface
         output   SelectorE;
         output   PCSrcE;
         output   TrapIsSet;
-        output   MoveOperationE;
         output   RdFM;
         output   RdFW;
         output   Rs1FE;
@@ -63,7 +65,7 @@ interface hazard_interface
         output   FPURegWriteM;
         output   FPURegWriteW;
         output   FPUValidE;
-        output   FPUBusyM;
+        output   FPUDoneE;
         output   ICacheHit;
         output   DCacheHit;
 
@@ -73,6 +75,10 @@ interface hazard_interface
         input  StallF;
         input  FlushE;
         input  FlushD;
+        input  StallE;
+        input  StallM;
+        input  StallW;
+        input  FlushM;
         input  ForwardFloatingAE;
         input  ForwardFloatingBE;    
     endclocking:mck
@@ -92,7 +98,6 @@ interface hazard_interface
         input   SelectorE;
         input   PCSrcE;
         input   TrapIsSet;
-        input   MoveOperationE;
         input   RdFM;
         input   RdFW;
         input   Rs1FE;
@@ -100,7 +105,7 @@ interface hazard_interface
         input   FPURegWriteM;
         input   FPURegWriteW;
         input   FPUValidE;
-        input   FPUBusyM;
+        input   FPUDoneE;
         input   ICacheHit;
         input   DCacheHit;
 
@@ -110,6 +115,10 @@ interface hazard_interface
         input  StallF;
         input  FlushE;
         input  FlushD;
+        input  StallE;
+        input  StallM;
+        input  StallW;
+        input  FlushM;
         input  ForwardFloatingAE;
         input  ForwardFloatingBE;    
     endclocking:pck
@@ -128,7 +137,6 @@ interface hazard_interface
         SelectorE = ALUToReg;
         PCSrcE = 0;
         TrapIsSet = 0;
-        MoveOperationE = FPUToFPU;
         RdFM = f0;
         RdFW = f0;
         Rs1FE = f0;
@@ -136,7 +144,7 @@ interface hazard_interface
         FPURegWriteM = 0;
         FPURegWriteW = 0;
         FPUValidE = 0;
-        FPUBusyM = 0;
+        FPUDoneE = 0;
         ICacheHit = 1;
         DCacheHit = 1;
         repeat(5)
@@ -159,7 +167,6 @@ interface hazard_interface
         mck.SelectorE <= drv.SelectorE;
         mck.PCSrcE <= drv.PCSrcE;
         mck.TrapIsSet <= drv.TrapIsSet;
-        mck.MoveOperationE <= drv.MoveOperationE;
         mck.RdFM <= drv.RdFM;
         mck.RdFW <= drv.RdFW;
         mck.Rs1FE <= drv.Rs1FE;
@@ -167,7 +174,7 @@ interface hazard_interface
         mck.FPURegWriteM <= drv.FPURegWriteM;
         mck.FPURegWriteW <= drv.FPURegWriteW;
         mck.FPUValidE <= drv.FPUValidE;
-        mck.FPUBusyM <= drv.FPUBusyM;
+        mck.FPUDoneE <= drv.FPUDoneE;
         mck.ICacheHit <= drv.ICacheHit;
         mck.DCacheHit <= drv.DCacheHit;
     endtask:drv2intf
@@ -192,7 +199,10 @@ interface hazard_interface
         mon.StallF = pck.StallF;
         mon.FlushE = pck.FlushE;
         mon.FlushD = pck.FlushD;
-        mon.MoveOperationE = pck.MoveOperationE;
+        mon.StallE = pck.StallE;
+        mon.StallM = pck.StallM;
+        mon.StallW = pck.StallW;
+        mon.FlushM = pck.FlushM;
         mon.RdFM = pck.RdFM;
         mon.RdFW = pck.RdFW;
         mon.Rs1FE = pck.Rs1FE;
@@ -204,7 +214,7 @@ interface hazard_interface
         mon.ForwardFloatingAE = pck.ForwardFloatingAE;
         mon.ForwardFloatingBE = pck.ForwardFloatingBE;
         mon.FPUValidE = pck.FPUValidE;
-        mon.FPUBusyM = pck.FPUBusyM;
+        mon.FPUDoneE = pck.FPUDoneE;
     endtask:intf2mon
 
     modport RISC (clocking pck); 

@@ -7,9 +7,10 @@ package mem_env_pkg;
     import mem_agent_pkg::*;
     import mem_scoreboard_pkg::*;
     import mem_subscriber_pkg::*;
-    import mem_predictor_pkg::*;
-    //import mem_flat_predictor_pkg::*;
+    import mem_flat_predictor_pkg::*;
     import mem_config_pkg::*;
+    import mem_reg_block_pkg::*;
+    import mem_ral_checker_pkg::*;
 
     class mem_env extends uvm_env;
 
@@ -24,24 +25,25 @@ package mem_env_pkg;
         mem_agent agent;
         mem_scoreboard scoreboard;
         mem_subscriber  sub;
-        mem_predictor   predictor;
+        mem_flat_predictor predictor;
         mem_config configuration;
-        // Architectural (flat) checker running in parallel with the structural
-        // predictor above - its own predictor + scoreboard, independent stream.
-        // mem_flat_predictor flat_predictor;
-        // mem_scoreboard     flat_scoreboard;
+        mem_reg_block   reg_block;
+        mem_ral_checker memory_checker;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
             if(! uvm_config_db #(mem_config)::get(this,"","CONFG",configuration))
                 `uvm_error("ENV","Environment couldn't receive configuration object")
             uvm_config_db #(mem_config)::set(this,"agent","CONFG",configuration);
+            reg_block = mem_reg_block::type_id::create("mem_reg_block");
+            reg_block.build();
+            reg_block.lock_model();
+            uvm_config_db #(mem_reg_block)::set(this, "memory_checker", "REG_BLOCK", reg_block);
             agent      = mem_agent     ::type_id::create("agent",this);
             scoreboard = mem_scoreboard::type_id::create("scoreboard",this);
             sub        = mem_subscriber::type_id::create("sub",this);
-            predictor  = mem_predictor ::type_id::create("predictor",this);
-            // flat_predictor  = mem_flat_predictor::type_id::create("flat_predictor",this);
-            // flat_scoreboard = mem_scoreboard    ::type_id::create("flat_scoreboard",this);
+            predictor  = mem_flat_predictor::type_id::create("predictor",this);
+            memory_checker = mem_ral_checker::type_id::create("memory_checker",this);
         endfunction:build_phase
 
         virtual function void connect_phase (uvm_phase phase);
@@ -53,12 +55,7 @@ package mem_env_pkg;
             agent.mon.mon_port.connect(scoreboard.actual_fifo.analysis_export);
             // Predictor publishes expected transactions to the scoreboard.
             predictor.exp_port.connect(scoreboard.expected_fifo.analysis_export);
-
-            // Parallel architectural checker: same monitor stream, own FIFOs.
-            // agent.mon.mon_port.connect(flat_predictor.analysis_export);
-            // agent.mon.mon_port.connect(flat_scoreboard.actual_fifo.analysis_export);
-            // flat_predictor.exp_port.connect(flat_scoreboard.expected_fifo.analysis_export);
         endfunction:connect_phase
 
     endclass:mem_env
-endpackage:mem_env_pkg
+endpackage:mem_env_pkg

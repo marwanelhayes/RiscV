@@ -44,6 +44,7 @@ package mem_test_pkg;
         
         virtual task run_phase (uvm_phase phase);
             phase.raise_objection(this);
+                env.memory_checker.check_initial_image();
                 main_sequence.start(env.agent.seq);
                 main_sequence_no_rst.start(env.agent.seq);
             phase.drop_objection(this);
@@ -54,4 +55,4 @@ package mem_test_pkg;
 
 
 
-endpackage:mem_test_pkg
+endpackage:mem_test_pkg

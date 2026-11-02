@@ -7,7 +7,8 @@
 //   - Execute all RV32F floating-point instructions
 //   - Dispatch operations to appropriate functional units
 //   - Handle move operations between GPR and FPR
-//   - Manage multi-cycle operations with busy/done handshake
+//   - Manage multi-cycle operations with busy/done handshake; done and Result
+//     stay valid while hold is high (the consumer is stalled)
 //   - Generate status flags (overflow, underflow, NaN, infinity, zero)
 //
 // Instantiates:
@@ -32,6 +33,7 @@ module risc_fpu #(
 
     // ─── Operand inputs ───────────────────────────────────────────────────────
     input  logic valid,                      // Operation valid signal
+    input  logic hold,                       // Consumer stalled: keep done/Result until it takes them
     input  logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InA,  // Operand A
     input  logic [ (PRECISION == SINGLE) ? 31 : 63 :0] InB,  // Operand B
     input  fpr_t RdF,                       // Destination FPR index
@@ -79,10 +81,6 @@ module risc_fpu #(
     logic OverflowMul, UnderflowMul, NaNMul, InfMul, ZeroMul;
     logic OverflowDiv, UnderflowDiv, NaNDiv, InfDiv, ZeroDiv;
     logic InfSqrt, NanSqrt, ZeroSqrt;
-    logic [ (PRECISION == SINGLE) ? 31 : 63 :0] SqrtMulA, SqrtMulB, SqrtAddSubA, SqrtAddSubB;
-    logic SqrtMulValid;
-    logic SqrtAddSubValid;
-    mode_t SqrtAddSubMode;
     logic Subnormal,InvalidDivActual;
     logic AddSubBusy, AddSubDone;
     logic MulBusy, MulDone;
@@ -93,245 +91,178 @@ module risc_fpu #(
     logic Overflow_reg, Underflow_reg, NaN_reg, Inf_reg, Zero_reg, InvalidDiv_reg;
     logic Overflow_selected, Underflow_selected, NaN_selected, Inf_selected, Zero_selected, InvalidDiv_selected;
     logic ClassNaN, ClassInf, ClassZero;
+    logic ANaN, BNaN;                       // Operand is a NaN (FMIN/FMAX and compares)
+    localparam logic [(PRECISION == SINGLE) ? 31 : 63 :0] CanonicalNaN = {1'b0, {EXP_BITS{1'b1}}, 1'b1, {(FRAC_BITS-1){1'b0}}};
     round_mode_t round_mode_reg;
     fpu_operation_t operation_reg;
     fpr_t RdF_reg;
     logic RegWrite_reg;
     move_operation_t MoveOperation_reg;
 
-    function logic signed [WIDTH-1:0] FloatToInt 
+    // Float -> 32-bit integer (FCVT.W.S / FCVT.WU.S). The value is rounded
+    // once with guard/sticky bits in the requested mode, then saturated as
+    // RISC-V specifies: NaN and +inf/too large -> max, -inf/too negative ->
+    // min (0 for the unsigned form).
+    function automatic logic [WIDTH-1:0] FloatToInt 
     (
         input  logic [WIDTH-1:0] float_in,
-        input  logic SignOrUnsign,
+        input  logic SignOrUnsign,          // 1 = signed (FCVT.W.S), 0 = unsigned
         input round_mode_t round
     );
         logic sign;
-        logic [EXP_BITS-1:0]  exponent;
-        logic [FRAC_BITS:0] mantissa; // Including hidden bit
-        logic signed [EXP_BITS:0] exp_unbiased;
-        logic [EXP_BITS-1:0] shift_amount;
-        bit frac_not_zero;
+        logic [EXP_BITS-1:0] exponent;
+        logic [FRAC_BITS:0] mantissa;       // Including hidden bit
+        int exp_unbiased;
+        int shift;
+        logic [32:0] magnitude;             // Rounded |value|, one carry bit
         logic guard_bit;
         logic sticky_bit;
         logic round_increment;
-        logic special; // Flag for special cases where rounding not needed
-        logic is_zero;
-        logic overflow_from_round;
-        logic inf;
         logic nan;
-        int sticky_idx;
+        logic inf;
 
         sign     = float_in[WIDTH-1];
-        exponent = float_in[WIDTH-2 -:EXP_BITS];
-        mantissa = {1'b1, float_in[FRAC_BITS-1:0]}; // Append hidden bit
-        frac_not_zero = |float_in[FRAC_BITS-1:0];
-        FloatToInt = 0;
+        exponent = float_in[WIDTH-2 -: EXP_BITS];
+        mantissa = {(exponent != 0), float_in[FRAC_BITS-1:0]};
+        nan      = (exponent == {EXP_BITS{1'b1}}) && (|float_in[FRAC_BITS-1:0]);
+        inf      = (exponent == {EXP_BITS{1'b1}}) && !(|float_in[FRAC_BITS-1:0]);
+        exp_unbiased = (exponent == 0) ? (1 - BIAS) : (int'(exponent) - BIAS);
+        magnitude = '0;
         guard_bit = 1'b0;
         sticky_bit = 1'b0;
         round_increment = 1'b0;
-        overflow_from_round = 1'b0;
-        inf = ((exponent == {EXP_BITS{1'b1}}) && !frac_not_zero);
-        nan = ((exponent == {EXP_BITS{1'b1}}) &&  frac_not_zero);
-        is_zero = ((exponent == '0) && !frac_not_zero);
-        special = 0;
 
-        exp_unbiased = exponent - BIAS;
-        if(sign && !SignOrUnsign)
+        if(nan)
+            return SignOrUnsign ? 32'h7FFF_FFFF : 32'hFFFF_FFFF;
+        if(inf || (exp_unbiased >= 32))
         begin
-            FloatToInt = 32'h00000000; // Max Negative for unsigned input
+            if(sign)
+                return SignOrUnsign ? 32'h8000_0000 : 32'h0000_0000;
+            return SignOrUnsign ? 32'h7FFF_FFFF : 32'hFFFF_FFFF;
+        end
+
+        // |value| = mantissa * 2^(exp_unbiased - FRAC_BITS)
+        shift = FRAC_BITS - exp_unbiased;
+        if(shift <= 0)
+        begin
+            magnitude = 33'(mantissa) << (-shift);
+        end
+        else if(shift > FRAC_BITS + 1)
+        begin
+            sticky_bit = |mantissa;                      // |value| < 0.5
         end
         else
         begin
-            if(nan)
-            begin
-                FloatToInt = 32'h7FFFFFFF; // Max Positive for NaN
-                special = 1'b1;
-            end
-            else if(inf)
-            begin
-                if(sign && SignOrUnsign)
-                begin
-                    FloatToInt = 32'h80000000; // Max Negative
-                end
-                else
-                begin
-                    FloatToInt = 32'h7FFFFFFF; // Max Positive
-                end
-                special = 1'b1;
-            end
-            else if (is_zero) 
-            begin
-                // Exact zero is always converted without rounding.
-                FloatToInt = 32'd0;
-                special = 1'b1;
-            end
-            else if ((|exp_unbiased[EXP_BITS-1:WIDTHBITS])|| (& exp_unbiased[WIDTHBITS-1:0])) //If exponent is greater than or equal to WIDTH, it will overflow
-            begin
-                special = 1'b1;
-                if(sign && SignOrUnsign)
-                begin
-                    FloatToInt = 32'h80000000; // Max Negative
-                end
-                else
-                begin
-                    FloatToInt = 32'h7FFFFFFF; // Max Positive
-                end
-            end
-            else if ((!exponent) || exp_unbiased[EXP_BITS])
-            begin
-                // Subnormal values and magnitudes below 1.0 still need rounding-mode handling.
-                FloatToInt = '0;
-
-                if ((exponent != '0) && (exp_unbiased == -1))
-                begin
-                    guard_bit = 1'b1;
-                    sticky_bit = frac_not_zero;
-                end
-                else
-                begin
-                    guard_bit = 1'b0;
-                    sticky_bit = frac_not_zero;
-                end
-            end
-            else if (exp_unbiased > FRAC_BITS) 
-            begin
-                // Overflow beyond mantissa width
-                FloatToInt = mantissa << (exp_unbiased[EXP_BITS-1:0] - FRAC_BITS);
-            end 
-            else 
-            begin
-                // Shift mantissa according to exponent
-                shift_amount = FRAC_BITS - exp_unbiased[EXP_BITS-1:0];
-                FloatToInt = mantissa >> shift_amount;
-                if (shift_amount != 0)
-                begin
-                    guard_bit = mantissa[shift_amount-1];
-                    if (shift_amount > 1)
-                    begin
-                        for (sticky_idx = 0; sticky_idx < (shift_amount - 1); sticky_idx++)
-                            sticky_bit |= mantissa[sticky_idx];
-                    end
-                end
-            end
-
-            if(!special)
-            begin
-                case(round)
-                    RNE:
-                    begin
-                        round_increment = guard_bit && (sticky_bit || FloatToInt[0]);
-                    end
-                    RTZ:
-                    begin
-                        round_increment = 1'b0;
-                    end
-                    RDN:
-                    begin
-                        round_increment = sign && (guard_bit || sticky_bit);
-                    end
-                    RUP:
-                    begin
-                        round_increment = !sign && (guard_bit || sticky_bit);
-                    end
-                    RMM:
-                    begin
-                        round_increment = guard_bit;
-                    end
-                    default:
-                    begin
-                        round_increment = guard_bit && (sticky_bit || FloatToInt[0]);
-                    end
-                endcase
-
-                overflow_from_round = round_increment &&
-                                    !sign &&
-                                    SignOrUnsign &&
-                                    (FloatToInt == {1'b0, {(WIDTH-1){1'b1}}});
-
-                if (overflow_from_round)
-                begin
-                    FloatToInt = 32'h7FFFFFFF;
-                    special = 1'b1;
-                end
-                else
-                begin
-                    FloatToInt = FloatToInt + round_increment;
-                    if(SignOrUnsign && sign)
-                        FloatToInt = -FloatToInt;
-                end
-            end
+            magnitude = 33'(mantissa >> shift);
+            guard_bit = mantissa[shift-1];
+            for(int i = 0; i < FRAC_BITS + 1; i++)
+                if(i < shift - 1)
+                    sticky_bit |= mantissa[i];
         end
-    
+
+        case(round)
+            RTZ:     round_increment = 1'b0;
+            RDN:     round_increment = sign && (guard_bit || sticky_bit);
+            RUP:     round_increment = !sign && (guard_bit || sticky_bit);
+            RMM:     round_increment = guard_bit;
+            default: round_increment = guard_bit && (sticky_bit || magnitude[0]);
+        endcase
+        magnitude = magnitude + round_increment;
+
+        if(SignOrUnsign)
+        begin
+            if(!sign && (magnitude > 33'h0_7FFF_FFFF))
+                return 32'h7FFF_FFFF;
+            if(sign && (magnitude > 33'h0_8000_0000))
+                return 32'h8000_0000;
+            return sign ? -magnitude[31:0] : magnitude[31:0];
+        end
+        if(sign)
+            return 32'h0000_0000;                        // negative -> 0
+        if(magnitude > 33'h0_FFFF_FFFF)
+            return 32'hFFFF_FFFF;
+        return magnitude[31:0];
     endfunction: FloatToInt
 
-    function logic [WIDTH-1:0] IntToFloat
+    // 32-bit integer -> float (FCVT.S.W / FCVT.S.WU), rounded once with
+    // guard/sticky bits in the requested mode.
+    function automatic logic [WIDTH-1:0] IntToFloat
     (
-        input  logic signed [WIDTH-1:0] int_in,
-        input  logic SignOrUnsign,
+        input  logic [WIDTH-1:0] int_in,
+        input  logic SignOrUnsign,          // 1 = signed (FCVT.S.W), 0 = unsigned
         input  round_mode_t round
     );
         logic sign;
-        logic [WIDTH-1:0] abs_val;
+        logic [31:0] abs_val;
         logic [EXP_BITS-1:0] exponent;
-        logic [FRAC_BITS:0] mantissa;
-        logic signed [EXP_BITS:0] exp_unbiased;
+        logic [FRAC_BITS+1:0] significand;  // Hidden bit + fraction + carry
         int msb_index;
-        logic signed [1:0] round_up_down;
-        logic [WIDTH-1:0] result;
+        int shift;
+        logic guard_bit;
+        logic sticky_bit;
+        logic round_increment;
 
-        // Step 1: Extract sign and absolute value
-        sign    = int_in[WIDTH-1];
+        sign    = SignOrUnsign && int_in[31];
         abs_val = sign ? -int_in : int_in;
-        mantissa = 0;
+        guard_bit = 1'b0;
+        sticky_bit = 1'b0;
+        round_increment = 1'b0;
         msb_index = 0;
-        exponent = 0;
 
-        // Step 2: Handle zero
-        if (abs_val == 0) 
+        if(abs_val == 0)
+            return '0;
+
+        for(int i = 0; i < 32; i++)
+            if(abs_val[i])
+                msb_index = i;
+        exponent = EXP_BITS'(msb_index + BIAS);
+        shift = msb_index - FRAC_BITS;
+        if(shift <= 0)
         begin
-            IntToFloat = {sign, {EXP_BITS{1'b0}}, {FRAC_BITS{1'b0}}};
+            significand = (FRAC_BITS+2)'(abs_val) << (-shift);
         end
-        else 
+        else
         begin
-            // Step 3: Find MSB position (normalization)
-            for (int i = 0; (i < WIDTH); i++) 
-            begin
-                if(abs_val[i])
-                begin
-                    msb_index = i;
-                end
-            end
-            // Step 4: Compute unbiased exponent
-            
-            //exp_unbiased = msb_index;
+            significand = (FRAC_BITS+2)'(abs_val >> shift);
+            guard_bit = abs_val[shift-1];
+            for(int i = 0; i < 32; i++)
+                if(i < shift - 1)
+                    sticky_bit |= abs_val[i];
+        end
 
-            // Step 5: Bias exponent
-            exponent = msb_index + BIAS;
-
-            // Step 6: Normalize mantissa (drop hidden bit)
-            abs_val = (abs_val << (WIDTH - 1 - msb_index));
-            mantissa = abs_val[WIDTH-2 -: FRAC_BITS];
-
-            // Step 7: Rounding logic (similar to FloatToInt)
-            round_up_down = 0;
-            case(round)
-                RNE: round_up_down = mantissa[0]; // round to nearest even
-                RTZ: round_up_down = 0;
-                RDN: round_up_down = (sign) ? 2'b11 : 2'b0;
-                RUP: round_up_down = (!sign) ? 2'b01 : 2'b0;
-                RMM: round_up_down = 2'b01;
-            endcase
-
-            mantissa = mantissa + round_up_down;
-            if(mantissa == (1 << FRAC_BITS)) // Check for mantissa overflow (e.g., 1.111... + 0.000... = 10.000...)
-            begin
-                mantissa = 0;
-                exponent ++;
-            end
-            // Step 8: Pack into IEEE-754 format
-            IntToFloat = {sign & SignOrUnsign, exponent, mantissa[FRAC_BITS-1:0]};
-            end
+        case(round)
+            RTZ:     round_increment = 1'b0;
+            RDN:     round_increment = sign && (guard_bit || sticky_bit);
+            RUP:     round_increment = !sign && (guard_bit || sticky_bit);
+            RMM:     round_increment = guard_bit;
+            default: round_increment = guard_bit && (sticky_bit || significand[0]);
+        endcase
+        significand = significand + round_increment;
+        if(significand[FRAC_BITS+1])                    // rounded up to the next power of two
+        begin
+            significand = significand >> 1;
+            exponent = exponent + 1'b1;
+        end
+        return {sign, exponent, significand[FRAC_BITS-1:0]};
     endfunction: IntToFloat
+
+    // IEEE ordered less-than; -0 and +0 are equal. Operands are not NaN.
+    function automatic logic FpLess(input logic [WIDTH-1:0] a, input logic [WIDTH-1:0] b);
+        if((a[WIDTH-2:0] == 0) && (b[WIDTH-2:0] == 0))
+            return 1'b0;
+        if(a[WIDTH-1] != b[WIDTH-1])
+            return a[WIDTH-1];
+        if(a[WIDTH-1])
+            return a[WIDTH-2:0] > b[WIDTH-2:0];
+        return a[WIDTH-2:0] < b[WIDTH-2:0];
+    endfunction: FpLess
+
+    // FMIN/FMAX ordering: like FpLess but -0 is below +0
+    function automatic logic FpLessSignedZero(input logic [WIDTH-1:0] a, input logic [WIDTH-1:0] b);
+        if((a[WIDTH-2:0] == 0) && (b[WIDTH-2:0] == 0))
+            return a[WIDTH-1] && !b[WIDTH-1];
+        return FpLess(a, b);
+    endfunction: FpLessSignedZero
 
     // Classification function that returns 4-bit encoded status
     // Bit 3: is_subnormal, Bit 2: is_nan, Bit 1: is_infinity, Bit 0: is_zero
@@ -394,7 +325,7 @@ module risc_fpu #(
                 done_reg <= 1'b1;
                 req_valid_reg <= 1'b0;
             end
-            else if(done_reg)
+            else if(done_reg && !hold)    // Result stays until the consumer advances
             begin
                 done_reg <= 1'b0;
                 RdF_reg <= f0;
@@ -441,6 +372,8 @@ module risc_fpu #(
         Zero_selected = 1'b0;
         InvalidDiv_selected = 1'b0;
         req_uses_module = 1'b0;
+        ANaN = (InA_reg[WIDTH-2 -: EXP_BITS] == {EXP_BITS{1'b1}}) && (|InA_reg[FRAC_BITS-1:0]);
+        BNaN = (InB_reg[WIDTH-2 -: EXP_BITS] == {EXP_BITS{1'b1}}) && (|InB_reg[FRAC_BITS-1:0]);
 
         case(operation_reg)
                 FADD_S:
@@ -501,13 +434,6 @@ module risc_fpu #(
                 FSQRT_S:
                 begin
                     InSqrt          = InA_reg;
-                    InMulA          = SqrtMulA;
-                    InMulB          = SqrtMulB;
-                    InAddSubA       = SqrtAddSubA;
-                    InAddSubB       = SqrtAddSubB;
-                    add_sub_mode    = SqrtAddSubMode;
-                    UseMul          = SqrtMulValid;
-                    UseAddSub       = SqrtAddSubValid;
                     UseSqrt         = 1'b1;
                     req_uses_module = 1'b1;
                     NaN_selected = NanSqrt;
@@ -527,29 +453,19 @@ module risc_fpu #(
                 begin
                     Result_selected = {InA_reg[(PRECISION == SINGLE) ? 31 : 63] ^ InB_reg[(PRECISION == SINGLE) ? 31 : 63], InA_reg[(PRECISION == SINGLE) ? 30 : 62 :0]};
                 end
-                FMIN_S:
+                FMIN_S, FMAX_S:
                 begin
-                    add_sub_mode    = SUB_FLP;
-                    UseAddSub       = 1'b1;
-                    req_uses_module = 1'b1;
-                    InAddSubA = InA_reg;
-                    InAddSubB = InB_reg;
-                    if((ResultAddSub[(PRECISION == SINGLE) ? 31 : 63] == 1'b1) && (NaNAddSub == 1'b0))
-                        Result_selected = InA_reg;
-                    else
+                    // -0 < +0; one NaN operand -> the other one; two NaNs -> canonical NaN
+                    if(ANaN && BNaN)
+                        Result_selected = CanonicalNaN;
+                    else if(ANaN)
                         Result_selected = InB_reg;
-                end
-                FMAX_S:
-                begin
-                    add_sub_mode    = SUB_FLP;
-                    UseAddSub       = 1'b1;
-                    req_uses_module = 1'b1;
-                    InAddSubA = InA_reg;
-                    InAddSubB = InB_reg;
-                    if(ResultAddSub[(PRECISION == SINGLE) ? 31 : 63] == 1'b0 && NaNAddSub == 1'b0)
+                    else if(BNaN)
                         Result_selected = InA_reg;
+                    else if(operation_reg == FMIN_S)
+                        Result_selected = FpLessSignedZero(InA_reg, InB_reg) ? InA_reg : InB_reg;
                     else
-                        Result_selected = InB_reg;
+                        Result_selected = FpLessSignedZero(InB_reg, InA_reg) ? InA_reg : InB_reg;
                 end
                 FCVT_W_S:
                 begin
@@ -565,39 +481,19 @@ module risc_fpu #(
                 end
                 FEQ_S:
                 begin
-                    add_sub_mode    = SUB_FLP;
-                    UseAddSub       = 1'b1;
-                    req_uses_module = 1'b1;
-                    InAddSubA = InA_reg;
-                    InAddSubB = InB_reg;
-                    if(ZeroAddSub == 1'b1 && NaNAddSub == 1'b0)
-                        Result_selected = 32'd1;
-                    else
-                        Result_selected = 32'd0;
+                    Result_selected = (!ANaN && !BNaN &&
+                                       ((InA_reg == InB_reg) ||
+                                        ((InA_reg[WIDTH-2:0] == 0) && (InB_reg[WIDTH-2:0] == 0)))) ? 1 : 0;
                 end
                 FLT_S:
                 begin
-                    add_sub_mode    = SUB_FLP;
-                    UseAddSub       = 1'b1;
-                    req_uses_module = 1'b1;
-                    InAddSubA = InA_reg;
-                    InAddSubB = InB_reg;
-                    if((!NaNAddSub) && (ResultAddSub[(PRECISION == SINGLE) ? 31 : 63] == 1'b1) && (!ZeroAddSub))
-                        Result_selected = 32'd1;
-                    else
-                        Result_selected = 32'd0;
+                    Result_selected = (!ANaN && !BNaN && FpLess(InA_reg, InB_reg)) ? 1 : 0;
                 end
                 FLE_S:
                 begin
-                    add_sub_mode    = SUB_FLP;
-                    UseAddSub       = 1'b1;
-                    req_uses_module = 1'b1;
-                    InAddSubA = InA_reg;
-                    InAddSubB = InB_reg;
-                    if(((ResultAddSub[(PRECISION == SINGLE) ? 31 : 63]) && (!NaNAddSub)) || (ZeroAddSub))
-                        Result_selected = 32'd1;
-                    else
-                        Result_selected = 32'd0;
+                    Result_selected = (!ANaN && !BNaN &&
+                                       (FpLess(InA_reg, InB_reg) || (InA_reg == InB_reg) ||
+                                        ((InA_reg[WIDTH-2:0] == 0) && (InB_reg[WIDTH-2:0] == 0)))) ? 1 : 0;
                 end
                 FCLASS_S:
                 begin
@@ -626,8 +522,8 @@ module risc_fpu #(
                     Result_selected[5] = Subnormal & !(InA_reg[(PRECISION == SINGLE) ? 31 : 63]);
                     Result_selected[6] = !(ClassNaN | ClassInf | ClassZero | Subnormal) & !(InA_reg[(PRECISION == SINGLE) ? 31 : 63]);
                     Result_selected[7] = ClassInf & !(InA_reg[(PRECISION == SINGLE) ? 31 : 63]);
-                    Result_selected[8] = ClassNaN & (InA_reg[(PRECISION == SINGLE) ? 22 : 51]); 
-                    Result_selected[9] = ClassNaN & !(InA_reg[(PRECISION == SINGLE) ? 22 : 51]);
+                    Result_selected[8] = ClassNaN & !(InA_reg[(PRECISION == SINGLE) ? 22 : 51]);   // signaling NaN
+                    Result_selected[9] = ClassNaN & (InA_reg[(PRECISION == SINGLE) ? 22 : 51]);    // quiet NaN
                 end
                 FCVT_S_W:
                 begin
@@ -749,17 +645,7 @@ module risc_fpu #(
         .rst(rst),
         .valid(req_valid_reg & UseSqrt),
         .a(InSqrt),
-        .mul_a(SqrtMulA),
-        .mul_b(SqrtMulB),
-        .mul_valid(SqrtMulValid),
-        .mul_result(ResultMul),
-        .mul_done(MulDone),
-        .add_sub_a(SqrtAddSubA),
-        .add_sub_b(SqrtAddSubB),
-        .add_sub_valid(SqrtAddSubValid),
-        .add_sub_mode(SqrtAddSubMode),
-        .add_sub_result(ResultAddSub),
-        .add_sub_done(AddSubDone),
+        .round_mode(round_mode_reg),
         .busy(SqrtBusy),
         .done(SqrtDone),
         .Inf(InfSqrt),

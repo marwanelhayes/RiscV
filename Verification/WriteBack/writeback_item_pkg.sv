@@ -22,18 +22,18 @@ package writeback_item_pkg;
         rand logic rst;
         rand logic PCSrcE;
         rand logic StallF;
-        logic [FINAL_ADDR_WIDTH-1:0] PCPlus4F = 0;
-        rand logic [FINAL_ADDR_WIDTH-1:0] PCBranchE;
+        logic [FINAL_DATA_WIDTH-1:0] PCPlus4F = 0;
+        rand logic [FINAL_DATA_WIDTH-1:0] PCBranchE;
         rand logic [FINAL_DATA_WIDTH-1:0] ALUOutW;
         rand logic [FINAL_DATA_WIDTH-1:0] ReadDataW;
         rand selector_t SelectorW;
         rand logic [FINAL_DATA_WIDTH-1:0] CsrOutW;
-        rand logic [FINAL_ADDR_WIDTH-1:0] PCPlus4W;
+        rand logic [FINAL_DATA_WIDTH-1:0] PCPlus4W;
         rand logic TrapIsSet;
-        rand logic [FINAL_ADDR_WIDTH-1:0] CsrOutPC;
+        rand logic [FINAL_DATA_WIDTH-1:0] CsrOutPC;
 
         logic [FINAL_DATA_WIDTH-1:0] ResultW;
-        logic [FINAL_ADDR_WIDTH-1:0] PCF;
+        logic [FINAL_DATA_WIDTH-1:0] PCF;
         
 
 
@@ -124,7 +124,7 @@ package writeback_item_pkg;
         endfunction:copy_inputs
 
         function void post_randomize;
-            PCPlus4F = PCPlus4F + 32'h4;
+            PCPlus4F = PCPlus4F + FINAL_DATA_WIDTH'(4);
         endfunction: post_randomize
 
 

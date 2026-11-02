@@ -50,22 +50,18 @@ package execute_subscriber_pkg;
             ExternalInterrupt_cg: coverpoint sub_item.ExternalInterrupt iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
             FPUValidE_cg: coverpoint sub_item.FPUValidE iff(sub_item.rst)    { bins lo = {0}; bins hi = {1}; }
 
-            // Integer forwarding selects (constrained to 0..4).
+            // Integer forwarding selects: 0 register, 1 WB, 2 MEM.
             ForwardAE_cg: coverpoint sub_item.ForwardAE iff(sub_item.rst)
             {
                 bins no_fwd = {0};
                 bins fwd1   = {1};
                 bins fwd2   = {2};
-                bins fwd3   = {3};
-                bins fwd4   = {4};
             }
             ForwardBE_cg: coverpoint sub_item.ForwardBE iff(sub_item.rst)
             {
                 bins no_fwd = {0};
                 bins fwd1   = {1};
                 bins fwd2   = {2};
-                bins fwd3   = {3};
-                bins fwd4   = {4};
             }
 
             // Floating forwarding selects (constrained != 2'b11).
@@ -90,7 +86,7 @@ package execute_subscriber_pkg;
             CsrIndexE_cg: coverpoint sub_item.CsrIndexE iff(sub_item.rst)
             {
                 bins idx[] = {fflags, frm, fcsr, mstatus, misa, medeleg, mideleg, mie,
-                              mtvec, mscratch, mepc, mcause, mbadaddr, mip, mcycle,
+                              mtvec, mscratch, mepc, mcause, mtval, mip, mcycle, cycle,
                               mhartid, mvendorid};
             }
 

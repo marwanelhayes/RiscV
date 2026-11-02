@@ -7,7 +7,7 @@
 //   - Provide dual-ported read access for FPU operands
 //   - Provide single-ported write access for FPU results
 //   - Store 32 floating-point registers (f0-f31)
-//   - f0 is hardwired to zero
+//   - f0 is an ordinary register (only x0 is hardwired to zero)
 // =============================================================================
 import shared_pkg::*;
 
@@ -36,7 +36,7 @@ module fp_reg_file
     localparam int DEPTH = 2**ADDR_WIDTH;
     
     // ─── Internal registers – register file storage ─────────────────────────
-    logic [DATA_WIDTH-1:0] mem [32];    // 32 × 32-bit registers
+    logic [DATA_WIDTH-1:0] mem [32];    // 32 × FLEN registers
 
     // ─── Combinational read ─────────────────────────────────────────────────
     assign RD1 = mem[Rs1];    // Read source 1

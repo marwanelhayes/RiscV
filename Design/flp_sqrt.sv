@@ -4,12 +4,16 @@
 // Floating-point square root unit for RISC-V FPU.
 //
 // Responsibilities:
-//   - Perform IEEE 754 single/double precision square root
-//   - Handle special cases (NaN, infinity, zero, negative input)
-//   - Support all rounding modes (RNE, RTZ, RDN, RUP, RMM, DYN)
-//   - Multi-cycle iterative square root using Newton-Raphson method
+//   - Perform the IEEE 754 square root, correctly rounded in every rounding
+//     mode (RNE, RTZ, RDN, RUP, RMM)
+//   - Handle special cases: NaN -> canonical NaN, -0/+0 -> itself, negative
+//     -> canonical NaN, +inf -> +inf
+//   - Accept subnormal operands (normalised first)
+//   - Multi-cycle restoring digit recurrence, one result bit per cycle
 //   - Provide busy/done handshake for flow control
-//   - Interface with external multiplier for iterations
+//
+// The integer root of the scaled significand is exact, and its remainder
+// supplies the sticky bit, so a single final rounding gives the IEEE result.
 //
 // Parameters:
 //   - PRECISION: SINGLE (32-bit) or DOUBLE (64-bit)
@@ -17,7 +21,7 @@
 //   - EXP_BITS: Exponent bits (8 for single, 11 for double)
 //   - FRAC_BITS: Fraction bits (23 for single, 52 for double)
 //   - BIAS: Exponent bias (127 for single, 1023 for double)
-//   - STAGES: Number of iteration stages (default 4)
+//   - STAGES: Kept for interface compatibility (unused)
 // =============================================================================
 import shared_pkg::*;
 
@@ -37,50 +41,46 @@ module flp_sqrt
     // ─── Control and operand inputs ─────────────────────────────────────────
     input   logic valid,                     // Operation valid (start)
     input   logic [WIDTH-1:0] a,             // Input operand (radicand)
+    input   round_mode_t round_mode,         // Rounding mode
 
-    // ─── Multiplier interface (for Newton-Raphson iterations) ──────────────
-    output  logic [WIDTH-1:0] mul_a,         // Multiplier operand A
-    output  logic [WIDTH-1:0] mul_b,         // Multiplier operand B
-    output  logic mul_valid,                 // Multiplier valid signal
-    input   logic [WIDTH-1:0] mul_result,    // Multiplier result
-    input   logic mul_done,                  // Multiplier done signal
-    output  logic [WIDTH-1:0] add_sub_a,
-    output  logic [WIDTH-1:0] add_sub_b,
-    output  logic add_sub_valid,
-    output  mode_t add_sub_mode,
-    input   logic [WIDTH-1:0] add_sub_result,
-    input   logic add_sub_done,
-    output  logic busy,
-    output  logic done,
-    output  logic Inf,
-    output  logic NaN,
-    output  logic Zero,
-    output  logic [WIDTH-1:0] result
+    // ─── Status outputs ─────────────────────────────────────────────────────
+    output  logic busy,                      // Operation in progress
+    output  logic done,                      // Operation complete
+    output  logic Inf,                       // Result is infinity
+    output  logic NaN,                       // Result is NaN
+    output  logic Zero,                      // Result is zero
+
+    // ─── Result output ─────────────────────────────────────────────────────
+    output  logic [WIDTH-1:0] result         // Floating-point result
 );
 
-    localparam logic [WIDTH-1:0] MAGIC = (PRECISION == SINGLE) ? 'h5f3759df : 'h5fe6eb50c7b537a9;
-    localparam logic [WIDTH-1:0] THREE_HALFS = (PRECISION == SINGLE) ? 32'h3fc00000 : 64'h3ff8000000000000;
+    localparam int SIG_W  = FRAC_BITS + 1;           // significand incl. hidden bit
+    localparam int ROOT_W = SIG_W + 2;               // root bits: significand + guard + 1
+    localparam int RAD_W  = 2 * ROOT_W;              // radicand bits
+    localparam logic [WIDTH-1:0] CANONICAL_NAN = {1'b0, {EXP_BITS{1'b1}}, 1'b1, {(FRAC_BITS-1){1'b0}}};
 
-    logic [WIDTH-1:0] a_reg, a_next;
-    logic [WIDTH-1:0] InHalf_reg, InHalf_next;
-    logic [WIDTH-1:0] InMagic_reg, InMagic_next;
-    logic [WIDTH-1:0] Result1_reg, Result1_next;
-    logic [WIDTH-1:0] Result2_reg, Result2_next;
-    logic [WIDTH-1:0] Result3_reg, Result3_next;
-    logic [WIDTH-1:0] Result4_reg, Result4_next;
     flp_sqrt_state_t state_reg, state_next;
-
+    round_mode_t round_mode_reg, round_mode_next;
+    logic [WIDTH-1:0] a_reg, a_next;
+    logic [RAD_W-1:0] rad_reg, rad_next;             // radicand, consumed 2 bits per step
+    logic [ROOT_W-1:0] root_reg, root_next;          // partial root
+    logic [ROOT_W+1:0] rem_reg, rem_next;            // partial remainder
+    logic [$clog2(ROOT_W+1)-1:0] count_reg, count_next;
+    int unsigned scale_reg, scale_next;              // radicand scale (exponent offset)
+    logic signed [EXP_BITS+1:0] exp_reg, exp_next;   // unbiased exponent of the operand
     logic Inf_reg, Inf_next;
     logic NaN_reg, NaN_next;
     logic Zero_reg, Zero_next;
     logic [WIDTH-1:0] result_reg, result_next;
 
-    logic Sign;
-    logic [EXP_BITS-1:0] Exp;
-    logic [FRAC_BITS-1:0] Mant;
     logic [3:0] class_in;
-    logic [EXP_BITS-1:0] ExpHalf;
-    logic [3:0] class_out;
+    logic [SIG_W-1:0] sig;
+    logic signed [EXP_BITS+1:0] exp_unb;
+    int unsigned scale;
+    logic [ROOT_W+1:0] trial;
+    logic signed [EXP_BITS+2:0] res_exp;
+    logic [SIG_W:0] res_sig;
+    logic g, s, up;
 
     function automatic logic [3:0] classify_value(
         input logic [EXP_BITS-1:0] exp,
@@ -98,14 +98,15 @@ module flp_sqrt
     begin
         if (!rst)
         begin
-            a_reg <= '0;
-            InHalf_reg <= '0;
-            InMagic_reg <= '0;
-            Result1_reg <= '0;
-            Result2_reg <= '0;
-            Result3_reg <= '0;
-            Result4_reg <= '0;
             state_reg <= SQRT_INIT;
+            round_mode_reg <= RNE;
+            a_reg <= '0;
+            rad_reg <= '0;
+            root_reg <= '0;
+            rem_reg <= '0;
+            count_reg <= '0;
+            scale_reg <= '0;
+            exp_reg <= '0;
             Inf_reg <= 1'b0;
             NaN_reg <= 1'b0;
             Zero_reg <= 1'b0;
@@ -113,14 +114,15 @@ module flp_sqrt
         end
         else
         begin
-            a_reg <= a_next;
-            InHalf_reg <= InHalf_next;
-            InMagic_reg <= InMagic_next;
-            Result1_reg <= Result1_next;
-            Result2_reg <= Result2_next;
-            Result3_reg <= Result3_next;
-            Result4_reg <= Result4_next;
             state_reg <= state_next;
+            round_mode_reg <= round_mode_next;
+            a_reg <= a_next;
+            rad_reg <= rad_next;
+            root_reg <= root_next;
+            rem_reg <= rem_next;
+            count_reg <= count_next;
+            scale_reg <= scale_next;
+            exp_reg <= exp_next;
             Inf_reg <= Inf_next;
             NaN_reg <= NaN_next;
             Zero_reg <= Zero_next;
@@ -130,35 +132,32 @@ module flp_sqrt
 
     always_comb
     begin: comb
-        a_next = a_reg;
-        InHalf_next = InHalf_reg;
-        InMagic_next = InMagic_reg;
-        Result1_next = Result1_reg;
-        Result2_next = Result2_reg;
-        Result3_next = Result3_reg;
-        Result4_next = Result4_reg;
         state_next = state_reg;
+        round_mode_next = round_mode_reg;
+        a_next = a_reg;
+        rad_next = rad_reg;
+        root_next = root_reg;
+        rem_next = rem_reg;
+        count_next = count_reg;
+        scale_next = scale_reg;
+        exp_next = exp_reg;
         Inf_next = Inf_reg;
         NaN_next = NaN_reg;
         Zero_next = Zero_reg;
         result_next = result_reg;
 
-        mul_a = '0;
-        mul_b = '0;
-        mul_valid = 1'b0;
-        add_sub_a = THREE_HALFS;
-        add_sub_b = Result2_reg;
-        add_sub_valid = 1'b0;
-        add_sub_mode = SUB_FLP;
+        class_in = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0]);
+        sig = '0;
+        exp_unb = '0;
+        scale = 0;
+        trial = '0;
+        res_exp = '0;
+        res_sig = '0;
+        g = 1'b0;
+        s = 1'b0;
+        up = 1'b0;
 
-        Sign = a_reg[WIDTH-1];
-        Exp = a_reg[WIDTH-2 -: EXP_BITS];
-        Mant = a_reg[FRAC_BITS-1:0];
-        ExpHalf = 0;
-        class_out = classify_value(result_reg[WIDTH-2 -: EXP_BITS], result_reg[FRAC_BITS-1:0]);
-        class_in  = classify_value(a[WIDTH-2 -: EXP_BITS], a[FRAC_BITS-1:0]);
-
-        busy = (state_reg != SQRT_IDLE) && (state_reg != SQRT_DONE);
+        busy = (state_reg != SQRT_IDLE) && (state_reg != SQRT_INIT) && (state_reg != SQRT_DONE);
         done = (state_reg == SQRT_DONE);
         Inf = Inf_reg;
         NaN = NaN_reg;
@@ -166,151 +165,134 @@ module flp_sqrt
         result = result_reg;
 
         case (state_reg)
-            SQRT_INIT:
+            SQRT_INIT,
+            SQRT_IDLE:
             begin
                 state_next = SQRT_IDLE;
                 Inf_next = 1'b0;
                 NaN_next = 1'b0;
                 Zero_next = 1'b0;
                 result_next = '0;
-                busy = 1'b0;
-                done = 1'b0;
                 if (valid)
                 begin
                     a_next = a;
-                    if (a[WIDTH-1])
-                    begin
-                        result_next = 32'h7FC00000;
-                        NaN_next = 1'b1;
-                        state_next = SQRT_DONE;
-                    end
-                    else if (class_in[2] ||
-                             class_in[1] ||
-                             class_in[0])
-                    begin
-                        NaN_next = class_in[2];
-                        Inf_next = class_in[1];
-                        Zero_next = class_in[0];
-                        result_next = a;
-                        state_next = SQRT_DONE;
-                    end
-                    else
-                    begin
-                        if (class_in[3])
-                        begin
-                            InHalf_next = a;
-                        end
-                        else
-                        begin
-                            InHalf_next = {a[WIDTH-1], a[WIDTH-2 -: EXP_BITS] - 1'b1, a[FRAC_BITS-1:0]};
-                        end
-                        InMagic_next = MAGIC - (a >> 1);
-                        state_next = SQRT_MUL1;
-                    end
-                end
-            end
-
-            SQRT_IDLE:
-            begin
-                Inf_next = 1'b0;
-                NaN_next = 1'b0;
-                Zero_next = 1'b0;
-                result_next = '0;
-                if (valid)
-                begin
-                    a_next = a;
-                    if (a[WIDTH-1])
-                    begin
-                        result_next = 32'h7FC00000;
-                        NaN_next = 1'b1;
-                        state_next = SQRT_DONE;
-                    end
-                    else if (class_in[2] ||
-                             class_in[1] ||
-                             class_in[0])
-                    begin
-                        result_next = a;
-                        NaN_next = class_in[2];
-                        Inf_next = class_in[1];
-                        Zero_next = class_in[0];
-                        state_next = SQRT_DONE;
-                    end
-                    else
-                    begin
-                        if (class_in[3])
-                        begin
-                            InHalf_next = a;
-                        end
-                        else
-                        begin
-                            InHalf_next = {a[WIDTH-1], a[WIDTH-2 -: EXP_BITS] - 1'b1, a[FRAC_BITS-1:0]};
-                        end
-                        InMagic_next = MAGIC - (a >> 1);
-                        state_next = SQRT_MUL1;
-                    end
-                end
-            end
-
-            SQRT_MUL1:
-            begin
-                mul_a = InHalf_reg;
-                mul_b = InMagic_reg;
-                mul_valid = 1'b1;
-                if (mul_done)
-                begin
-                    Result1_next = mul_result;
-                    state_next = SQRT_MUL2;
-                end
-            end
-
-            SQRT_MUL2:
-            begin
-                mul_a = Result1_reg;
-                mul_b = InMagic_reg;
-                mul_valid = 1'b1;
-                if (mul_done)
-                begin
-                    Result2_next = mul_result;
-                    state_next = SQRT_ADD_SUB;
-                end
-            end
-
-            SQRT_ADD_SUB:
-            begin
-                add_sub_valid = 1'b1;
-                if (add_sub_done)
-                begin
-                    Result3_next = add_sub_result;
-                    state_next = SQRT_MUL3;
-                end
-            end
-
-            SQRT_MUL3:
-            begin
-                mul_a = Result3_reg;
-                mul_b = InMagic_reg;
-                mul_valid = 1'b1;
-                if (mul_done)
-                begin
-                    Result4_next = mul_result;
-                    state_next = SQRT_MUL4;
-                end
-            end
-
-            SQRT_MUL4:
-            begin
-                mul_a = a_reg;
-                mul_b = Result4_reg;
-                mul_valid = 1'b1;
-                if (mul_done)
-                begin
-                    result_next = mul_result;
-                    class_out = classify_value(mul_result[WIDTH-2 -: EXP_BITS], mul_result[FRAC_BITS-1:0]);
-                    NaN_next = class_out[2];
-                    Inf_next = class_out[1];
-                    Zero_next = class_out[0];
+                    round_mode_next = round_mode;
                     state_next = SQRT_DONE;
+                    if (class_in[2])
+                    begin
+                        result_next = CANONICAL_NAN;             // sqrt(NaN)
+                        NaN_next = 1'b1;
+                    end
+                    else if (class_in[0])
+                    begin
+                        result_next = a;                         // sqrt(+-0) = +-0
+                        Zero_next = 1'b1;
+                    end
+                    else if (a[WIDTH-1])
+                    begin
+                        result_next = CANONICAL_NAN;             // negative operand
+                        NaN_next = 1'b1;
+                    end
+                    else if (class_in[1])
+                    begin
+                        result_next = a;                         // sqrt(+inf) = +inf
+                        Inf_next = 1'b1;
+                    end
+                    else
+                    begin
+                        state_next = SQRT_NORM;
+                    end
                 end
+            end
+
+            // Normalise the significand and scale it so that the scaled
+            // exponent is even: value = sig * 2^(exp - FRAC_BITS) and the
+            // radicand is sig << scale with (exp - FRAC_BITS - scale) even.
+            SQRT_NORM:
+            begin
+                if (a_reg[WIDTH-2 -: EXP_BITS] == '0)
+                begin
+                    sig = {1'b0, a_reg[FRAC_BITS-1:0]};
+                    exp_unb = 1 - BIAS;
+                    for (int i = 0; i < SIG_W; i++)
+                    begin
+                        if (!sig[SIG_W-1])
+                        begin
+                            sig = sig << 1;
+                            exp_unb = exp_unb - 1;
+                        end
+                    end
+                end
+                else
+                begin
+                    sig = {1'b1, a_reg[FRAC_BITS-1:0]};
+                    exp_unb = $signed({2'b00, a_reg[WIDTH-2 -: EXP_BITS]}) - BIAS;
+                end
+                scale = RAD_W - SIG_W - 1;
+                if (((exp_unb - FRAC_BITS - scale) % 2) != 0)
+                    scale = scale + 1;
+                rad_next = RAD_W'(sig) << scale;
+                scale_next = scale;
+                exp_next = exp_unb;
+                root_next = '0;
+                rem_next = '0;
+                count_next = '0;
+                state_next = SQRT_ITER;
+            end
+
+            // One root bit per cycle (restoring recurrence)
+            SQRT_ITER:
+            begin
+                rem_next = {rem_reg[ROOT_W-1:0], rad_reg[RAD_W-1 -: 2]};
+                rad_next = rad_reg << 2;
+                trial = {root_reg, 2'b01};
+                if (rem_next >= trial)
+                begin
+                    rem_next = rem_next - trial;
+                    root_next = {root_reg[ROOT_W-2:0], 1'b1};
+                end
+                else
+                begin
+                    root_next = {root_reg[ROOT_W-2:0], 1'b0};
+                end
+                count_next = count_reg + 1'b1;
+                if (count_reg == ROOT_W - 1)
+                    state_next = SQRT_ROUND;
+            end
+
+            // root = floor(sqrt(radicand)); its top bit is ROOT_W-1 or ROOT_W-2.
+            // sqrt(value) = root * 2^((exp - FRAC_BITS - scale) / 2).
+            SQRT_ROUND:
+            begin
+                res_exp = (exp_reg - FRAC_BITS - $signed(scale_reg)) / 2;
+                if (root_reg[ROOT_W-1])
+                begin
+                    res_sig = {1'b0, root_reg[ROOT_W-1 -: SIG_W]};
+                    g = root_reg[ROOT_W-SIG_W-1];
+                    s = (root_reg[ROOT_W-SIG_W-2:0] != 0) || (rem_reg != 0);
+                    res_exp = res_exp + (ROOT_W - 1);
+                end
+                else
+                begin
+                    res_sig = {1'b0, root_reg[ROOT_W-2 -: SIG_W]};
+                    g = root_reg[ROOT_W-SIG_W-2];
+                    s = (rem_reg != 0);
+                    res_exp = res_exp + (ROOT_W - 2);
+                end
+                case (round_mode_reg)
+                    RTZ, RDN: up = 1'b0;                          // result is positive
+                    RUP:      up = g | s;
+                    RMM:      up = g;
+                    default:  up = g & (s | res_sig[0]);          // RNE
+                endcase
+                res_sig = res_sig + up;
+                if (res_sig[SIG_W])
+                begin
+                    res_sig = res_sig >> 1;
+                    res_exp = res_exp + 1;
+                end
+                result_next = {1'b0, EXP_BITS'(res_exp + BIAS), res_sig[FRAC_BITS-1:0]};
+                state_next = SQRT_DONE;
             end
 
             SQRT_DONE:

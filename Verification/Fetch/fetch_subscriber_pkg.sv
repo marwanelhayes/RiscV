@@ -47,8 +47,17 @@ package fetch_subscriber_pkg;
             }
 
             // ── Crosses ──────────────────────────────────────────────────────
-            Stall_x_Flush_cx:    cross StallD_cg, FlushD_cg;
-            CacheHit_x_Flush_cx: cross CacheHitF_cg, FlushD_cg;
+            // A redirect is only raised when EX advances, and a stall or a
+            // miss stops EX, so FlushD never meets StallD or a miss (fetch_top
+            // enforces FlushD = FlushBit & !StallD to match the contract).
+            Stall_x_Flush_cx:    cross StallD_cg, FlushD_cg
+            {
+                ignore_bins flush_while_stalled = binsof(StallD_cg.hi) && binsof(FlushD_cg.hi);
+            }
+            CacheHit_x_Flush_cx: cross CacheHitF_cg, FlushD_cg
+            {
+                ignore_bins flush_on_miss = binsof(CacheHitF_cg.miss) && binsof(FlushD_cg.hi);
+            }
             StallBit_x_FlushBit_cx: cross StallBit_cg, FlushBit_cg;
 
         endgroup:cvr_grp

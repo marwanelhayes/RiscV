@@ -27,6 +27,7 @@ module csr_top;
         .Address(intf.Address),
         .CsrAccess(intf.CsrAccess),
         .CsrIn(intf.CsrIn),
+        .Commit(intf.Commit),
         .TimerInterrupt(intf.TimerInterrupt),
         .ExternalInterrupt(intf.ExternalInterrupt),
         .SoftwareInterrupt(intf.SoftwareInterrupt),
@@ -34,6 +35,7 @@ module csr_top;
         .CsrOutPC(intf.CsrOutPC),
         .CsrOut(intf.CsrOut),
         .TrapIsSet(intf.TrapIsSet),
+        .TrapTaken(intf.TrapTaken),
         .RoundingMode(intf.RoundingMode)
     );
 
