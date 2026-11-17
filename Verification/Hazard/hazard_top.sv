@@ -55,6 +55,9 @@ module hazard_top;
     .ForwardFloatingBE(intf.ForwardFloatingBE)    
     );
 
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind hazard_unit hazard_sva HazardSva (.*);
+
     initial 
     begin
         clk = 0;

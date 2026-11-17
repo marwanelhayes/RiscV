@@ -71,7 +71,7 @@ package decode_predictor_pkg;
             e.RD1E = '0; e.RD2E = '0; e.SignImmE = '0; e.PCBranchE = '0; e.PCPlus4E = '0;
             e.funct3E = '0; e.ALUControlE = ADD; e.RegWriteE = 0; e.SelectorE = ALUToReg;
             e.MemWriteE = 0; e.MemReadE = 0; e.BranchE = 0; e.JumpE = 0; e.JalrE = 0;
-            e.ALUSrcE = 0; e.AuipcE = 0; e.WordOpE = 0; e.CsrAccessE = 0;
+            e.ALUSrcE = 0; e.AuipcE = 0; e.WordOpE = 0; e.CsrAccessE = 0; e.AmoE = 0; e.AmoOpE = AMO_ADD;
             e.CsrOperationE = csrrw; e.CsrIndexE = mstatus;
             e.EcallE = 0; e.EbreakE = 0; e.MRetE = 0; e.IllegaleInstructionE = 0;
             e.RdFE = f0; e.Rs1FE = f0; e.Rs2FE = f0; e.RD1FE = '0; e.RD2FE = '0;
@@ -103,7 +103,7 @@ package decode_predictor_pkg;
 
         function automatic gpr_t rs2_of(logic [31:0] in);
             opcode_t op = opcode_t'(in[6:0]);
-            return (op inside {R_TYPE, OP_32, S_TYPE, B_TYPE}) ? gpr_t'(in[24:20]) : zero;
+            return (op inside {R_TYPE, OP_32, S_TYPE, B_TYPE, AMO}) ? gpr_t'(in[24:20]) : zero;
         endfunction:rs2_of
 
         // ── Decode one instruction from the ISA tables into e ───────────────
@@ -228,6 +228,18 @@ package decode_predictor_pkg;
                     e.RegWriteE = 1; e.ALUSrcE = 1; e.ALUControlE = ADD; e.AuipcE = (opcode_t'(in[6:0]) == AUIPC);
                     e.chk_rs1 = 1; e.chk_imm = 1; e.chk_tgt = 1;     // LUI: operand A must read x0
                     e.SignImmE = immU; e.PCBranchE = pc + immU; legal = 1;
+                end
+                AMO: begin                                  // Zalrsc / Zaamo
+                    // address = rs1 (no offset), data = rs2, result via the load path;
+                    // LR only reads, SC only writes, AMO* read and write
+                    e.AmoE = 1; e.AmoOpE = amo_op_t'(in[31:27]);
+                    e.RegWriteE = 1; e.SelectorE = MemToReg; e.ALUSrcE = 1; e.ALUControlE = ADD;
+                    e.MemReadE = (in[31:27] != 5'b00011); e.MemWriteE = (in[31:27] != 5'b00010);
+                    e.chk_rs1 = 1; e.chk_rs2 = 1; e.chk_imm = 1; e.SignImmE = '0;
+                    legal = ((f3 == 3'b010) || (IS_RV64 && (f3 == 3'b011))) &&
+                            (in[31:27] inside {5'b00000, 5'b00001, 5'b00010, 5'b00011, 5'b00100, 5'b01000,
+                                               5'b01100, 5'b10000, 5'b10100, 5'b11000, 5'b11100}) &&
+                            !((in[31:27] == 5'b00010) && (rs2f != 0));
                 end
                 MISC_MEM: begin
                     e.chk_alu = 0;

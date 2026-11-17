@@ -20,6 +20,11 @@
 //     the *M inputs, shadowed with emit-before-update exactly like the DUT.
 //   - StallW (any cache miss freezes the pipeline) holds MEM/WB, and the
 //     access commits in the cycle MEM advances.
+//   - A extension, from Zalrsc/Zaamo: LR loads and registers a reservation;
+//     SC stores rs2 and returns 0 iff the reservation is valid for exactly
+//     its address (else 1, no store), and always clears it; AMO* return the
+//     old value and store f(old, rs2). Each commits once, when MEM advances,
+//     however long the DUT holds it in MEM.
 //
 // Reset (the one place a flat model needs help):
 //   A write-back cache can hold a dirty line whose store has NOT yet reached
@@ -67,6 +72,10 @@ package mem_flat_predictor_pkg;
         // every reset cycle - data_memory is stable for the whole reset.
         logic prev_rst = 1'b1;
 
+        // LR/SC reservation (cleared by reset, like the DUT)
+        bit                          res_valid;
+        logic [FINAL_DATA_WIDTH-1:0] res_addr;
+
         // ── MEM/WB pipeline-register shadows (emit-before-update) ────────────
         logic                               q_ValidW;
         logic                               q_LoadW;
@@ -84,7 +93,7 @@ package mem_flat_predictor_pkg;
         logic                               q_InfW;
         logic                               q_ZeroW;
         logic                               q_InvalidDivW;
-        logic [FINAL_DATA_WIDTH-1:0]        q_FPUOutW;
+        logic [FINAL_FLP_WIDTH-1:0]         q_FPUOutW;
         move_operation_t                    q_MoveOperationW;
         logic                               q_FPURegWriteW;
 
@@ -105,6 +114,7 @@ package mem_flat_predictor_pkg;
 
         // Mirror the memory_stage MEM/WB reset block (output defaults only).
         function void reset_shadow ();
+            res_valid        = 1'b0;
             q_ValidW         = 1'b0;
             q_LoadW          = 1'b0;
             q_RdW            = zero;
@@ -149,6 +159,11 @@ package mem_flat_predictor_pkg;
             size      = 1 << t.funct3M[1:0];
             q_LoadW   = t.MemReadM;
             q_ReadDataW = '0;
+            if(t.AmoM)
+            begin
+                atomic_predict(t, word_addr, off, size);
+                return;
+            end
             if(t.MemWriteM)
                 for(int i = 0; i < size; i++)
                     mem_ref[word_addr][8*(off+i) +: 8] = t.WriteDataM[8*i +: 8];
@@ -166,6 +181,48 @@ package mem_flat_predictor_pkg;
                 endcase
             end
         endfunction:flat_predict
+
+        // LR / SC / AMO* (.W sign-extends the old value into rd)
+        function void atomic_predict (mem_item t, int unsigned word_addr, int unsigned off, int unsigned size);
+            x_t old, src, nv;
+            bit ok;
+            old = x_t'(mem_ref[word_addr]) >> (8*off);
+            src = t.WriteDataM;
+            if(size == 4)
+            begin
+                old = x_t'(signed'(old[31:0]));
+                src = x_t'(signed'(src[31:0]));
+            end
+            q_LoadW = 1'b1;
+            case(t.AmoOpM)
+                AMO_LR: begin
+                    q_ReadDataW = old;
+                    res_valid = 1'b1;
+                    res_addr = t.ALUOutM;
+                    return;
+                end
+                AMO_SC: begin
+                    ok = res_valid && (res_addr == t.ALUOutM);
+                    q_ReadDataW = ok ? '0 : x_t'(1);
+                    res_valid = 1'b0;
+                    if(!ok) return;
+                    nv = src;
+                end
+                AMO_SWAP: nv = src;
+                AMO_ADD:  nv = old + src;
+                AMO_XOR:  nv = old ^ src;
+                AMO_AND:  nv = old & src;
+                AMO_OR:   nv = old | src;
+                AMO_MIN:  nv = ($signed(old) < $signed(src)) ? old : src;
+                AMO_MAX:  nv = ($signed(old) > $signed(src)) ? old : src;
+                AMO_MINU: nv = (size == 4) ? ((old[31:0] < src[31:0]) ? old : src) : ((old < src) ? old : src);
+                default:  nv = (size == 4) ? ((old[31:0] > src[31:0]) ? old : src) : ((old > src) ? old : src);
+            endcase
+            if(t.AmoOpM != AMO_SC)
+                q_ReadDataW = old;
+            for(int i = 0; i < size; i++)
+                mem_ref[word_addr][8*(off+i) +: 8] = nv[8*i +: 8];
+        endfunction:atomic_predict
 
         // Compute the NEXT-cycle *W passthrough shadow from this cycle's *M
         // inputs (identical to the registered MEM/WB passthrough in the DUT).

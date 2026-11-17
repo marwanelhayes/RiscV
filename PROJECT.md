@@ -5,6 +5,7 @@
 This is a complete RISC-V 5-stage pipeline processor implementation with:
 - RV32I base integer instruction set
 - RV32M multiply/divide extension
+- RV32A atomics (LR/SC, AMO*; .D on RV64)
 - RV32F single-precision floating-point extension
 - Machine-mode CSR support
 - Instruction and Data Cache (configurable set-associativity)
@@ -142,6 +143,7 @@ RiscV/
 
 - **RV32I**: Base integer ISA (ADD, SUB, AND, OR, XOR, SLT, shifts, etc.)
 - **RV32M**: Multiply/Divide extension (MUL, DIV, REM, etc.)
+- **RV32A**: Atomics (LR/SC with a one-entry reservation, AMOSWAP/ADD/XOR/AND/OR/MIN/MAX/MINU/MAXU as a D-cache read-modify-write in MEM)
 - **RV32F**: Single-precision floating-point (FADD, FMUL, FCVT, etc.)
 
 ## Verification Strategy

@@ -51,9 +51,9 @@ package decode_reg_checker_pkg;
             ok = 1'b0;
             if(status != UVM_IS_OK)
                 `uvm_error("REGCHK",$sformatf("%s %s backdoor peek failed", kind, r.get_name()))
-            else if(hw[31:0] !== mir[31:0])
-                `uvm_error("REGCHK",$sformatf("%s %s mismatch: DUT=0x%08h mirror=0x%08h",
-                    kind, r.get_name(), hw[31:0], mir[31:0]))
+            else if(hw !== mir)
+                `uvm_error("REGCHK",$sformatf("%s %s mismatch: DUT=0x%0h mirror=0x%0h",
+                    kind, r.get_name(), hw, mir))
             else
                 ok = 1'b1;
         endtask

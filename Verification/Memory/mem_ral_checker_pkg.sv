@@ -45,7 +45,7 @@ package mem_ral_checker_pkg;
                 if((status != UVM_IS_OK) || (actual[FINAL_DATA_WIDTH-1:0] !== '0)) begin
                     fail++;
                     `uvm_error("DMEM_RAL", $sformatf(
-                        "reset word %0d is 0x%08h, expected zero",
+                        "reset word %0d is 0x%0h, expected zero",
                         i, actual[FINAL_DATA_WIDTH-1:0]))
                 end
             end
@@ -64,7 +64,7 @@ package mem_ral_checker_pkg;
             beat_addr = write_addr;
             beat_data = vif.MWData;
             beat_strb = vif.MWStrb;
-            reg_block.data_memory.peek(status, beat_addr[FINAL_ADDR_WIDTH-1:2], prior);
+            reg_block.data_memory.peek(status, beat_addr >> $clog2(FINAL_DATA_WIDTH/8), prior);
             if(status != UVM_IS_OK) begin
                 fail++;
                 `uvm_error("DMEM_RAL", "pre-write backdoor peek failed")
@@ -89,12 +89,12 @@ package mem_ral_checker_pkg;
             endcase
 
             @(negedge vif.clk);
-            reg_block.data_memory.peek(status, beat_addr[FINAL_ADDR_WIDTH-1:2], after);
+            reg_block.data_memory.peek(status, beat_addr >> $clog2(FINAL_DATA_WIDTH/8), after);
             if((status != UVM_IS_OK) ||
                (after[FINAL_DATA_WIDTH-1:0] !== expected[FINAL_DATA_WIDTH-1:0])) begin
                 fail++;
                 `uvm_error("DMEM_RAL", $sformatf(
-                    "AXI write mismatch at 0x%0h: RAM=0x%08h expected=0x%08h",
+                    "AXI write mismatch at 0x%0h: RAM=0x%0h expected=0x%0h",
                     beat_addr, after[FINAL_DATA_WIDTH-1:0],
                     expected[FINAL_DATA_WIDTH-1:0]))
             end

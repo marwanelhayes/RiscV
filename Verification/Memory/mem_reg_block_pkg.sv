@@ -8,7 +8,7 @@ package mem_reg_block_pkg;
     class mem_reg_block extends uvm_reg_block;
         `uvm_object_utils(mem_reg_block)
 
-        localparam int DEPTH = 2**(FINAL_ADDR_WIDTH-2);
+        localparam int DEPTH = 2**(FINAL_ADDR_WIDTH - $clog2(FINAL_DATA_WIDTH/8));   // one entry per XLEN word, as risc_data_memory
         uvm_mem data_memory;
 
         function new(string name = "mem_reg_block");

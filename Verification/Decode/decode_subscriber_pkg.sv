@@ -35,10 +35,14 @@ package decode_subscriber_pkg;
                 bins misc_mem    = {MISC_MEM};
                 bins op_imm_32   = {OP_IMM_32};
                 bins op_32       = {OP_32};
+                bins amo         = {AMO};
                 bins csr         = {CSR};
                 bins floating_pt = {FLOATING_PT};
                 bins other       = default;
             }
+
+            // Decoded A-extension operation of a legal LR / SC / AMO* (all eleven).
+            AmoOpE_cg: coverpoint sub_item.AmoOpE iff(sub_item.rst && sub_item.ValidE && sub_item.AmoE && !sub_item.IllegaleInstructionE);
 
             // Decoded ALU operation (all eighteen).
             ALUControlE_cg: coverpoint sub_item.ALUControlE iff(sub_item.rst)

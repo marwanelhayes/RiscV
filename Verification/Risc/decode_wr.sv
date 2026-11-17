@@ -38,6 +38,8 @@ interface decode_wr
     input logic ALUSrcE,
     input logic AuipcE,
     input logic WordOpE,
+    input logic AmoE,
+    input amo_op_t AmoOpE,
     input csr_t CsrOperationE,
     input csr_index_t CsrIndexE,
     input logic CsrAccessE,
@@ -99,6 +101,8 @@ interface decode_wr
         decode_intf.ALUSrcE = ALUSrcE;
         decode_intf.AuipcE = AuipcE;
         decode_intf.WordOpE = WordOpE;
+        decode_intf.AmoE = AmoE;
+        decode_intf.AmoOpE = AmoOpE;
         decode_intf.CsrOperationE = CsrOperationE;
         decode_intf.CsrIndexE = CsrIndexE;
         decode_intf.CsrAccessE = CsrAccessE;

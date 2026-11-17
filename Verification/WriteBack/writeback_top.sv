@@ -34,6 +34,9 @@ module writeback_top;
         .PCF(intf.PCF)
     );
 
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind wb_stage wb_sva WbSva (.*);
+
     initial 
     begin
         clk = 0;

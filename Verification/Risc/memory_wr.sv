@@ -26,9 +26,11 @@ interface memory_wr
     input logic InfM,
     input logic ZeroM,
     input logic InvalidDivM,
-    input logic [FINAL_DATA_WIDTH-1:0] FPUOutM,
+    input logic [FINAL_FLP_WIDTH-1:0] FPUOutM,
     input move_operation_t MoveOperationM,
     input FPURegWriteM,
+    input AmoM,
+    input amo_op_t AmoOpM,
     
     input logic ValidW,
     input logic signed [FINAL_DATA_WIDTH-1:0] ReadDataW,
@@ -45,7 +47,7 @@ interface memory_wr
     input logic InfW,    
     input logic ZeroW,
     input logic InvalidDivW,
-    input logic [FINAL_DATA_WIDTH-1:0] FPUOutW,
+    input logic [FINAL_FLP_WIDTH-1:0] FPUOutW,
     input move_operation_t MoveOperationW,
     input logic FPURegWriteW
 );
@@ -79,6 +81,8 @@ interface memory_wr
         mem_intf.FPUOutM = FPUOutM;
         mem_intf.MoveOperationM = MoveOperationM;
         mem_intf.FPURegWriteM = FPURegWriteM;
+        mem_intf.AmoM = AmoM;
+        mem_intf.AmoOpM = AmoOpM;
 
         mem_intf.ValidW = ValidW;
         mem_intf.ReadDataW = ReadDataW;

@@ -1,0 +1,698 @@
+Coverage Report by instance with details
+
+=================================================================================
+=== Instance: /flp_top/DUT/FpuSva
+=== Design Unit: work.fpu_sva
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       8         7         1    87.50%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/flp_top/DUT/FpuSva/a_accept
+                     ../../Verification/FPU/fpu_sva.sv(22)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_busy
+                     ../../Verification/FPU/fpu_sva.sv(24)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_complete
+                     ../../Verification/FPU/fpu_sva.sv(26)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_exclusive
+                     ../../Verification/FPU/fpu_sva.sv(28)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_hold
+                     ../../Verification/FPU/fpu_sva.sv(30)
+                                                        0          0
+/flp_top/DUT/FpuSva/a_release
+                     ../../Verification/FPU/fpu_sva.sv(32)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_result_stable
+                     ../../Verification/FPU/fpu_sva.sv(34)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_known
+                     ../../Verification/FPU/fpu_sva.sv(36)
+                                                        0          1
+
+=================================================================================
+=== Instance: /uvm_pkg
+=== Design Unit: mtiUvm.uvm_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       1         1         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/uvm_pkg/uvm_component_name_check_visitor/visit/immed__262
+                     /opt/questasim/questasim/linux_x86_64/../verilog_src/uvm-1.2/src/base/uvm_traversal.svh(262)
+                                                        0          1
+
+=================================================================================
+=== Instance: /flp_seq_pkg
+=== Design Unit: work.flp_seq_pkg
+=================================================================================
+
+Assertion Coverage:
+    Assertions                       1         1         0   100.00%
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/flp_seq_pkg/flp_seq/body/main_sequence/immed__53
+                     ../../Verification/FPU/flp_seq_pkg.sv(53)
+                                                        0          1
+
+=================================================================================
+=== Instance: /flp_subscriber_pkg
+=== Design Unit: work.flp_subscriber_pkg
+=================================================================================
+
+Covergroup Coverage:
+    Covergroups                      1        na        na    91.17%
+        Coverpoints/Crosses         17        na        na        na
+            Covergroup Bins        211       208         3    98.57%
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /flp_subscriber_pkg/flp_subscriber/cvr_grp       91.17%        100          -    Uncovered            
+    covered/total bins:                                   208        211          -                      
+    missing/total bins:                                     3        211          -                      
+    % Hit:                                             98.57%        100          -                      
+    Coverpoint valid_cg                                50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                         265998          1          -    Covered              
+    Coverpoint operation_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                21         21          -                      
+        missing/total bins:                                 0         21          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin op[FADD_S]                                  12534          1          -    Covered              
+        bin op[FSUB_S]                                  12700          1          -    Covered              
+        bin op[FMUL_S]                                  12436          1          -    Covered              
+        bin op[FDIV_S]                                  12350          1          -    Covered              
+        bin op[FSQRT_S]                                 12130          1          -    Covered              
+        bin op[FSGNJ_S]                                 12683          1          -    Covered              
+        bin op[FSGNJN_S]                                12669          1          -    Covered              
+        bin op[FSGNJX_S]                                12737          1          -    Covered              
+        bin op[FMIN_S]                                  12757          1          -    Covered              
+        bin op[FMAX_S]                                  12748          1          -    Covered              
+        bin op[FCVT_W_S]                                12809          1          -    Covered              
+        bin op[FCVT_WU_S]                               12839          1          -    Covered              
+        bin op[FMV_X_S]                                 12548          1          -    Covered              
+        bin op[FEQ_S]                                   12917          1          -    Covered              
+        bin op[FLT_S]                                   12594          1          -    Covered              
+        bin op[FLE_S]                                   12770          1          -    Covered              
+        bin op[FCLASS_S]                                12844          1          -    Covered              
+        bin op[FCVT_S_W]                                12847          1          -    Covered              
+        bin op[FCVT_S_WU]                               12796          1          -    Covered              
+        bin op[FMV_S_X]                                 12520          1          -    Covered              
+        bin op[NOOPERATION]                             12770          1          -    Covered              
+    Coverpoint round_mode_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin rne                                         44279          1          -    Covered              
+        bin rtz                                         44318          1          -    Covered              
+        bin rdn                                         44371          1          -    Covered              
+        bin rup                                         44448          1          -    Covered              
+        bin rmm                                         44219          1          -    Covered              
+        bin dyn                                         44363          1          -    Covered              
+    Coverpoint MoveOperation_cg                       100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                  88733          1          -    Covered              
+        bin reg_to_fpu                                  89006          1          -    Covered              
+        bin fpu_to_fpu                                  88259          1          -    Covered              
+    Coverpoint RegWrite_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         133392          1          -    Covered              
+        bin hi                                         132606          1          -    Covered              
+    Coverpoint InA_class_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin zero                                         6936          1          -    Covered              
+        bin denorm                                      14280          1          -    Covered              
+        bin normal                                     223194          1          -    Covered              
+        bin inf                                          6947          1          -    Covered              
+        bin nan                                         14641          1          -    Covered              
+    Coverpoint InB_class_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin zero                                         6388          1          -    Covered              
+        bin denorm                                      15068          1          -    Covered              
+        bin normal                                     222981          1          -    Covered              
+        bin inf                                          6491          1          -    Covered              
+        bin nan                                         15070          1          -    Covered              
+    Coverpoint busy_cg                                 50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                         265998          1          -    Covered              
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint done_cg                                 50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                         265998          1          -    Covered              
+    Coverpoint Overflow_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264349          1          -    Covered              
+        bin hi                                           1649          1          -    Covered              
+    Coverpoint Underflow_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264182          1          -    Covered              
+        bin hi                                           1816          1          -    Covered              
+    Coverpoint NaN_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         253543          1          -    Covered              
+        bin hi                                          12455          1          -    Covered              
+    Coverpoint Inf_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         261614          1          -    Covered              
+        bin hi                                           4384          1          -    Covered              
+    Coverpoint Zero_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         261977          1          -    Covered              
+        bin hi                                           4021          1          -    Covered              
+    Coverpoint InvalidDiv_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264701          1          -    Covered              
+        bin hi                                           1297          1          -    Covered              
+    Cross operation_x_round_cx                        100.00%        100          -    Covered              
+        covered/total bins:                               126        126          -                      
+        missing/total bins:                                 0        126          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <op[NOOPERATION],dyn>                    2105          1          -    Covered              
+            bin <op[FMV_S_X],dyn>                        2031          1          -    Covered              
+            bin <op[FCVT_S_WU],dyn>                      2182          1          -    Covered              
+            bin <op[FCVT_S_W],dyn>                       2100          1          -    Covered              
+            bin <op[FCLASS_S],dyn>                       2105          1          -    Covered              
+            bin <op[FLE_S],dyn>                          2186          1          -    Covered              
+            bin <op[FLT_S],dyn>                          2118          1          -    Covered              
+            bin <op[FEQ_S],dyn>                          2219          1          -    Covered              
+            bin <op[FMV_X_S],dyn>                        2084          1          -    Covered              
+            bin <op[FCVT_WU_S],dyn>                      2086          1          -    Covered              
+            bin <op[FCVT_W_S],dyn>                       2174          1          -    Covered              
+            bin <op[FMAX_S],dyn>                         2116          1          -    Covered              
+            bin <op[FMIN_S],dyn>                         2164          1          -    Covered              
+            bin <op[FSGNJX_S],dyn>                       2182          1          -    Covered              
+            bin <op[FSGNJN_S],dyn>                       2092          1          -    Covered              
+            bin <op[FSGNJ_S],dyn>                        2111          1          -    Covered              
+            bin <op[FSQRT_S],dyn>                        2000          1          -    Covered              
+            bin <op[FDIV_S],dyn>                         2107          1          -    Covered              
+            bin <op[FMUL_S],dyn>                         2082          1          -    Covered              
+            bin <op[FSUB_S],dyn>                         2062          1          -    Covered              
+            bin <op[FADD_S],dyn>                         2057          1          -    Covered              
+            bin <op[NOOPERATION],rmm>                    2123          1          -    Covered              
+            bin <op[FMV_S_X],rmm>                        2073          1          -    Covered              
+            bin <op[FCVT_S_WU],rmm>                      2149          1          -    Covered              
+            bin <op[FCVT_S_W],rmm>                       2102          1          -    Covered              
+            bin <op[FCLASS_S],rmm>                       2156          1          -    Covered              
+            bin <op[FLE_S],rmm>                          2149          1          -    Covered              
+            bin <op[FLT_S],rmm>                          2138          1          -    Covered              
+            bin <op[FEQ_S],rmm>                          2135          1          -    Covered              
+            bin <op[FMV_X_S],rmm>                        2157          1          -    Covered              
+            bin <op[FCVT_WU_S],rmm>                      2135          1          -    Covered              
+            bin <op[FCVT_W_S],rmm>                       2136          1          -    Covered              
+            bin <op[FMAX_S],rmm>                         2108          1          -    Covered              
+            bin <op[FMIN_S],rmm>                         2092          1          -    Covered              
+            bin <op[FSGNJX_S],rmm>                       2127          1          -    Covered              
+            bin <op[FSGNJN_S],rmm>                       2171          1          -    Covered              
+            bin <op[FSGNJ_S],rmm>                        2074          1          -    Covered              
+            bin <op[FSQRT_S],rmm>                        1981          1          -    Covered              
+            bin <op[FDIV_S],rmm>                         1970          1          -    Covered              
+            bin <op[FMUL_S],rmm>                         2002          1          -    Covered              
+            bin <op[FSUB_S],rmm>                         2113          1          -    Covered              
+            bin <op[FADD_S],rmm>                         2128          1          -    Covered              
+            bin <op[NOOPERATION],rup>                    2144          1          -    Covered              
+            bin <op[FMV_S_X],rup>                        2104          1          -    Covered              
+            bin <op[FCVT_S_WU],rup>                      2086          1          -    Covered              
+            bin <op[FCVT_S_W],rup>                       2061          1          -    Covered              
+            bin <op[FCLASS_S],rup>                       2143          1          -    Covered              
+            bin <op[FLE_S],rup>                          2109          1          -    Covered              
+            bin <op[FLT_S],rup>                          2103          1          -    Covered              
+            bin <op[FEQ_S],rup>                          2210          1          -    Covered              
+            bin <op[FMV_X_S],rup>                        2116          1          -    Covered              
+            bin <op[FCVT_WU_S],rup>                      2198          1          -    Covered              
+            bin <op[FCVT_W_S],rup>                       2100          1          -    Covered              
+            bin <op[FMAX_S],rup>                         2098          1          -    Covered              
+            bin <op[FMIN_S],rup>                         2140          1          -    Covered              
+            bin <op[FSGNJX_S],rup>                       2135          1          -    Covered              
+            bin <op[FSGNJN_S],rup>                       2144          1          -    Covered              
+            bin <op[FSGNJ_S],rup>                        2091          1          -    Covered              
+            bin <op[FSQRT_S],rup>                        2061          1          -    Covered              
+            bin <op[FDIV_S],rup>                         2033          1          -    Covered              
+            bin <op[FMUL_S],rup>                         2138          1          -    Covered              
+            bin <op[FSUB_S],rup>                         2132          1          -    Covered              
+            bin <op[FADD_S],rup>                         2102          1          -    Covered              
+            bin <op[NOOPERATION],rdn>                    2125          1          -    Covered              
+            bin <op[FMV_S_X],rdn>                        2131          1          -    Covered              
+            bin <op[FCVT_S_WU],rdn>                      2142          1          -    Covered              
+            bin <op[FCVT_S_W],rdn>                       2201          1          -    Covered              
+            bin <op[FCLASS_S],rdn>                       2120          1          -    Covered              
+            bin <op[FLE_S],rdn>                          2053          1          -    Covered              
+            bin <op[FLT_S],rdn>                          2133          1          -    Covered              
+            bin <op[FEQ_S],rdn>                          2136          1          -    Covered              
+            bin <op[FMV_X_S],rdn>                        2055          1          -    Covered              
+            bin <op[FCVT_WU_S],rdn>                      2099          1          -    Covered              
+            bin <op[FCVT_W_S],rdn>                       2211          1          -    Covered              
+            bin <op[FMAX_S],rdn>                         2096          1          -    Covered              
+            bin <op[FMIN_S],rdn>                         2098          1          -    Covered              
+            bin <op[FSGNJX_S],rdn>                       2070          1          -    Covered              
+            bin <op[FSGNJN_S],rdn>                       2187          1          -    Covered              
+            bin <op[FSGNJ_S],rdn>                        2119          1          -    Covered              
+            bin <op[FSQRT_S],rdn>                        2031          1          -    Covered              
+            bin <op[FDIV_S],rdn>                         2108          1          -    Covered              
+            bin <op[FMUL_S],rdn>                         2063          1          -    Covered              
+            bin <op[FSUB_S],rdn>                         2068          1          -    Covered              
+            bin <op[FADD_S],rdn>                         2125          1          -    Covered              
+            bin <op[NOOPERATION],rtz>                    2164          1          -    Covered              
+            bin <op[FMV_S_X],rtz>                        2102          1          -    Covered              
+            bin <op[FCVT_S_WU],rtz>                      2133          1          -    Covered              
+            bin <op[FCVT_S_W],rtz>                       2294          1          -    Covered              
+            bin <op[FCLASS_S],rtz>                       2187          1          -    Covered              
+            bin <op[FLE_S],rtz>                          2154          1          -    Covered              
+            bin <op[FLT_S],rtz>                          2020          1          -    Covered              
+            bin <op[FEQ_S],rtz>                          2054          1          -    Covered              
+            bin <op[FMV_X_S],rtz>                        2084          1          -    Covered              
+            bin <op[FCVT_WU_S],rtz>                      2204          1          -    Covered              
+            bin <op[FCVT_W_S],rtz>                       2060          1          -    Covered              
+            bin <op[FMAX_S],rtz>                         2166          1          -    Covered              
+            bin <op[FMIN_S],rtz>                         2165          1          -    Covered              
+            bin <op[FSGNJX_S],rtz>                       2140          1          -    Covered              
+            bin <op[FSGNJN_S],rtz>                       2043          1          -    Covered              
+            bin <op[FSGNJ_S],rtz>                        2115          1          -    Covered              
+            bin <op[FSQRT_S],rtz>                        2011          1          -    Covered              
+            bin <op[FDIV_S],rtz>                         2019          1          -    Covered              
+            bin <op[FMUL_S],rtz>                         2040          1          -    Covered              
+            bin <op[FSUB_S],rtz>                         2128          1          -    Covered              
+            bin <op[FADD_S],rtz>                         2035          1          -    Covered              
+            bin <op[NOOPERATION],rne>                    2109          1          -    Covered              
+            bin <op[FMV_S_X],rne>                        2079          1          -    Covered              
+            bin <op[FCVT_S_WU],rne>                      2104          1          -    Covered              
+            bin <op[FCVT_S_W],rne>                       2089          1          -    Covered              
+            bin <op[FCLASS_S],rne>                       2133          1          -    Covered              
+            bin <op[FLE_S],rne>                          2119          1          -    Covered              
+            bin <op[FLT_S],rne>                          2082          1          -    Covered              
+            bin <op[FEQ_S],rne>                          2163          1          -    Covered              
+            bin <op[FMV_X_S],rne>                        2052          1          -    Covered              
+            bin <op[FCVT_WU_S],rne>                      2117          1          -    Covered              
+            bin <op[FCVT_W_S],rne>                       2128          1          -    Covered              
+            bin <op[FMAX_S],rne>                         2164          1          -    Covered              
+            bin <op[FMIN_S],rne>                         2098          1          -    Covered              
+            bin <op[FSGNJX_S],rne>                       2083          1          -    Covered              
+            bin <op[FSGNJN_S],rne>                       2032          1          -    Covered              
+            bin <op[FSGNJ_S],rne>                        2173          1          -    Covered              
+            bin <op[FSQRT_S],rne>                        2046          1          -    Covered              
+            bin <op[FDIV_S],rne>                         2113          1          -    Covered              
+            bin <op[FMUL_S],rne>                         2111          1          -    Covered              
+            bin <op[FSUB_S],rne>                         2197          1          -    Covered              
+            bin <op[FADD_S],rne>                         2087          1          -    Covered              
+    Cross InA_x_InB_class_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                25         25          -                      
+        missing/total bins:                                 0         25          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <nan,nan>                                2197          1          -    Covered              
+            bin <inf,nan>                                 844          1          -    Covered              
+            bin <normal,nan>                            10910          1          -    Covered              
+            bin <denorm,nan>                              770          1          -    Covered              
+            bin <zero,nan>                                349          1          -    Covered              
+            bin <nan,inf>                                 385          1          -    Covered              
+            bin <inf,inf>                                 380          1          -    Covered              
+            bin <normal,inf>                             5193          1          -    Covered              
+            bin <denorm,inf>                              352          1          -    Covered              
+            bin <zero,inf>                                181          1          -    Covered              
+            bin <nan,normal>                            10903          1          -    Covered              
+            bin <inf,normal>                             5178          1          -    Covered              
+            bin <normal,normal>                        191129          1          -    Covered              
+            bin <denorm,normal>                         10647          1          -    Covered              
+            bin <zero,normal>                            5124          1          -    Covered              
+            bin <nan,denorm>                              786          1          -    Covered              
+            bin <inf,denorm>                              389          1          -    Covered              
+            bin <normal,denorm>                         10826          1          -    Covered              
+            bin <denorm,denorm>                          2157          1          -    Covered              
+            bin <zero,denorm>                             910          1          -    Covered              
+            bin <nan,zero>                                370          1          -    Covered              
+            bin <inf,zero>                                156          1          -    Covered              
+            bin <normal,zero>                            5136          1          -    Covered              
+            bin <denorm,zero>                             354          1          -    Covered              
+            bin <zero,zero>                               372          1          -    Covered              
+
+COVERGROUP COVERAGE:
+----------------------------------------------------------------------------------------------------------
+Covergroup                                             Metric       Goal       Bins    Status               
+                                                                                                         
+----------------------------------------------------------------------------------------------------------
+ TYPE /flp_subscriber_pkg/flp_subscriber/cvr_grp       91.17%        100          -    Uncovered            
+    covered/total bins:                                   208        211          -                      
+    missing/total bins:                                     3        211          -                      
+    % Hit:                                             98.57%        100          -                      
+    Coverpoint valid_cg                                50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                         265998          1          -    Covered              
+    Coverpoint operation_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                21         21          -                      
+        missing/total bins:                                 0         21          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin op[FADD_S]                                  12534          1          -    Covered              
+        bin op[FSUB_S]                                  12700          1          -    Covered              
+        bin op[FMUL_S]                                  12436          1          -    Covered              
+        bin op[FDIV_S]                                  12350          1          -    Covered              
+        bin op[FSQRT_S]                                 12130          1          -    Covered              
+        bin op[FSGNJ_S]                                 12683          1          -    Covered              
+        bin op[FSGNJN_S]                                12669          1          -    Covered              
+        bin op[FSGNJX_S]                                12737          1          -    Covered              
+        bin op[FMIN_S]                                  12757          1          -    Covered              
+        bin op[FMAX_S]                                  12748          1          -    Covered              
+        bin op[FCVT_W_S]                                12809          1          -    Covered              
+        bin op[FCVT_WU_S]                               12839          1          -    Covered              
+        bin op[FMV_X_S]                                 12548          1          -    Covered              
+        bin op[FEQ_S]                                   12917          1          -    Covered              
+        bin op[FLT_S]                                   12594          1          -    Covered              
+        bin op[FLE_S]                                   12770          1          -    Covered              
+        bin op[FCLASS_S]                                12844          1          -    Covered              
+        bin op[FCVT_S_W]                                12847          1          -    Covered              
+        bin op[FCVT_S_WU]                               12796          1          -    Covered              
+        bin op[FMV_S_X]                                 12520          1          -    Covered              
+        bin op[NOOPERATION]                             12770          1          -    Covered              
+    Coverpoint round_mode_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 6          6          -                      
+        missing/total bins:                                 0          6          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin rne                                         44279          1          -    Covered              
+        bin rtz                                         44318          1          -    Covered              
+        bin rdn                                         44371          1          -    Covered              
+        bin rup                                         44448          1          -    Covered              
+        bin rmm                                         44219          1          -    Covered              
+        bin dyn                                         44363          1          -    Covered              
+    Coverpoint MoveOperation_cg                       100.00%        100          -    Covered              
+        covered/total bins:                                 3          3          -                      
+        missing/total bins:                                 0          3          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin fpu_to_reg                                  88733          1          -    Covered              
+        bin reg_to_fpu                                  89006          1          -    Covered              
+        bin fpu_to_fpu                                  88259          1          -    Covered              
+    Coverpoint RegWrite_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         133392          1          -    Covered              
+        bin hi                                         132606          1          -    Covered              
+    Coverpoint InA_class_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin zero                                         6936          1          -    Covered              
+        bin denorm                                      14280          1          -    Covered              
+        bin normal                                     223194          1          -    Covered              
+        bin inf                                          6947          1          -    Covered              
+        bin nan                                         14641          1          -    Covered              
+    Coverpoint InB_class_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 5          5          -                      
+        missing/total bins:                                 0          5          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin zero                                         6388          1          -    Covered              
+        bin denorm                                      15068          1          -    Covered              
+        bin normal                                     222981          1          -    Covered              
+        bin inf                                          6491          1          -    Covered              
+        bin nan                                         15070          1          -    Covered              
+    Coverpoint busy_cg                                 50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                         265998          1          -    Covered              
+        bin hi                                              0          1          -    ZERO                 
+    Coverpoint done_cg                                 50.00%        100          -    Uncovered            
+        covered/total bins:                                 1          2          -                      
+        missing/total bins:                                 1          2          -                      
+        % Hit:                                         50.00%        100          -                      
+        bin lo                                              0          1          -    ZERO                 
+        bin hi                                         265998          1          -    Covered              
+    Coverpoint Overflow_cg                            100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264349          1          -    Covered              
+        bin hi                                           1649          1          -    Covered              
+    Coverpoint Underflow_cg                           100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264182          1          -    Covered              
+        bin hi                                           1816          1          -    Covered              
+    Coverpoint NaN_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         253543          1          -    Covered              
+        bin hi                                          12455          1          -    Covered              
+    Coverpoint Inf_cg                                 100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         261614          1          -    Covered              
+        bin hi                                           4384          1          -    Covered              
+    Coverpoint Zero_cg                                100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         261977          1          -    Covered              
+        bin hi                                           4021          1          -    Covered              
+    Coverpoint InvalidDiv_cg                          100.00%        100          -    Covered              
+        covered/total bins:                                 2          2          -                      
+        missing/total bins:                                 0          2          -                      
+        % Hit:                                        100.00%        100          -                      
+        bin lo                                         264701          1          -    Covered              
+        bin hi                                           1297          1          -    Covered              
+    Cross operation_x_round_cx                        100.00%        100          -    Covered              
+        covered/total bins:                               126        126          -                      
+        missing/total bins:                                 0        126          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <op[NOOPERATION],dyn>                    2105          1          -    Covered              
+            bin <op[FMV_S_X],dyn>                        2031          1          -    Covered              
+            bin <op[FCVT_S_WU],dyn>                      2182          1          -    Covered              
+            bin <op[FCVT_S_W],dyn>                       2100          1          -    Covered              
+            bin <op[FCLASS_S],dyn>                       2105          1          -    Covered              
+            bin <op[FLE_S],dyn>                          2186          1          -    Covered              
+            bin <op[FLT_S],dyn>                          2118          1          -    Covered              
+            bin <op[FEQ_S],dyn>                          2219          1          -    Covered              
+            bin <op[FMV_X_S],dyn>                        2084          1          -    Covered              
+            bin <op[FCVT_WU_S],dyn>                      2086          1          -    Covered              
+            bin <op[FCVT_W_S],dyn>                       2174          1          -    Covered              
+            bin <op[FMAX_S],dyn>                         2116          1          -    Covered              
+            bin <op[FMIN_S],dyn>                         2164          1          -    Covered              
+            bin <op[FSGNJX_S],dyn>                       2182          1          -    Covered              
+            bin <op[FSGNJN_S],dyn>                       2092          1          -    Covered              
+            bin <op[FSGNJ_S],dyn>                        2111          1          -    Covered              
+            bin <op[FSQRT_S],dyn>                        2000          1          -    Covered              
+            bin <op[FDIV_S],dyn>                         2107          1          -    Covered              
+            bin <op[FMUL_S],dyn>                         2082          1          -    Covered              
+            bin <op[FSUB_S],dyn>                         2062          1          -    Covered              
+            bin <op[FADD_S],dyn>                         2057          1          -    Covered              
+            bin <op[NOOPERATION],rmm>                    2123          1          -    Covered              
+            bin <op[FMV_S_X],rmm>                        2073          1          -    Covered              
+            bin <op[FCVT_S_WU],rmm>                      2149          1          -    Covered              
+            bin <op[FCVT_S_W],rmm>                       2102          1          -    Covered              
+            bin <op[FCLASS_S],rmm>                       2156          1          -    Covered              
+            bin <op[FLE_S],rmm>                          2149          1          -    Covered              
+            bin <op[FLT_S],rmm>                          2138          1          -    Covered              
+            bin <op[FEQ_S],rmm>                          2135          1          -    Covered              
+            bin <op[FMV_X_S],rmm>                        2157          1          -    Covered              
+            bin <op[FCVT_WU_S],rmm>                      2135          1          -    Covered              
+            bin <op[FCVT_W_S],rmm>                       2136          1          -    Covered              
+            bin <op[FMAX_S],rmm>                         2108          1          -    Covered              
+            bin <op[FMIN_S],rmm>                         2092          1          -    Covered              
+            bin <op[FSGNJX_S],rmm>                       2127          1          -    Covered              
+            bin <op[FSGNJN_S],rmm>                       2171          1          -    Covered              
+            bin <op[FSGNJ_S],rmm>                        2074          1          -    Covered              
+            bin <op[FSQRT_S],rmm>                        1981          1          -    Covered              
+            bin <op[FDIV_S],rmm>                         1970          1          -    Covered              
+            bin <op[FMUL_S],rmm>                         2002          1          -    Covered              
+            bin <op[FSUB_S],rmm>                         2113          1          -    Covered              
+            bin <op[FADD_S],rmm>                         2128          1          -    Covered              
+            bin <op[NOOPERATION],rup>                    2144          1          -    Covered              
+            bin <op[FMV_S_X],rup>                        2104          1          -    Covered              
+            bin <op[FCVT_S_WU],rup>                      2086          1          -    Covered              
+            bin <op[FCVT_S_W],rup>                       2061          1          -    Covered              
+            bin <op[FCLASS_S],rup>                       2143          1          -    Covered              
+            bin <op[FLE_S],rup>                          2109          1          -    Covered              
+            bin <op[FLT_S],rup>                          2103          1          -    Covered              
+            bin <op[FEQ_S],rup>                          2210          1          -    Covered              
+            bin <op[FMV_X_S],rup>                        2116          1          -    Covered              
+            bin <op[FCVT_WU_S],rup>                      2198          1          -    Covered              
+            bin <op[FCVT_W_S],rup>                       2100          1          -    Covered              
+            bin <op[FMAX_S],rup>                         2098          1          -    Covered              
+            bin <op[FMIN_S],rup>                         2140          1          -    Covered              
+            bin <op[FSGNJX_S],rup>                       2135          1          -    Covered              
+            bin <op[FSGNJN_S],rup>                       2144          1          -    Covered              
+            bin <op[FSGNJ_S],rup>                        2091          1          -    Covered              
+            bin <op[FSQRT_S],rup>                        2061          1          -    Covered              
+            bin <op[FDIV_S],rup>                         2033          1          -    Covered              
+            bin <op[FMUL_S],rup>                         2138          1          -    Covered              
+            bin <op[FSUB_S],rup>                         2132          1          -    Covered              
+            bin <op[FADD_S],rup>                         2102          1          -    Covered              
+            bin <op[NOOPERATION],rdn>                    2125          1          -    Covered              
+            bin <op[FMV_S_X],rdn>                        2131          1          -    Covered              
+            bin <op[FCVT_S_WU],rdn>                      2142          1          -    Covered              
+            bin <op[FCVT_S_W],rdn>                       2201          1          -    Covered              
+            bin <op[FCLASS_S],rdn>                       2120          1          -    Covered              
+            bin <op[FLE_S],rdn>                          2053          1          -    Covered              
+            bin <op[FLT_S],rdn>                          2133          1          -    Covered              
+            bin <op[FEQ_S],rdn>                          2136          1          -    Covered              
+            bin <op[FMV_X_S],rdn>                        2055          1          -    Covered              
+            bin <op[FCVT_WU_S],rdn>                      2099          1          -    Covered              
+            bin <op[FCVT_W_S],rdn>                       2211          1          -    Covered              
+            bin <op[FMAX_S],rdn>                         2096          1          -    Covered              
+            bin <op[FMIN_S],rdn>                         2098          1          -    Covered              
+            bin <op[FSGNJX_S],rdn>                       2070          1          -    Covered              
+            bin <op[FSGNJN_S],rdn>                       2187          1          -    Covered              
+            bin <op[FSGNJ_S],rdn>                        2119          1          -    Covered              
+            bin <op[FSQRT_S],rdn>                        2031          1          -    Covered              
+            bin <op[FDIV_S],rdn>                         2108          1          -    Covered              
+            bin <op[FMUL_S],rdn>                         2063          1          -    Covered              
+            bin <op[FSUB_S],rdn>                         2068          1          -    Covered              
+            bin <op[FADD_S],rdn>                         2125          1          -    Covered              
+            bin <op[NOOPERATION],rtz>                    2164          1          -    Covered              
+            bin <op[FMV_S_X],rtz>                        2102          1          -    Covered              
+            bin <op[FCVT_S_WU],rtz>                      2133          1          -    Covered              
+            bin <op[FCVT_S_W],rtz>                       2294          1          -    Covered              
+            bin <op[FCLASS_S],rtz>                       2187          1          -    Covered              
+            bin <op[FLE_S],rtz>                          2154          1          -    Covered              
+            bin <op[FLT_S],rtz>                          2020          1          -    Covered              
+            bin <op[FEQ_S],rtz>                          2054          1          -    Covered              
+            bin <op[FMV_X_S],rtz>                        2084          1          -    Covered              
+            bin <op[FCVT_WU_S],rtz>                      2204          1          -    Covered              
+            bin <op[FCVT_W_S],rtz>                       2060          1          -    Covered              
+            bin <op[FMAX_S],rtz>                         2166          1          -    Covered              
+            bin <op[FMIN_S],rtz>                         2165          1          -    Covered              
+            bin <op[FSGNJX_S],rtz>                       2140          1          -    Covered              
+            bin <op[FSGNJN_S],rtz>                       2043          1          -    Covered              
+            bin <op[FSGNJ_S],rtz>                        2115          1          -    Covered              
+            bin <op[FSQRT_S],rtz>                        2011          1          -    Covered              
+            bin <op[FDIV_S],rtz>                         2019          1          -    Covered              
+            bin <op[FMUL_S],rtz>                         2040          1          -    Covered              
+            bin <op[FSUB_S],rtz>                         2128          1          -    Covered              
+            bin <op[FADD_S],rtz>                         2035          1          -    Covered              
+            bin <op[NOOPERATION],rne>                    2109          1          -    Covered              
+            bin <op[FMV_S_X],rne>                        2079          1          -    Covered              
+            bin <op[FCVT_S_WU],rne>                      2104          1          -    Covered              
+            bin <op[FCVT_S_W],rne>                       2089          1          -    Covered              
+            bin <op[FCLASS_S],rne>                       2133          1          -    Covered              
+            bin <op[FLE_S],rne>                          2119          1          -    Covered              
+            bin <op[FLT_S],rne>                          2082          1          -    Covered              
+            bin <op[FEQ_S],rne>                          2163          1          -    Covered              
+            bin <op[FMV_X_S],rne>                        2052          1          -    Covered              
+            bin <op[FCVT_WU_S],rne>                      2117          1          -    Covered              
+            bin <op[FCVT_W_S],rne>                       2128          1          -    Covered              
+            bin <op[FMAX_S],rne>                         2164          1          -    Covered              
+            bin <op[FMIN_S],rne>                         2098          1          -    Covered              
+            bin <op[FSGNJX_S],rne>                       2083          1          -    Covered              
+            bin <op[FSGNJN_S],rne>                       2032          1          -    Covered              
+            bin <op[FSGNJ_S],rne>                        2173          1          -    Covered              
+            bin <op[FSQRT_S],rne>                        2046          1          -    Covered              
+            bin <op[FDIV_S],rne>                         2113          1          -    Covered              
+            bin <op[FMUL_S],rne>                         2111          1          -    Covered              
+            bin <op[FSUB_S],rne>                         2197          1          -    Covered              
+            bin <op[FADD_S],rne>                         2087          1          -    Covered              
+    Cross InA_x_InB_class_cx                          100.00%        100          -    Covered              
+        covered/total bins:                                25         25          -                      
+        missing/total bins:                                 0         25          -                      
+        % Hit:                                        100.00%        100          -                      
+        Auto, Default and User Defined Bins:
+            bin <nan,nan>                                2197          1          -    Covered              
+            bin <inf,nan>                                 844          1          -    Covered              
+            bin <normal,nan>                            10910          1          -    Covered              
+            bin <denorm,nan>                              770          1          -    Covered              
+            bin <zero,nan>                                349          1          -    Covered              
+            bin <nan,inf>                                 385          1          -    Covered              
+            bin <inf,inf>                                 380          1          -    Covered              
+            bin <normal,inf>                             5193          1          -    Covered              
+            bin <denorm,inf>                              352          1          -    Covered              
+            bin <zero,inf>                                181          1          -    Covered              
+            bin <nan,normal>                            10903          1          -    Covered              
+            bin <inf,normal>                             5178          1          -    Covered              
+            bin <normal,normal>                        191129          1          -    Covered              
+            bin <denorm,normal>                         10647          1          -    Covered              
+            bin <zero,normal>                            5124          1          -    Covered              
+            bin <nan,denorm>                              786          1          -    Covered              
+            bin <inf,denorm>                              389          1          -    Covered              
+            bin <normal,denorm>                         10826          1          -    Covered              
+            bin <denorm,denorm>                          2157          1          -    Covered              
+            bin <zero,denorm>                             910          1          -    Covered              
+            bin <nan,zero>                                370          1          -    Covered              
+            bin <inf,zero>                                156          1          -    Covered              
+            bin <normal,zero>                            5136          1          -    Covered              
+            bin <denorm,zero>                             354          1          -    Covered              
+            bin <zero,zero>                               372          1          -    Covered              
+
+TOTAL COVERGROUP COVERAGE: 91.17%  COVERGROUP TYPES: 1
+
+ASSERTION RESULTS:
+--------------------------------------------------------------------
+Name                 File(Line)                   Failure      Pass 
+                                                  Count        Count
+--------------------------------------------------------------------
+/flp_top/DUT/FpuSva/a_accept
+                     ../../Verification/FPU/fpu_sva.sv(22)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_busy
+                     ../../Verification/FPU/fpu_sva.sv(24)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_complete
+                     ../../Verification/FPU/fpu_sva.sv(26)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_exclusive
+                     ../../Verification/FPU/fpu_sva.sv(28)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_hold
+                     ../../Verification/FPU/fpu_sva.sv(30)
+                                                        0          0
+/flp_top/DUT/FpuSva/a_release
+                     ../../Verification/FPU/fpu_sva.sv(32)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_result_stable
+                     ../../Verification/FPU/fpu_sva.sv(34)
+                                                        0          1
+/flp_top/DUT/FpuSva/a_known
+                     ../../Verification/FPU/fpu_sva.sv(36)
+                                                        0          1
+/uvm_pkg/uvm_component_name_check_visitor/visit/immed__262
+                     /opt/questasim/questasim/linux_x86_64/../verilog_src/uvm-1.2/src/base/uvm_traversal.svh(262)
+                                                        0          1
+/flp_seq_pkg/flp_seq/body/main_sequence/immed__53
+                     ../../Verification/FPU/flp_seq_pkg.sv(53)
+                                                        0          1
+
+Total Coverage By Instance (filtered view): 90.58%
+

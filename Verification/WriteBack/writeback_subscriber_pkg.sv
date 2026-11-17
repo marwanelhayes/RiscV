@@ -31,20 +31,20 @@ package writeback_subscriber_pkg;
             TrapIsSet_cg: coverpoint sub_item.TrapIsSet iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
 
             // Data busses - sign partition.
-            ALUOutW_cg: coverpoint sub_item.ALUOutW iff(sub_item.rst)
+            ALUOutW_cg: coverpoint sub_item.ALUOutW[$bits(sub_item.ALUOutW)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            ReadDataW_cg: coverpoint sub_item.ReadDataW iff(sub_item.rst)
+            ReadDataW_cg: coverpoint sub_item.ReadDataW[$bits(sub_item.ReadDataW)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            CsrOutW_cg: coverpoint sub_item.CsrOutW iff(sub_item.rst)
+            CsrOutW_cg: coverpoint sub_item.CsrOutW[$bits(sub_item.CsrOutW)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
 
             // ── Crosses ──────────────────────────────────────────────────────

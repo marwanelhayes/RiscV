@@ -144,6 +144,8 @@ module riscv_processor
     wire ALUSrcE;                           // ALU operand B select
     wire AuipcE;                            // ALU operand A is the PC
     wire WordOpE;                           // RV64 32-bit operation
+    wire AmoE;                              // A extension instruction
+    amo_op_t AmoOpE;                        // A extension operation
     wire [2:0] ForwardAE;                  // Forwarding select A
     wire [2:0] ForwardBE;                  // Forwarding select B
     wire StallE;                            // Hold execute stage
@@ -192,6 +194,8 @@ module riscv_processor
     wire RegWriteM;                           // Register write enable
     wire MemWriteM;                           // Memory write enable
     wire MemReadM;                            // Memory read enable
+    wire AmoM;                                // A extension instruction
+    amo_op_t AmoOpM;                          // A extension operation
     wire [DATA_WIDTH-1:0] CsrOutM;           // CSR read data
     selector_t SelectorM;                     // Write-back select
     wire [DATA_WIDTH-1:0] PCPlus4M;           // PC+4 to memory
@@ -322,6 +326,8 @@ module riscv_processor
         .ALUSrcE(ALUSrcE),
         .AuipcE(AuipcE),
         .WordOpE(WordOpE),
+        .AmoE(AmoE),
+        .AmoOpE(AmoOpE),
         .MRetE(MRetE),
         .EcallE(EcallE),
         .EbreakE(EbreakE),
@@ -363,6 +369,8 @@ module riscv_processor
         .JalrE(JalrE),
         .AuipcE(AuipcE),
         .WordOpE(WordOpE),
+        .AmoE(AmoE),
+        .AmoOpE(AmoOpE),
         .ForwardAE(ForwardAE),
         .ForwardBE(ForwardBE),
         .Rs1E(Rs1E),
@@ -398,6 +406,8 @@ module riscv_processor
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
         .MemReadM(MemReadM),
+        .AmoM(AmoM),
+        .AmoOpM(AmoOpM),
         .FPUOutW(FPUOutW),
         .RdFE(RdFE),
         .RD1FE(RD1FE),
@@ -451,6 +461,8 @@ module riscv_processor
         .SelectorM(SelectorM),
         .MemWriteM(MemWriteM),
         .MemReadM(MemReadM),
+        .AmoM(AmoM),
+        .AmoOpM(AmoOpM),
         .StallW(StallW),
         .CacheHitM(CacheHitM),
         .ValidW(ValidW),

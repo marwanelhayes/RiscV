@@ -46,6 +46,8 @@ module mem_top;
         .SelectorM(intf.SelectorM),
         .MemWriteM(intf.MemWriteM),
         .MemReadM(intf.MemReadM),
+        .AmoM(intf.AmoM),
+        .AmoOpM(intf.AmoOpM),
         .StallW(intf.StallW),
         .ValidW(intf.ValidW),
         .ReadDataW(intf.ReadDataW),
@@ -167,35 +169,25 @@ module mem_top;
         .MRRValid(MRRValid)
     );
 
-    bind DUT.DCache cache_sva #(
-        .DATA_WIDTH (FINAL_DATA_WIDTH),
-        .ADDR_WIDTH (FINAL_ADDR_WIDTH),
-        .TOTAL_LINES(CACHE_TOTAL_LINES),
-        .WAY        (CACHE_WAY),
-        .LINE_WORDS (CACHE_LINE_WORDS)
-    ) cache_assertions (
-        .clk(clk),
-        .rst(rst),
-        .CPUReadEn(CPUReadEn),
-        .CPUWriteEn(CPUWriteEn),
-        .CacheHit(CacheHit),
-        .hit_array(hit_array),
-        .valid_reg(valid_reg),
-        .tags_reg(tags_reg),
-        .CpuIdx(CpuIdx),
-        .CpuTag(CpuTag),
-        .victim_way(victim_way),
-        .lru_way(lru_way),
-        .state(state)
-    );
+    bind cache cache_sva #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .TOTAL_LINES(TOTAL_LINES), .WAY(WAY), .LINE_WORDS(LINE_WORDS)) CacheSva (.*);
 
     // Hazard-unit contract for a stand-alone MEM stage: a D-cache miss
     // freezes the pipeline, so MEM/WB holds until the access completes.
+    // ExtraStall stands in for the other freeze source (an I-cache miss): MEM
+    // is held although its own access is done, which an SC / AMO* must not
+    // repeat.
+    bit ExtraStall;
+    always @(posedge clk)
+        ExtraStall <= ($urandom_range(0, 9) == 0);
+
     always_comb
     begin
         axi_intf.rst = intf.rst;
-        intf.StallW  = !intf.CacheHitM;
+        intf.StallW  = !intf.CacheHitM || ExtraStall;
     end
+
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind memory_stage memory_sva MemorySva (.*);
 
     initial
     begin

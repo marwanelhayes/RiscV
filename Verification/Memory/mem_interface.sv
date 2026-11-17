@@ -43,9 +43,11 @@ interface mem_interface
     logic InfM;
     logic ZeroM;
     logic InvalidDivM;
-    logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
+    logic [FINAL_FLP_WIDTH-1:0] FPUOutM;
     move_operation_t MoveOperationM;
     logic FPURegWriteM;
+    logic AmoM;
+    amo_op_t AmoOpM;
 
     // ─── Cache hit response (DUT output) and the stall it causes ────────────
     logic CacheHitM;
@@ -67,7 +69,7 @@ interface mem_interface
     logic InfW;
     logic ZeroW;
     logic InvalidDivW;
-    logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
+    logic [FINAL_FLP_WIDTH-1:0] FPUOutW;
     move_operation_t MoveOperationW;
     logic FPURegWriteW;
 
@@ -97,6 +99,8 @@ interface mem_interface
         output FPUOutM;
         output MoveOperationM;
         output FPURegWriteM;
+        output AmoM;
+        output AmoOpM;
 
         input CacheHitM;
         input ValidW;
@@ -145,6 +149,8 @@ interface mem_interface
         input FPUOutM;
         input MoveOperationM;
         input FPURegWriteM;
+        input AmoM;
+        input AmoOpM;
 
         input CacheHitM;
         input ValidW;
@@ -191,6 +197,8 @@ interface mem_interface
         FPUOutM <= 0;
         MoveOperationM <= FPUToFPU;
         FPURegWriteM <= 0;
+        AmoM <= 0;
+        AmoOpM <= AMO_ADD;
 
         repeat(5)
         begin
@@ -229,6 +237,8 @@ interface mem_interface
             mck.FPUOutM <= drv.FPUOutM;
             mck.MoveOperationM <= drv.MoveOperationM;
             mck.FPURegWriteM <= drv.FPURegWriteM;
+            mck.AmoM <= drv.AmoM;
+            mck.AmoOpM <= drv.AmoOpM;
         end
         // else: StallW -> hold *M inputs (pipeline stall during refill)
     endtask:drv2intf
@@ -259,6 +269,8 @@ interface mem_interface
         mon.FPUOutM = pck.FPUOutM;
         mon.MoveOperationM = pck.MoveOperationM;
         mon.FPURegWriteM = pck.FPURegWriteM;
+        mon.AmoM = pck.AmoM;
+        mon.AmoOpM = pck.AmoOpM;
 
         mon.CacheHitM = pck.CacheHitM;
         mon.ValidW = pck.ValidW;

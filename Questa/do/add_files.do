@@ -18,6 +18,7 @@ project addfile ../../Design/fetch_stage.sv
 project addfile ../../Design/decode_stage.sv
 project addfile ../../Design/execute_stage.sv
 project addfile ../../Design/memory_stage.sv
+project addfile ../../Design/amo_unit.sv
 project addfile ../../Design/wb_stage.sv
 
 # Control units
@@ -216,6 +217,14 @@ project addfile ../../Verification/Hazard/hazard_top.sv
 # Reusable protocol assertion modules
 echo "Adding reusable assertions module"
 project addfile ../../Verification/Protocol/AXI_Assertions.sv
+project addfile ../../Verification/Fetch/fetch_sva.sv
+project addfile ../../Verification/Decode/decode_sva.sv
+project addfile ../../Verification/Execute/execute_sva.sv
+project addfile ../../Verification/Memory/memory_sva.sv
+project addfile ../../Verification/WriteBack/wb_sva.sv
+project addfile ../../Verification/Hazard/hazard_sva.sv
+project addfile ../../Verification/FPU/fpu_sva.sv
+project addfile ../../Verification/CSR/csr_sva.sv
 project addfile ../../Verification/Protocol/axi_interface.sv
 
 # Verification packages - Risc (full processor)

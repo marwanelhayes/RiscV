@@ -32,6 +32,8 @@ module execute_top;
         .JalrE(intf.JalrE),
         .AuipcE(intf.AuipcE),
         .WordOpE(intf.WordOpE),
+        .AmoE(1'b0),                      // atomics are covered by mem_top and risc_top
+        .AmoOpE(AMO_ADD),
         .ForwardAE(intf.ForwardAE),
         .ForwardBE(intf.ForwardBE),
         .Rs1E(intf.Rs1E),
@@ -120,6 +122,11 @@ module execute_top;
     (
         .*
     );
+
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind execute_stage execute_sva ExecuteSva (.*);
+    bind risc_fpu fpu_sva #(.WIDTH(WIDTH)) FpuSva (.*);
+    bind csr_file csr_sva CsrSva (.*);
 
     initial 
     begin

@@ -12,8 +12,10 @@
 //   - EX commit (ValidE && !StallE): the ISS steps once. PC, trap/no-trap and
 //     the next PC (or trap vector) must match; one cycle after a trap the
 //     DUT's mepc/mcause/mtval must equal the ISS's.
-//   - MEM store (a new store in EX/MEM): address, size and data must match the
-//     oldest store the ISS performed.
+//   - MEM store (a new store in EX/MEM): PC, address, size and data must
+//     match the oldest store the ISS performed. An SC / AMO* is checked when
+//     its D-cache write completes instead (AtomicStoreM): its data is only
+//     known then, and a failed SC writes nothing.
 //   - WB write (a new instruction in MEM/WB): rd/value and frd/value must match
 //     the oldest register write the ISS performed.
 //
@@ -21,6 +23,12 @@
 // global "ISS_DONE" uvm_event. risc_test drains the pipeline and triggers
 // "ISS_FINAL", on which the checker verifies that every expected write was
 // seen (still inside the UVM run phase, so the errors are counted).
+//
+// With +SPIKE (and -sv_lib Verification/Risc/spike/libspike_dpi), Spike is
+// stepped next to the ISS on every commit with the same inputs and the two
+// commit records must be identical. The DUT is already checked against the
+// ISS, so a Spike-only mismatch means the ISS and the RTL share a misreading
+// of the spec (see spike/spike_dpi.cc for the core profile Spike runs with).
 // =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
@@ -58,6 +66,10 @@ module commit_checker
     input logic [FINAL_DATA_WIDTH-1:0] ALUOutM,
     input logic [2:0]                  funct3M,
     input logic [FINAL_DATA_WIDTH-1:0] WriteDataM,
+    input logic [FINAL_DATA_WIDTH-1:0] PCPlus4M,
+    input logic                        AmoM,
+    input logic                        AtomicStoreM,         // SC / AMO* cache write completes
+    input logic [FINAL_DATA_WIDTH-1:0] AtomicStoreDataM,     // its data (before lane replication)
 
     // ── WB stage (register writes) ───────────────────────────────────────────
     input logic                        ValidW,
@@ -76,6 +88,24 @@ module commit_checker
     typedef struct { int rd; logic [XL-1:0] val; xlen_t pc; } wr_t;
     typedef struct { xlen_t addr; int size; xlen_t data; xlen_t pc; } st_t;
 
+    // ── Spike lock-step (Verification/Risc/spike/spike_dpi.cc) ─────────────────
+    import "DPI-C" function int  spike_init(int xlen, string image, int unsigned mvendorid);
+    import "DPI-C" function void spike_reset();
+    import "DPI-C" function void spike_step(input bit ext, input bit tmr, input bit sw,
+        input longint unsigned csr_rdata,
+        output longint unsigned pc, output int unsigned insn, output bit trap, output bit interrupt,
+        output longint unsigned cause, output longint unsigned tval,
+        output bit rd_we, output int rd, output longint unsigned rd_val,
+        output bit frd_we, output int frd, output int unsigned frd_val,
+        output bit st_we, output longint unsigned st_addr, output int st_size,
+        output longint unsigned st_data, output longint unsigned next_pc);
+
+    localparam int SPIKE_MAX_ERRORS = 10;   // the models diverge after the first mismatch
+
+    bit          use_spike;               // +SPIKE given
+    bit          spike_on;                // still comparing
+    int unsigned spike_commits, spike_errors;
+
     riscv_iss    iss;
     wr_t         gpr_q[$], fpr_q[$];
     st_t         st_q[$];
@@ -92,6 +122,14 @@ module commit_checker
         iss.load_image(INSTR_MEM_PATH);
         done_ev  = uvm_event_pool::get_global("ISS_DONE");
         final_ev = uvm_event_pool::get_global("ISS_FINAL");
+        use_spike = $test$plusargs("SPIKE");
+        if(use_spike)
+        begin
+            if(spike_init(XL, INSTR_MEM_PATH, MVENDORID_VALUE) != 0)
+                `uvm_fatal("SPIKE_CHK", "spike_init failed")
+            spike_reset();
+            spike_on = 1;
+        end
         final_ev.wait_trigger();
         if(gpr_q.size() || st_q.size() || fpr_q.size())
             `uvm_error("ISS_CHK", $sformatf("expected writes never seen: %0d integer, %0d FP, %0d stores",
@@ -102,6 +140,13 @@ module commit_checker
             `uvm_error("ISS_CHK", "the program never reached its end (self-loop)")
         `uvm_info("ISS_CHK", $sformatf("summary: %0d commits, %0d traps, %0d interrupts, %0d mismatches",
                                        commits, traps, interrupts, errors), UVM_LOW)
+        if(use_spike)
+        begin
+            if(spike_commits == 0)
+                `uvm_error("SPIKE_CHK", "no commit was compared against Spike")
+            `uvm_info("SPIKE_CHK", $sformatf("summary: %0d commits compared with Spike, %0d mismatches%s",
+                                             spike_commits, spike_errors, spike_on ? "" : " (comparison stopped)"), UVM_LOW)
+        end
     end
 
     function automatic string fmt(iss_commit_t c);
@@ -117,11 +162,71 @@ module commit_checker
         `uvm_error("ISS_CHK", $sformatf("%s\n  last ISS commits (oldest first):%s", what, ctx))
     endfunction
 
+    // Step Spike with the inputs the ISS just used and compare the two records
+    function automatic void spike_check(iss_commit_t r, bit ext, bit tmr, bit sw, logic [XL-1:0] csr_rdata);
+        iss_commit_t s;
+        longint unsigned pc, cause, tval, rd_val, st_addr, st_data, next_pc;
+        int unsigned     insn, frd_val;
+        bit              trap, intr, rd_we, frd_we, st_we;
+        int              rd, frd, st_size;
+        logic [XL-1:0]   st_mask;
+        string           diff;
+
+        spike_step(ext, tmr, sw, 64'(csr_rdata), pc, insn, trap, intr, cause, tval,
+                   rd_we, rd, rd_val, frd_we, frd, frd_val, st_we, st_addr, st_size, st_data, next_pc);
+        spike_commits++;
+        s = '{default:0};
+        s.pc = xlen_t'(pc); s.insn = insn; s.trap = trap; s.interrupt = intr;
+        s.cause = xlen_t'(cause); s.tval = xlen_t'(tval);
+        s.rd_we = rd_we; s.rd = rd; s.rd_val = xlen_t'(rd_val);
+        s.frd_we = frd_we; s.frd = frd; s.frd_val = frd_val;
+        s.st_we = st_we; s.st_addr = xlen_t'(st_addr); s.st_size = st_size; s.st_data = xlen_t'(st_data);
+        s.next_pc = xlen_t'(next_pc);
+
+        diff = "";
+        if((s.pc !== r.pc) || (s.insn !== r.insn))       diff = {diff, " pc/insn"};
+        if(s.trap != r.trap)                              diff = {diff, " trap"};
+        else if(r.trap)
+        begin
+            if((s.cause !== r.cause) || (s.interrupt != r.interrupt)) diff = {diff, " cause"};
+            if(s.tval !== r.tval)                         diff = {diff, " tval"};
+        end
+        else
+        begin
+            if((r.rd_we && r.rd != 0) != s.rd_we)         diff = {diff, " rd_we"};
+            else if(s.rd_we && ((s.rd != r.rd) || (s.rd_val !== r.rd_val))) diff = {diff, " rd"};
+            if(s.frd_we != r.frd_we)                      diff = {diff, " frd_we"};
+            else if(s.frd_we && ((s.frd != r.frd) || (s.frd_val !== r.frd_val))) diff = {diff, " frd"};
+            if(s.st_we != r.st_we)                        diff = {diff, " st_we"};
+            else if(s.st_we)
+            begin
+                st_mask = (s.st_size >= XL/8) ? '1 : ((XL'(1) << (8*s.st_size)) - 1);
+                if((s.st_addr !== r.st_addr) || (s.st_size != r.st_size) ||
+                   ((s.st_data & st_mask) !== (r.st_data & st_mask)))
+                    diff = {diff, " store"};
+            end
+        end
+        if(s.next_pc !== r.next_pc)                       diff = {diff, " next_pc"};
+
+        if(diff != "")
+        begin
+            spike_errors++;
+            `uvm_error("SPIKE_CHK", $sformatf("ISS and Spike disagree on%s\n    ISS  : %s\n    Spike: %s",
+                                              diff, fmt(r), fmt(s)))
+            if(spike_errors == SPIKE_MAX_ERRORS)
+            begin
+                spike_on = 0;
+                `uvm_info("SPIKE_CHK", $sformatf("Spike comparison stopped after %0d mismatches", spike_errors), UVM_LOW)
+            end
+        end
+    endfunction
+
     always @(negedge clk or negedge rst)
     begin
         if(!rst)
         begin
             iss.reset();
+            if(use_spike) spike_reset();
             gpr_q.delete(); fpr_q.delete(); st_q.delete(); hist.delete();
             m_new = 0; w_new = 0; check_trap_csrs = 0;
         end
@@ -175,24 +280,27 @@ module commit_checker
                 end
             end
 
-            // ── MEM: store of the instruction that entered EX/MEM ──────────────
-            if(m_new && ValidM && MemWriteM)
+            // ── MEM: store of the instruction that entered EX/MEM, or the
+            //    completed cache write of an SC / AMO* ─────────────────────────
+            if((m_new && ValidM && MemWriteM && !AmoM) || AtomicStoreM)
             begin
                 int size;
-                logic [XL-1:0] mask;
+                logic [XL-1:0] mask, data, pc;
                 size = 1 << funct3M[1:0];
                 mask = (size == XL/8) ? '1 : ((XL'(1) << (8*size)) - 1);
+                data = (AmoM ? AtomicStoreDataM : WriteDataM) & mask;
+                pc = PCPlus4M - XL'(4);
                 if(st_q.size() == 0)
                 begin
-                    if(!done) fail($sformatf("DUT stores to %h but the ISS expected no store", ALUOutM));
+                    if(!done) fail($sformatf("DUT stores to %h (pc %h) but the ISS expected no store", ALUOutM, pc));
                 end
                 else
                 begin
                     st_t e;
                     e = st_q.pop_front();
-                    if((e.addr !== ALUOutM) || (e.size != size) || (e.data !== (WriteDataM & mask)))
-                        fail($sformatf("store mismatch (pc %h): DUT [%h] size %0d data %h, ISS [%h] size %0d data %h",
-                                       e.pc, ALUOutM, size, WriteDataM & mask, e.addr, e.size, e.data));
+                    if((e.pc !== pc) || (e.addr !== ALUOutM) || (e.size != size) || (e.data !== data))
+                        fail($sformatf("store mismatch: DUT pc %h [%h] size %0d data %h, ISS pc %h [%h] size %0d data %h",
+                                       pc, ALUOutM, size, data, e.pc, e.addr, e.size, e.data));
                 end
             end
 
@@ -203,6 +311,7 @@ module commit_checker
                 logic [XL-1:0] dut_pc, dut_next;
                 dut_pc = PCPlus4E - XL'(4);
                 r = iss.step(ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, CsrReadE);
+                if(spike_on) spike_check(r, ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, CsrReadE);
                 commits++;
                 hist.push_back(r);
                 if(hist.size() > 10) void'(hist.pop_front());

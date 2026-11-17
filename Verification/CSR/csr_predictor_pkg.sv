@@ -7,7 +7,8 @@
 // checker.
 //
 // Every CSR output is combinational (the trap is taken in the same cycle):
-//   - CsrOut   = read value of CsrIndex (cycle counters are not predicted)
+//   - CsrOut   = read value of CsrIndex (cycle counters and missing CSRs,
+//     which trap, are not predicted)
 //   - TrapTaken = Commit && (enabled interrupt pending || exception), where an
 //     interrupt is taken before the instruction (MEI > MSI > MTI) and an
 //     access to an unknown CSR is an illegal-instruction exception
@@ -118,7 +119,7 @@ package csr_predictor_pkg;
             exp = csr_item::type_id::create("exp");
             exp.copy_inputs(t);
             exp.CsrOut       = rv;
-            exp.chk_csrout   = !(t.CsrIndex inside {mcycle, cycle, mcycleh, cycleh});
+            exp.chk_csrout   = exists && !(t.CsrIndex inside {mcycle, cycle, mcycleh, cycleh});   // a missing CSR traps, its read value is never used
             exp.TrapTaken    = trap_taken;
             exp.TrapIsSet    = trap_taken || mret_taken;
             exp.RoundingMode = round_mode_t'(m.frm);

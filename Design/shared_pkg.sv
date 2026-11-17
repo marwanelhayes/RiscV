@@ -32,6 +32,7 @@ package shared_pkg;
         MISC_MEM     = 7'b000_1111 ,   // FENCE (FENCE.I needs Zifencei)
         OP_IMM_32    = 7'b001_1011 ,   // RV64 only: ADDIW, SLLIW, SRLIW, SRAIW
         OP_32        = 7'b011_1011 ,   // RV64 only: ADDW ... REMUW
+        AMO          = 7'b010_1111 ,   // A extension: LR, SC, AMO*
         CSR          = 7'b111_0011 ,
         FLOATING_PT  = 7'b101_0011
     } opcode_t;
@@ -165,9 +166,25 @@ package shared_pkg;
         WU  = 3'b110     // RV64 only
     } load_store_t;
 
-    typedef enum logic [1:0] 
-    { 
-        ALUToReg    = 2'b00 , 
+    // A extension: the values are the funct5 field (instruction bits 31:27)
+    typedef enum logic [4:0]
+    {
+        AMO_ADD     = 5'b00000 ,
+        AMO_SWAP    = 5'b00001 ,
+        AMO_LR      = 5'b00010 ,
+        AMO_SC      = 5'b00011 ,
+        AMO_XOR     = 5'b00100 ,
+        AMO_OR      = 5'b01000 ,
+        AMO_AND     = 5'b01100 ,
+        AMO_MIN     = 5'b10000 ,
+        AMO_MAX     = 5'b10100 ,
+        AMO_MINU    = 5'b11000 ,
+        AMO_MAXU    = 5'b11100
+    } amo_op_t;
+
+    typedef enum logic [1:0]
+    {
+        ALUToReg    = 2'b00 ,
         MemToReg    = 2'b01 ,   
         PCToReg     = 2'b10 ,
         CSRToReg    = 2'b11

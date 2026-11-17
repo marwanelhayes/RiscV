@@ -81,7 +81,8 @@ mismatches. Fixed by widening the parameter to `csr_index_t`.
 - Crosses: `CsrOperation × CsrIndex`; `Traps × mret` (`ignore_bins` trap-with-mret); `{Timer,External,Software}Interrupt × TrapIsSet`
 
 ### Decode (`decode_subscriber_pkg.sv`) — 100%
-- `opcode_cg`: R_TYPE, LOAD, S_TYPE, B_TYPE, I_TYPE, JAL, JALR, CSR, FLOATING_PT
+- `opcode_cg`: every claimed opcode space incl. AMO, plus other (illegal)
+- `AmoOpE_cg`: all eleven decoded LR/SC/AMO* operations (legal AMO only)
 - `ALUControlE_cg`: 18 ALU ops; `FPUControlE_cg`: 21 FPU ops
 - `CsrOperationE_cg` (7), `CsrIndexE_cg` (17), `SelectorE_cg` (4), `MoveOperationE_cg`/`MoveOperationW_cg` (3), `RoundModeE_cg` (6), `funct3E_cg` (0-7)
 - Control flags {0}/{1}: RegWriteE, FPURegWriteE, MemWriteE, BranchE, JumpE, ALUSrcE, CsrAccessE, EcallE, EbreakE, MRetE, FlushE, FPUValidE, RegWriteW, FPURegWriteW
@@ -114,7 +115,8 @@ mismatches. Fixed by widening the parameter to `csr_index_t`.
 - `CacheHitM_cg`: miss{0}, hit{1}; {0}/{1}: ValidM, MemReadM, MemWriteM, StallW, RegWriteM, FPURegWriteM, RegWriteW
 - `SelectorM_cg`/`SelectorW_cg` (4), `MoveOperationM_cg` (3); FP flags {0}/{1}
 - `RdM_cg` (`ignore_bins` zero); data sign bins {neg,pos}: ALUOutM, ReadDataW, ALUOutW
-- Predictor (`unused/mem_flat_predictor_pkg.sv`, the one compiled): flat byte-exact memory, ISA load/store semantics, `ReadDataW` compared for loads only, MEM/WB held while `StallW`.
+- `AmoOp_cg`: all eleven LR/SC/AMO* operations; `AmoSize_cg`: .W (+ .D at XLEN 64)
+- Predictor (`unused/mem_flat_predictor_pkg.sv`, the one compiled): flat byte-exact memory, ISA load/store semantics, `ReadDataW` compared for loads only, MEM/WB held while `StallW`. A extension: LR/SC reservation and AMO* read-modify-write, committed once when MEM advances. `mem_top` adds a random external freeze (`ExtraStall`) so an SC / AMO* is held in MEM after its access is done.
 
 ### WriteBack (`writeback_subscriber_pkg.sv`) — 100%
 - `SelectorW_cg` (4); `PCSrcE_cg`, `StallF_cg`, `TrapIsSet_cg`: {0}/{1}

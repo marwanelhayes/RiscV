@@ -123,27 +123,10 @@ module fetch_top;
         .MRRValid(MRRValid)
     );
 
-    bind DUT.ICache cache_sva #(
-        .DATA_WIDTH (FINAL_DATA_WIDTH),
-        .ADDR_WIDTH (FINAL_ADDR_WIDTH),
-        .TOTAL_LINES(CACHE_TOTAL_LINES),
-        .WAY        (CACHE_WAY),
-        .LINE_WORDS (CACHE_LINE_WORDS)
-    ) cache_assertions (
-        .clk(clk),
-        .rst(rst),
-        .CPUReadEn(CPUReadEn),
-        .CPUWriteEn(CPUWriteEn),
-        .CacheHit(CacheHit),
-        .hit_array(hit_array),
-        .valid_reg(valid_reg),
-        .tags_reg(tags_reg),
-        .CpuIdx(CpuIdx),
-        .CpuTag(CpuTag),
-        .victim_way(victim_way),
-        .lru_way(lru_way),
-        .state(state)
-    );
+    bind cache cache_sva #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .TOTAL_LINES(TOTAL_LINES), .WAY(WAY), .LINE_WORDS(LINE_WORDS)) CacheSva (.*);
+
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind fetch_stage fetch_sva FetchSva (.*);
 
     always_comb
     begin

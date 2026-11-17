@@ -38,6 +38,14 @@ package mem_subscriber_pkg;
                 bins lane[] = {[0:(FINAL_DATA_WIDTH/8)-1]};
             }
 
+            // A extension operation of the serviced access, .W and .D (RV64)
+            AmoOp_cg: coverpoint sub_item.AmoOpM iff(sub_item.rst && sub_item.AmoM && !sub_item.StallW);
+            AmoSize_cg: coverpoint load_store_t'(sub_item.funct3M) iff(sub_item.rst && sub_item.AmoM && !sub_item.StallW)
+            {
+                bins w = {W};
+                bins d = {D} with (FINAL_DATA_WIDTH == 64);
+            }
+
             ValidM_cg: coverpoint sub_item.ValidM iff(sub_item.rst)     { bins lo = {0}; bins hi = {1}; }
             MemReadM_cg: coverpoint sub_item.MemReadM iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
             StallW_cg: coverpoint sub_item.StallW iff(sub_item.rst)     { bins lo = {0}; bins hi = {1}; }
@@ -91,20 +99,20 @@ package mem_subscriber_pkg;
             }
 
             // Data busses - sign partition.
-            ALUOutM_cg: coverpoint sub_item.ALUOutM iff(sub_item.rst)
+            ALUOutM_cg: coverpoint sub_item.ALUOutM[$bits(sub_item.ALUOutM)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            ReadDataW_cg: coverpoint sub_item.ReadDataW iff(sub_item.rst)
+            ReadDataW_cg: coverpoint sub_item.ReadDataW[$bits(sub_item.ReadDataW)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            ALUOutW_cg: coverpoint sub_item.ALUOutW iff(sub_item.rst)
+            ALUOutW_cg: coverpoint sub_item.ALUOutW[$bits(sub_item.ALUOutW)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
 
             // ── Crosses ──────────────────────────────────────────────────────

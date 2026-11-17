@@ -47,6 +47,8 @@ module execute_stage
     input JalrE,                               // Jump target from rs1 (JALR)
     input AuipcE,                              // ALU operand A is the PC
     input WordOpE,                             // RV64 32-bit operation
+    input AmoE,                                // A extension instruction
+    input amo_op_t AmoOpE,                     // A extension operation
 
     // ── Forwarding inputs ─────────────────────────────────────────────────────
     input [2:0] ForwardAE,                     // Forward select for operand A
@@ -114,6 +116,8 @@ module execute_stage
     output logic [DATA_WIDTH-1:0] CsrOutM,           // CSR read data
     output logic MemWriteM,                          // Memory write enable
     output logic MemReadM,                           // Memory read enable
+    output logic AmoM,                               // A extension instruction
+    output amo_op_t AmoOpM,                          // A extension operation
 
     // ── Trap and CSR outputs ────────────────────────────────────────────────
     output logic TrapIsSet,                         // Trap/MRET redirect this cycle
@@ -290,6 +294,8 @@ module execute_stage
             SelectorM <= ALUToReg;
             MemWriteM <= 0;
             MemReadM <= 0;
+            AmoM <= 0;
+            AmoOpM <= AMO_ADD;
             ALUOutM <= 0;
             WriteDataM <= 0;
             RdM <= zero;
@@ -314,6 +320,8 @@ module execute_stage
             SelectorM <= ALUToReg;
             MemWriteM <= 0;
             MemReadM <= 0;
+            AmoM <= 0;
+            AmoOpM <= AMO_ADD;
             ALUOutM <= 0;
             WriteDataM <= 0;
             RdM <= zero;
@@ -338,6 +346,8 @@ module execute_stage
             SelectorM <= SelectorE;
             MemWriteM <= MemWriteE;
             MemReadM <= MemReadE;
+            AmoM <= AmoE;
+            AmoOpM <= AmoOpE;
             ALUOutM <= ResultE;
             WriteDataM <= WriteDataE;
             RdM <= RdE;
@@ -436,7 +446,7 @@ module execute_stage
         begin
             TrapsE = EcallMOrMachineExternalInterrupt;
         end
-        else if(MemReadE)
+        else if(MemReadE && !MemWriteE)                   // AMO* (read + write) traps as a store
         begin
             if(((load_store_t'(funct3E) == HW) || (load_store_t'(funct3E) == HWU)) && AddressE[0])
                 TrapsE = LoadAddressMisalignedOrUserSoftwareInterrupt;

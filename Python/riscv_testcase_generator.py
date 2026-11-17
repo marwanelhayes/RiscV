@@ -1,5 +1,5 @@
 #   ======================= A RISCV RANDOM TEST CASES GENERATOR ======================    #
-#   Generates a random RISC-V program in the standard encoding (RV32 or RV64: I, M,      #
+#   Generates a random RISC-V program in the standard encoding (RV32 or RV64: I, M, A,   #
 #   the implemented F subset, Zicsr, M-mode traps). The full-core testbench runs it      #
 #   against the ISA golden model (Verification/Risc/riscv_iss_pkg.sv), so the program    #
 #   needs no expected values of its own.                                                 #
@@ -13,6 +13,7 @@
 #              values, frm, optional interrupt enables
 #   body     : random instructions and small templates (forward branches/jumps,
 #              JALR, counted loops, loads/stores around the data base pointer,
+#              atomics (AMO*, LR/SC pairs, lone SCs) through the AMO address register,
 #              ECALL/EBREAK, illegal encodings and misaligned accesses that trap)
 #   end      : JAL x0, 0 (self-loop; the testbench stops when it commits)
 #
@@ -33,8 +34,9 @@ import random
 BASE_REG = 27      # data base pointer (never overwritten by random code)
 LOOP_REG = 26      # loop counter
 JALR_REG = 25      # JALR target scratch
+AMO_REG = 24       # atomic address (atomics have no offset)
 HANDLER_REGS = (28, 29, 30)
-RESERVED = {0, BASE_REG, LOOP_REG, JALR_REG, *HANDLER_REGS}
+RESERVED = {0, BASE_REG, LOOP_REG, JALR_REG, AMO_REG, *HANDLER_REGS}
 FREE_GPRS = [r for r in range(1, 32) if r not in RESERVED]
 
 DATA_BASE = 0x400   # data accesses stay inside [0x200, 0x5ff] of the data memory
@@ -100,6 +102,10 @@ def u_type(imm20, rd, op):
     return bits(imm20, 20) + bits(rd, 5) + bits(op, 7)
 
 
+def amo_type(f5, rs2, rs1, f3, rd, aq=0, rl=0):
+    return r_type((f5 << 2) | (aq << 1) | rl, rs2, rs1, f3, rd, AMO_OP)
+
+
 def j_type(imm, rd):
     v = imm & 0x1FFFFF
     return (bits(v >> 20, 1) + bits(v >> 1, 10) + bits(v >> 11, 1) + bits(v >> 12, 8) +
@@ -109,6 +115,7 @@ def j_type(imm, rd):
 OP_IMM, OP, OP_IMM_32, OP_32 = 0b0010011, 0b0110011, 0b0011011, 0b0111011
 LOAD, STORE, JALR_OP = 0b0000011, 0b0100011, 0b1100111
 LUI_OP, AUIPC_OP, SYSTEM, MISC_MEM, OP_FP = 0b0110111, 0b0010111, 0b1110011, 0b0001111, 0b1010011
+AMO_OP = 0b0101111
 
 R_OPS = {'ADD': (0, 0), 'SUB': (0x20, 0), 'SLL': (0, 1), 'SLT': (0, 2), 'SLTU': (0, 3), 'XOR': (0, 4),
          'SRL': (0, 5), 'SRA': (0x20, 5), 'OR': (0, 6), 'AND': (0, 7),
@@ -128,6 +135,9 @@ FP_SGNJ = {'FSGNJ.S': 0, 'FSGNJN.S': 1, 'FSGNJX.S': 2}
 FP_MINMAX = {'FMIN.S': 0, 'FMAX.S': 1}
 FP_CMP = {'FEQ.S': 2, 'FLT.S': 1, 'FLE.S': 0}
 ROUND_MODES = [0, 1, 2, 3, 4, 7]   # 7 = DYN (frm only ever holds 0..4)
+AMO_OPS = {'AMOADD': 0b00000, 'AMOSWAP': 0b00001, 'AMOXOR': 0b00100, 'AMOOR': 0b01000, 'AMOAND': 0b01100,
+           'AMOMIN': 0b10000, 'AMOMAX': 0b10100, 'AMOMINU': 0b11000, 'AMOMAXU': 0b11100}
+LR_F5, SC_F5 = 0b00010, 0b00011
 
 
 class Generator:
@@ -239,6 +249,46 @@ class Generator:
             self.p.emit(i_type(offset, BASE_REG, f3, rd, LOAD),
                         '{} x{}, {}(x{})'.format(name, rd, offset, BASE_REG))
 
+    def emit_atomic(self, budget, allow_traps=True):
+        """ADDI x24 = base + offset, then an AMO*, an LR ... SC pair or a lone SC."""
+        if budget < 4:
+            return 0
+        size = 8 if (self.xlen == 64 and random.random() < 0.4) else 4
+        f3, sfx = (3, '.D') if size == 8 else (2, '.W')
+        offset = random.randrange(-512, 512, size)
+        if self.stored and random.random() < 0.5:
+            base, _ = random.choice(self.stored)
+            offset = base - (base % size)              # hit data written earlier
+        misaligned = allow_traps and random.random() < 0.05
+        if misaligned:
+            offset += random.randint(1, size - 1)      # traps (load/store-misaligned)
+        else:
+            self.stored.append((offset, size))
+        p = self.p
+        p.emit(i_type(offset, BASE_REG, 0, AMO_REG, OP_IMM), 'ADDI x{}, x{}, {}'.format(AMO_REG, BASE_REG, offset))
+        n = 1
+        aq, rl = random.getrandbits(1), random.getrandbits(1)
+        roll = random.random()
+        if roll < 0.6:
+            name = random.choice(list(AMO_OPS))
+            rd, rs2 = self.reg(), self.src()
+            p.emit(amo_type(AMO_OPS[name], rs2, AMO_REG, f3, rd, aq, rl),
+                   '{}{} x{}, x{}, (x{})'.format(name, sfx, rd, rs2, AMO_REG))
+            return n + 1
+        if roll < 0.9:
+            rd = self.reg()
+            p.emit(amo_type(LR_F5, 0, AMO_REG, f3, rd, aq, rl), 'LR{} x{}, (x{})'.format(sfx, rd, AMO_REG))
+            n += 1
+            for _ in range(random.randint(0, 2)):      # constrained LR/SC loop body
+                self.emit_alu()
+                n += 1
+            if random.random() < 0.2:                  # SC to another address: fails
+                p.emit(i_type(size, AMO_REG, 0, AMO_REG, OP_IMM), 'ADDI x{}, x{}, {}'.format(AMO_REG, AMO_REG, size))
+                n += 1
+        rd, rs2 = self.reg(), self.src()
+        p.emit(amo_type(SC_F5, rs2, AMO_REG, f3, rd, aq, rl), 'SC{} x{}, x{}, (x{})'.format(sfx, rd, rs2, AMO_REG))
+        return n + 1
+
     def emit_csr(self):
         rd = self.reg()
         name = random.choice(list(CSR_OPS))
@@ -326,6 +376,9 @@ class Generator:
                 (s_type(0, 0, BASE_REG, 4, STORE), 'ILLEGAL (store funct3 100)'),
                 (i_type(0, 0, 1, 0, JALR_OP), 'ILLEGAL (JALR funct3)'),
                 (i_type(0, 0, 1, 0, MISC_MEM), 'ILLEGAL (FENCE.I, Zifencei not claimed)'),
+                (amo_type(0b00101, self.src(), BASE_REG, 2, rd), 'ILLEGAL (AMO funct5 00101)'),
+                (amo_type(LR_F5, random.randint(1, 31), BASE_REG, 2, rd), 'ILLEGAL (LR.W rs2 != x0)'),
+                (amo_type(AMO_OPS['AMOADD'], self.src(), BASE_REG, 0, rd), 'ILLEGAL (AMO funct3 000)'),
                 (i_type(0x7FF, 0, 0, 0, SYSTEM), 'ILLEGAL (SYSTEM imm)'),
                 (i_type(0x300, 0, 4, rd, SYSTEM), 'ILLEGAL (SYSTEM funct3 100)'),
                 (r_type(0b1111111, 0, 0, 0, 0, OP_FP), 'ILLEGAL (FP funct7)'),
@@ -335,7 +388,8 @@ class Generator:
             ]
             if self.xlen == 32:
                 illegal += [(r_type(0, self.src(), self.src(), 0, rd, OP_32), 'OP-32 (illegal on RV32)'),
-                            (i_type(0, BASE_REG, 3, rd, LOAD), 'LD (illegal on RV32)')]
+                            (i_type(0, BASE_REG, 3, rd, LOAD), 'LD (illegal on RV32)'),
+                            (amo_type(AMO_OPS['AMOADD'], self.src(), BASE_REG, 3, rd), 'AMOADD.D (illegal on RV32)')]
             self.p.emit(*random.choice(illegal))
 
     # ── templates ─────────────────────────────────────────────────────────────
@@ -451,6 +505,8 @@ class Generator:
                 n = self.emit_jalr(budget)
             elif roll < 0.25:
                 n = self.emit_loop(budget)
+            elif roll < 0.33:
+                n = self.emit_atomic(budget)
             if n == 0:
                 self.emit_simple()
                 n = 1

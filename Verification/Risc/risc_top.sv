@@ -193,7 +193,9 @@ module risc_top;
         .CsrReadE(Execute.CsrReadE),
         .MepcE(Execute.CSR.Mepc),
         .McauseE(Execute.CSR.Mcause),
-        .MtvalE(Execute.CSR.Mtval)
+        .MtvalE(Execute.CSR.Mtval),
+        .AtomicStoreM(Memory.AmoM && Memory.CacheWriteEnM && Memory.CacheHitC),
+        .AtomicStoreDataM(Memory.StoreSrcM)
     );
 
     bind DUT.Hazard hazard_wr HazardBind
@@ -201,6 +203,17 @@ module risc_top;
         .*
     );
     
+
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind fetch_stage   fetch_sva   FetchSva   (.*);
+    bind decode_stage  decode_sva  DecodeSva  (.*);
+    bind execute_stage execute_sva ExecuteSva (.*);
+    bind memory_stage  memory_sva  MemorySva  (.*);
+    bind wb_stage      wb_sva      WbSva      (.*);
+    bind hazard_unit   hazard_sva  HazardSva  (.*);
+    bind risc_fpu fpu_sva #(.WIDTH(WIDTH)) FpuSva (.*);
+    bind csr_file csr_sva CsrSva (.*);
+    bind cache cache_sva #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .TOTAL_LINES(TOTAL_LINES), .WAY(WAY), .LINE_WORDS(LINE_WORDS)) CacheSva (.*);
 
     initial 
     begin

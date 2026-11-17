@@ -10,7 +10,7 @@ quit -sim
 do ../do/compile.do
 
 # Load simulation
-vsim -voptargs=+acc writeback_top +cover +UVM_VERBOSITY=UVM_HIGH +UVM_MAX_QUIT_COUNT=100
+vsim -64 -voptargs=+acc writeback_top +cover +UVM_VERBOSITY=UVM_HIGH +UVM_MAX_QUIT_COUNT=100
 
 # Add signals to wave
 echo "Adding signals to waveform..."

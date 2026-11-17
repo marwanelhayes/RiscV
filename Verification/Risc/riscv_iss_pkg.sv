@@ -7,7 +7,8 @@
 // choice in the RTL shows up as a mismatch instead of being copied into the
 // model:
 //   - Unprivileged: RV32I / RV64I (incl. the RV64-only W/LD/SD/LWU forms),
-//     M, Zicsr, the F subset the FPU implements, FENCE (NOP)
+//     M, A (Zalrsc + Zaamo, .W and RV64 .D), Zicsr, the F subset the FPU
+//     implements, FENCE (NOP)
 //   - Privileged: M-mode only - mstatus/mie/mip/mtvec/mepc/mcause/mtval,
 //     MRET, WFI (NOP), synchronous exceptions and M-mode interrupts
 //
@@ -15,6 +16,10 @@
 // documents them (Harvard memories truncated to ADDR_WIDTH, misaligned
 // load/store traps, mtval = 0 except for address faults, WARL legalisation of
 // mtvec/mepc, mstatus.MPP = M, mstatus.FS = Dirty, the CSR set of B1.6).
+// A extension choices: the reservation set is the exact LR address, every SC
+// clears it, traps and MRET do not (Spike's policy); a misaligned LR raises
+// a load-address-misaligned, a misaligned SC/AMO a store/AMO-address-
+// misaligned exception (both allowed by Zalrsc/Zaamo; Spike does the same).
 //
 // Non-deterministic state (mcycle and its aliases) is not predicted: the
 // checker hands the DUT's read value to step(), which uses it.
@@ -67,6 +72,8 @@ package riscv_iss_pkg;
         logic [63:0] minstret;
         logic [4:0]  fflags;
         logic [2:0]  frm;
+        bit          res_valid;     // LR/SC reservation
+        xlen_t       res_addr;
 
         // ── Memories (Harvard, as in the core) ──────────────────────────────
         logic [31:0] imem [int];    // word index -> instruction
@@ -88,6 +95,7 @@ package riscv_iss_pkg;
             mie_meie = 0; mie_mtie = 0; mie_msie = 0;
             mtvec = '0; mscratch = '0; mepc = '0; mcause = '0; mtval = '0;
             minstret = '0; fflags = '0; frm = '0;
+            res_valid = 0; res_addr = '0;
             dmem.delete();
         endfunction
 
@@ -173,7 +181,8 @@ package riscv_iss_pkg;
                 12'h003: v = xlen_t'({frm, fflags});
                 12'h300: v = mstatus_value();
                 12'h301: v = {(IS_RV64 ? 2'd2 : 2'd1), {(XLEN-2){1'b0}}} |
-                             (xlen_t'(1) << 8) | (xlen_t'(1) << 12) | (xlen_t'(1) << 5);   // I, M, F
+                             (xlen_t'(1) << 8) | (xlen_t'(1) << 12) | (xlen_t'(1) << 5) |  // I, M, F
+                             xlen_t'(1);                                                   // A
                 12'h302, 12'h303: v = '0;                                                   // medeleg/mideleg RO 0
                 12'h304: begin v[11] = mie_meie; v[7] = mie_mtie; v[3] = mie_msie; end
                 12'h305: v = mtvec;
@@ -452,6 +461,12 @@ package riscv_iss_pkg;
                         endcase
                     else illegal = 1;
                 end
+                7'b0101111: begin                                                   // AMO (A extension)
+                    if(!amo_execute(in, r, res))
+                        illegal = 1;
+                    else if(r.trap)
+                        return r;
+                end
                 7'b0001111: begin                                                   // FENCE (FENCE.I not claimed)
                     if(f3 != 3'b000) illegal = 1;
                 end
@@ -515,6 +530,72 @@ package riscv_iss_pkg;
                 minstret = minstret + 1;
             pc = r.next_pc;
             return r;
+        endfunction
+
+        // ── A extension: LR / SC / AMO*. Returns 0 for an illegal encoding;
+        //    a misaligned address takes the trap in r (r.trap = 1) ───────────
+        function automatic bit amo_execute(logic [31:0] in, ref iss_commit_t r, ref xlen_t res);
+            logic [4:0]  f5;
+            logic [2:0]  f3;
+            int          rs1, rs2, size;
+            xlen_t       addr, src, mval, wval;
+
+            f5 = in[31:27]; f3 = in[14:12];
+            rs1 = in[19:15]; rs2 = in[24:20];
+            if(f3 == 3'b010)                size = 4;
+            else if(f3 == 3'b011 && IS_RV64) size = 8;
+            else return 0;
+            if(!(f5 inside {5'b00000, 5'b00001, 5'b00010, 5'b00011, 5'b00100, 5'b01000,
+                            5'b01100, 5'b10000, 5'b10100, 5'b11000, 5'b11100}))
+                return 0;
+            if(f5 == 5'b00010 && rs2 != 0) return 0;                  // LR: rs2 must be x0
+
+            addr = x[rs1];
+            if((addr & xlen_t'(size - 1)) != 0)
+            begin
+                take_trap(r, 0, (f5 == 5'b00010) ? 4 : 6, addr);       // LR: load, SC/AMO: store
+                return 1;
+            end
+
+            src = x[rs2];
+            mval = load(addr, size);
+            if(size == 4) begin mval = sext(mval, 32); src = sext(src, 32); end
+            r.rd_we = 1;
+            case(f5)
+                5'b00010: begin                                       // LR
+                    res = mval;
+                    res_valid = 1;
+                    res_addr = addr;
+                    return 1;
+                end
+                5'b00011: begin                                       // SC
+                    res = (res_valid && (res_addr == addr)) ? '0 : xlen_t'(1);
+                    if(res == 0)
+                    begin
+                        r.st_we = 1; r.st_addr = addr; r.st_size = size;
+                        r.st_data = (size == XLEN/8) ? src : (src & ((xlen_t'(1) << (8*size)) - 1));
+                        store(addr, size, src);
+                    end
+                    res_valid = 0;
+                    return 1;
+                end
+                5'b00001: wval = src;                                 // AMOSWAP
+                5'b00000: wval = mval + src;                          // AMOADD
+                5'b00100: wval = mval ^ src;                          // AMOXOR
+                5'b01100: wval = mval & src;                          // AMOAND
+                5'b01000: wval = mval | src;                          // AMOOR
+                5'b10000: wval = ($signed(mval) < $signed(src)) ? mval : src;   // AMOMIN
+                5'b10100: wval = ($signed(mval) > $signed(src)) ? mval : src;   // AMOMAX
+                5'b11000: wval = (size == 4) ? ((mval[31:0] < src[31:0]) ? mval : src)
+                                             : ((mval < src) ? mval : src);    // AMOMINU
+                default:  wval = (size == 4) ? ((mval[31:0] > src[31:0]) ? mval : src)
+                                             : ((mval > src) ? mval : src);    // AMOMAXU
+            endcase
+            res = mval;
+            r.st_we = 1; r.st_addr = addr; r.st_size = size;
+            r.st_data = (size == XLEN/8) ? wval : (wval & ((xlen_t'(1) << (8*size)) - 1));
+            store(addr, size, wval);
+            return 1;
         endfunction
 
         // ── M extension (XLEN) ──────────────────────────────────────────────

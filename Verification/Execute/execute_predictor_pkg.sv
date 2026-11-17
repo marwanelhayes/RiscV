@@ -198,8 +198,9 @@ package execute_predictor_pkg;
             else if(taken && target[1])                      begin code = 0; tval = target; end
             else if(t.EbreakE)                               code = 3;
             else if(t.EcallE)                                code = 11;
-            else if(t.MemReadE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0))  begin code = 4; tval = addr; end
+            // A load (or LR) faults as a load; a store, SC or AMO* (reads and writes) as a store/AMO
             else if(t.MemWriteE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0)) begin code = 6; tval = addr; end
+            else if(t.MemReadE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0))  begin code = 4; tval = addr; end
             else exc = 0;
 
             // ── CSR read and existence ──────────────────────────────────────

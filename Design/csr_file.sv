@@ -58,6 +58,7 @@ module csr_file
     localparam bit IS_RV64 = (DATA_WIDTH == 64);
     localparam logic [1:0] MXL = IS_RV64 ? 2'd2 : 2'd1;
     localparam logic [DATA_WIDTH-1:0] MISA_VALUE = {MXL, {(DATA_WIDTH-2){1'b0}}}
+                                                 | (DATA_WIDTH'(1) << `MISA_A)
                                                  | (DATA_WIDTH'(1) << `MISA_I)
                                                  | (DATA_WIDTH'(1) << `MISA_M)
                                                  | (DATA_WIDTH'(1) << `MISA_F);

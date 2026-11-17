@@ -57,8 +57,17 @@ Each `sim_*.do` recompiles, loads its `*_top`, adds waves, and runs to completio
 
 Batch (no GUI), e.g.:
 ```sh
-vsim -c -voptargs=+acc mem_top +UVM_VERBOSITY=UVM_LOW -do "run -all; quit -f"
+vsim -c -64 -voptargs=+acc mem_top +UVM_VERBOSITY=UVM_LOW -do "run -all; quit -f"
 ```
+
+Regression (all tops × XLEN 32/64 × random seeds, one PASS/FAIL table, works in a scratch dir outside the repo):
+```sh
+Questa/regress.sh                          # 3 random seeds, XLEN 32 and 64, all nine tops
+Questa/regress.sh -n 10                    # 10 random seeds
+Questa/regress.sh -x 64 -s 1234 -t mem_top # reproduce one failing row
+```
+
+**Spike lock-step (risc_top):** when `Verification/Risc/spike/libspike_dpi.so` exists, `regress.sh` and `sim_risc.do` load it with `+SPIKE`, and the commit checker steps Spike next to the in-house ISS on every commit (`SPIKE_CHK` messages). Build it with `cd Verification/Risc/spike && make` once Spike is installed (steps in that Makefile). The core profile Spike runs with is listed at the top of `spike_dpi.cc`.
 
 `-voptargs=+acc` is required: the UVM RAL checkers (Fetch, Decode, CSR, Memory) read DUT storage through backdoor HDL paths.
 
@@ -84,7 +93,7 @@ Each simulation do file adds specific signals to the waveform:
 ## Requirements
 
 - Questa SIM (Mentor Graphics/Siemens EDA)
-- UVM 1.1d (bundled with Questa)
+- UVM 1.2 (bundled with Questa; set as the default `mtiUvm` in the Questa install's modelsim.ini and in `Scratch/test.mpf`)
 - Design source files in `Design/`, verification files in `Verification/`
 
 ## Notes

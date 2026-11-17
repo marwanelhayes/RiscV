@@ -63,6 +63,8 @@ package decode_item_pkg;
         logic ALUSrcE;
         logic AuipcE;
         logic WordOpE;
+        logic AmoE;
+        amo_op_t AmoOpE;
         logic EcallE;
         logic EbreakE;
         logic MRetE;
@@ -110,7 +112,7 @@ package decode_item_pkg;
         constraint ClaimedOpcodes
         {
             legalish -> opcode_t'(InstructionD[6:0]) inside {R_TYPE, I_TYPE, S_TYPE, B_TYPE, LOAD, JAL, JALR,
-                                                            LUI, AUIPC, MISC_MEM, OP_IMM_32, OP_32, CSR, FLOATING_PT};
+                                                            LUI, AUIPC, MISC_MEM, OP_IMM_32, OP_32, AMO, CSR, FLOATING_PT};
         }
         // Bias the sub-fields toward their legal values so legal decodes dominate
         constraint MostlyLegalFields
@@ -125,6 +127,13 @@ package decode_item_pkg;
                 InstructionD[31:25] inside {7'b000_0000, 7'b000_0100, 7'b000_1000, 7'b000_1100, 7'b010_1100,
                                             7'b001_0000, 7'b001_0100, 7'b110_0000, 7'b111_0000, 7'b101_0000,
                                             7'b110_1000, 7'b111_1000, 7'b111_1111};
+            if(legalish && (opcode_t'(InstructionD[6:0]) == AMO))
+                InstructionD[31:27] dist {[5'b00000:5'b00100] := 50, 5'b01000 := 10, 5'b01100 := 10, 5'b10000 := 10,
+                                          5'b10100 := 10, 5'b11000 := 10, 5'b11100 := 10, [5'b00101:5'b00111] := 5};
+            if(legalish && (opcode_t'(InstructionD[6:0]) == AMO))
+                InstructionD[14:12] dist {3'b010 := 60, 3'b011 := 30, [3'b000:3'b001] := 5, [3'b100:3'b111] := 5};
+            if(legalish && (opcode_t'(InstructionD[6:0]) == AMO) && (InstructionD[31:27] == 5'b00010))
+                InstructionD[24:20] dist {5'd0 := 85, [5'd1:5'd31] := 15};    // LR: rs2 must be x0
             if(legalish && (opcode_t'(InstructionD[6:0]) == FLOATING_PT))
                 InstructionD[24:20] dist {5'd0 := 50, 5'd1 := 20, [5'd2:5'd31] := 30};
         }
@@ -189,6 +198,8 @@ package decode_item_pkg;
                 ok &= chk("JumpE", JumpE, e.JumpE) & chk("JalrE", JalrE, e.JalrE);
                 ok &= chk("ALUSrcE", ALUSrcE, e.ALUSrcE) & chk("AuipcE", AuipcE, e.AuipcE);
                 ok &= chk("WordOpE", WordOpE, e.WordOpE) & chk("CsrAccessE", CsrAccessE, e.CsrAccessE);
+                ok &= chk("AmoE", AmoE, e.AmoE);
+                if(e.AmoE) ok &= chk("AmoOpE", AmoOpE, e.AmoOpE);
                 ok &= chk("EcallE", EcallE, e.EcallE) & chk("EbreakE", EbreakE, e.EbreakE) & chk("MRetE", MRetE, e.MRetE);
                 ok &= chk("FPURegWriteE", FPURegWriteE, e.FPURegWriteE) & chk("FPUValidE", FPUValidE, e.FPUValidE);
                 ok &= chk("funct3E", funct3E, e.funct3E);
@@ -244,6 +255,8 @@ package decode_item_pkg;
             this.ALUSrcE              = other.ALUSrcE;
             this.AuipcE               = other.AuipcE;
             this.WordOpE              = other.WordOpE;
+            this.AmoE                 = other.AmoE;
+            this.AmoOpE               = other.AmoOpE;
             this.EcallE               = other.EcallE;
             this.EbreakE              = other.EbreakE;
             this.MRetE                = other.MRetE;

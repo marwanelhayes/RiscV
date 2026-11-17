@@ -47,6 +47,7 @@ module risc_control_unit
     output logic JumpD,                 // Jump instruction flag
     output logic JalrD,                 // Jump target from rs1 (JALR)
     output logic WordOpD,               // RV64 32-bit operation
+    output logic AmoD,                  // A extension instruction
     output logic IllegaleInstructionD,  // Illegal instruction flag
 
     // ─── FPU control outputs ──────────────────────────────────────────────────
@@ -83,6 +84,8 @@ module risc_control_unit
     opcode_decoder #(.ALU_SUB_CONTROL_WIDTH(ALU_SUB_CONTROL_WIDTH),.DATA_WIDTH(DATA_WIDTH)) opdec(
         .opcode(opcode),
         .funct3(funct3),
+        .funct5(amo_op_t'(funct7[6:2])),
+        .Rs2(Rs2),
         .ALUControl(ALUControl),
         .Jump(JumpD),
         .Jalr(JalrD),
@@ -98,6 +101,7 @@ module risc_control_unit
         .Store(StoreD),
         .RegWrite(RegWrite),
         .WordOp(WordOpD),
+        .Amo(AmoD),
         .CsrAccess(CsrAccessD),
         .MMode(MModeD),
         .FPU(FPUD),

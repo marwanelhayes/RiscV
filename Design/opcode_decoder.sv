@@ -7,7 +7,7 @@
 //   - Decode opcode field to generate control signals
 //   - Identify instruction type (R, I, S, B, U, J)
 //   - Generate ALU sub-operation code
-//   - Handle special instructions (CSR, FPU, jumps, branches)
+//   - Handle special instructions (CSR, FPU, jumps, branches, atomics)
 // =============================================================================
 import shared_pkg::*;
 
@@ -20,6 +20,8 @@ module opcode_decoder
     // ─── Instruction input ───────────────────────────────────────────────────
     input opcode_t opcode,           // Opcode field
     input [2:0] funct3,              // Function field 3 (size / variant)
+    input amo_op_t funct5,           // AMO function field (bits 31:27)
+    input gpr_t Rs2,                 // rs2 field (must be x0 for LR)
     input csr_t CsrOperation,        // CSR operation type
 
     // ─── Control signal outputs ───────────────────────────────────────────────
@@ -38,12 +40,14 @@ module opcode_decoder
     output logic RegWrite,          // Register write enable
     output logic Store,             // Store instruction flag
     output logic WordOp,            // RV64 32-bit operation (OP-IMM-32 / OP-32)
+    output logic Amo,               // A extension instruction (LR, SC, AMO*)
     output logic MMode,             // Machine mode flag
     output logic IllegaleInstruction,  // Illegal instruction flag
     output logic FPU                // FPU instruction flag
 );
 
     localparam bit IS_RV64 = (DATA_WIDTH == 64);
+    logic IllegalAmoOp;  // Flag for illegal AMO operation (funct5)
 
     // ─── Main opcode decoding logic ──────────────────────────────────────────
     always_comb
@@ -63,9 +67,13 @@ module opcode_decoder
         RegWrite = 1'b0;
         Store = 1'b0;
         WordOp = 1'b0;
+        Amo = 1'b0;
         CsrAccess = 1'b0;
         MMode = 1'b0;
         FPU = 1'b0;
+        // Check for illegal AMO operation
+        // TODO: Check if the inside keyword is synthesizable; if not, replace with a series of comparisons
+        IllegalAmoOp = !((funct5 inside {AMO_ADD, AMO_SWAP, AMO_LR, AMO_SC, AMO_XOR, AMO_OR,AMO_AND, AMO_MIN, AMO_MAX, AMO_MINU, AMO_MAXU}));
         IllegaleInstruction = 1'b1;    // Assume illegal until proven valid
 
         case(opcode)
@@ -172,6 +180,20 @@ module opcode_decoder
                 RegWrite = 1'b1;
                 Selector = PCToReg;
                 IllegaleInstruction = (funct3 != 3'b000);
+            end
+            // ── AMO: LR / SC / AMO*.W (.D on RV64) ────────────────────────────
+            // Address = rs1 (no immediate: ALUSrc with a zero immediate), data
+            // = rs2, result through the load path. LR only reads, SC only
+            // writes, AMO* read and write. aq/rl are ignored (in-order hart).
+            AMO:
+            begin
+                Amo = 1'b1;
+                Selector = MemToReg;
+                ALUSrc = 1'b1;
+                RegWrite = 1'b1;
+                MemRead = (funct5 != AMO_SC);
+                MemWrite = (funct5 != AMO_LR);
+                IllegaleInstruction = !((load_store_t'(funct3) == W) || (IS_RV64 && (load_store_t'(funct3) == D))) || IllegalAmoOp || ((funct5 == AMO_LR) && (Rs2 != zero));
             end
             // ── MISC-MEM: FENCE is a NOP on a single in-order hart ────────────
             MISC_MEM: 

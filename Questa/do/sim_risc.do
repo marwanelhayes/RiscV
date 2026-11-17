@@ -9,7 +9,14 @@
 do ../do/compile.do
 
 # Load simulation
-vsim -voptargs=+acc -lib work risc_top +UVM_VERBOSITY=UVM_LOW
+# Spike lock-step next to the ISS when the DPI library is built
+# (cd ../../Verification/Risc/spike && make)
+set spike_lib [file normalize ../../Verification/Risc/spike/libspike_dpi]
+if {[file exists $spike_lib.so]} {
+    vsim -64 -sv_lib $spike_lib +SPIKE -voptargs=+acc -lib work risc_top +UVM_VERBOSITY=UVM_LOW
+} else {
+    vsim -64 -voptargs=+acc -lib work risc_top +UVM_VERBOSITY=UVM_LOW
+}
 
 # Add signals to wave
 echo "Adding signals to waveform..."

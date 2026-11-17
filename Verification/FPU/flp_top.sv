@@ -42,6 +42,9 @@ module flp_top;
         .MoveOperationOut(intf.MoveOperationOut)
         );
 
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind risc_fpu fpu_sva #(.WIDTH(WIDTH)) FpuSva (.*);
+
     initial 
     begin
         clk = 0;

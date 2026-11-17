@@ -21,8 +21,9 @@ package flp_seq_pkg;
         // signaling NaNs, subnormals, extreme normals, small integers
         function logic [FINAL_FLP_WIDTH-1:0] corner_value();
             logic s;
+            int unsigned k;
             s = $urandom_range(0, 1);
-            case($urandom_range(0, 9))
+            case($urandom_range(0, 10))
                 0: return {s, 31'h0};                                   // +-0
                 1: return {s, 8'hFF, 23'h0};                            // +-inf
                 2: return {s, 8'hFF, 1'b1, 22'($urandom)};              // quiet NaN
@@ -32,6 +33,10 @@ package flp_seq_pkg;
                 6: return {s, 8'hFE, 23'($urandom)};                    // largest normals
                 7: return {s, 8'd127 + 8'($urandom_range(0, 30)), 23'h0}; // small powers of two
                 8: return {s, 8'd150, 23'($urandom_range(0, 7))};       // integers near 2^23
+                9: begin                                                // subnormal, any leading-zero count (D34)
+                       k = $urandom_range(0, 22);
+                       return {s, 8'h00, (23'(1) << k) | (23'($urandom) & ((23'(1) << k) - 1))};
+                   end
                 default: return {s, 8'($urandom_range(100, 160)), 23'($urandom)};
             endcase
         endfunction:corner_value

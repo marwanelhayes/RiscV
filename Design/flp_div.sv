@@ -398,7 +398,7 @@ module flp_div
                     if (class_a[3])
                     begin
                         MantA_next = {a_reg[FRAC_BITS-1:0], 1'b0} << LeadZeroCountA;
-                        ExpA_next = -$signed(LeadZeroCountA);
+                        ExpA_next = -$signed({1'b0, LeadZeroCountA});   // zero-extend: the count is unsigned
                     end
                     else
                     begin
@@ -408,7 +408,7 @@ module flp_div
                     if (class_b[3])
                     begin
                         MantB_next = {b_reg[FRAC_BITS-1:0], 1'b0} << LeadZeroCountB;
-                        ExpB_next = -$signed(LeadZeroCountB);
+                        ExpB_next = -$signed({1'b0, LeadZeroCountB});   // zero-extend: the count is unsigned
                     end
                     else
                     begin

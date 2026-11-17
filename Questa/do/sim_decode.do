@@ -8,7 +8,7 @@
 quit -sim
 do ../do/compile.do
 
-vsim -voptargs=+acc decode_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
+vsim -64 -voptargs=+acc decode_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
 
 echo "Adding signals to waveform..."
 

@@ -14,6 +14,14 @@ vlog -work work -vopt -stats=none ../../Design/csr_defs.sv
 
 # Reusable protocol assertion modules
 vlog -work work -vopt -stats=none ../../Verification/Protocol/AXI_Assertions.sv
+vlog -work work -vopt -stats=none ../../Verification/Fetch/fetch_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/Decode/decode_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/Execute/execute_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/Memory/memory_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/WriteBack/wb_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/Hazard/hazard_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/FPU/fpu_sva.sv
+vlog -work work -vopt -stats=none ../../Verification/CSR/csr_sva.sv
 vlog -work work -vopt -stats=none ../../Verification/Protocol/axi_interface.sv
 vlog -work work -vopt -stats=none ../../Verification/Protocol/axi_random_stall.sv
 
@@ -27,6 +35,7 @@ vlog -work work -vopt -stats=none ../../Design/fetch_stage.sv
 vlog -work work -vopt -stats=none ../../Design/decode_stage.sv
 vlog -work work -vopt -stats=none ../../Design/execute_stage.sv
 vlog -work work -vopt -stats=none ../../Design/memory_stage.sv
+vlog -work work -vopt -stats=none ../../Design/amo_unit.sv
 vlog -work work -vopt -stats=none ../../Design/wb_stage.sv
 
 # Control units

@@ -8,7 +8,7 @@
 quit -sim
 do ../do/compile.do
 
-vsim -voptargs=+acc execute_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
+vsim -64 -voptargs=+acc execute_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
 
 
 # Add signals to wave

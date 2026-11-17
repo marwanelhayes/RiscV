@@ -144,30 +144,30 @@ package execute_subscriber_pkg;
             }
 
             // Datapath operands / results - sign partition (reachable by random).
-            RD1E_cg: coverpoint sub_item.RD1E iff(sub_item.rst)
+            RD1E_cg: coverpoint sub_item.RD1E[$bits(sub_item.RD1E)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            RD2E_cg: coverpoint sub_item.RD2E iff(sub_item.rst)
+            RD2E_cg: coverpoint sub_item.RD2E[$bits(sub_item.RD2E)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            SignImmE_cg: coverpoint sub_item.SignImmE iff(sub_item.rst)
+            SignImmE_cg: coverpoint sub_item.SignImmE[$bits(sub_item.SignImmE)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            ALUOutM_cg: coverpoint sub_item.ALUOutM iff(sub_item.rst)
+            ALUOutM_cg: coverpoint sub_item.ALUOutM[$bits(sub_item.ALUOutM)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
-            WriteDataM_cg: coverpoint sub_item.WriteDataM iff(sub_item.rst)
+            WriteDataM_cg: coverpoint sub_item.WriteDataM[$bits(sub_item.WriteDataM)-1] iff(sub_item.rst)
             {
-                bins negative = {[32'sh8000_0000:-1]};
-                bins positive = {[0:32'sh7FFF_FFFF]};
+                bins negative = {1};   // sign bit, any XLEN
+                bins positive = {0};
             }
 
             // ── Crosses ──────────────────────────────────────────────────────

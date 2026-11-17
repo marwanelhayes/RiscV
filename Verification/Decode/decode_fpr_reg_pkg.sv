@@ -10,6 +10,7 @@ package decode_fpr_reg_pkg;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import shared_pkg::*;
 
     // ── Single FP register: one 32-bit RW field "value" ──────────────────────
     class fpr_reg extends uvm_reg;
@@ -46,7 +47,7 @@ package decode_fpr_reg_pkg;
                 regs[i].add_hdl_path_slice($sformatf("mem[%0d]", i), 0, 32);
                 // Nominal offset past the 32 GPR regs so GPR/FPR don't collide
                 // in the shared default_map (access is backdoor-only anyway).
-                map.add_reg(regs[i], 32*4 + i*4, "RW");
+                map.add_reg(regs[i], 32*(FINAL_DATA_WIDTH/8) + i*4, "RW");   // GPRs are XLEN/8 bytes each
             end
         endfunction
     endclass

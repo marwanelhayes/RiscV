@@ -38,9 +38,13 @@ package mem_item_pkg;
         rand logic InfM;
         rand logic ZeroM;
         rand logic InvalidDivM;
-        rand logic [FINAL_DATA_WIDTH-1:0] FPUOutM;
+        rand logic [FINAL_FLP_WIDTH-1:0] FPUOutM;
         rand move_operation_t MoveOperationM;
         rand logic FPURegWriteM;
+        rand logic AmoM;                 // A extension instruction
+        rand amo_op_t AmoOpM;            // its operation
+        rand bit reuse_lr_addr;          // SC targets the last LR address
+        static logic signed [FINAL_DATA_WIDTH-1:0] last_lr_addr = '0;
 
         // Cache hit response (DUT output). 0 = cache miss, pipeline stalls and
         // the *M inputs are held until the refill completes (CacheHitM == 1).
@@ -62,7 +66,7 @@ package mem_item_pkg;
         logic InfW;    
         logic ZeroW;
         logic InvalidDivW;
-        logic [FINAL_DATA_WIDTH-1:0] FPUOutW;
+        logic [FINAL_FLP_WIDTH-1:0] FPUOutW;
         move_operation_t MoveOperationW;
         logic FPURegWriteW;
 
@@ -83,12 +87,34 @@ package mem_item_pkg;
             RegWriteM == 1 -> RdM != zero;
         }
 
-        // A bubble has no side effects; a load or store is never both.
+        // A bubble has no side effects; only an AMO* both reads and writes.
         constraint BubbleIsInert
         {
-            !ValidM -> (!MemReadM && !MemWriteM && !RegWriteM && !FPURegWriteM);
-            !(MemReadM && MemWriteM);
+            !ValidM -> (!MemReadM && !MemWriteM && !RegWriteM && !FPURegWriteM && !AmoM);
+            (MemReadM && MemWriteM) -> AmoM;
         }
+
+        // Atomics as decode emits them: result through the load path, LR only
+        // reads, SC only writes, AMO* read and write; .W, and .D on RV64.
+        // An SC mostly targets the last LR address so it can succeed.
+        constraint AtomicShape
+        {
+            AmoM dist {0:=80, 1:=20};
+            !AmoM -> (AmoOpM == AMO_ADD);
+            AmoM -> (ValidM && RegWriteM && !FPURegWriteM && (SelectorM == MemToReg));
+            AmoM -> (MemReadM == (AmoOpM != AMO_SC)) && (MemWriteM == (AmoOpM != AMO_LR));
+            AmoM -> (load_store_t'(funct3M) inside {W, D});
+            AmoOpM dist {AMO_LR := 25, AMO_SC := 25, [AMO_ADD:AMO_SWAP] := 10, AMO_XOR := 5, AMO_OR := 5,
+                         AMO_AND := 5, AMO_MIN := 5, AMO_MAX := 5, AMO_MINU := 5, AMO_MAXU := 5};
+            reuse_lr_addr dist {0:=1, 1:=3};
+            reuse_lr_addr -> ((load_store_t'(funct3M) == W) || (last_lr_addr[2:0] == 3'b000));
+            (AmoM && (AmoOpM == AMO_SC) && reuse_lr_addr) -> (ALUOutM == last_lr_addr);
+        }
+
+        function void post_randomize();
+            if(AmoM && (AmoOpM == AMO_LR))
+                last_lr_addr = ALUOutM;
+        endfunction:post_randomize
 
         // Legal access sizes for the XLEN (LWU/LD/SD are RV64 only), and
         // naturally aligned addresses: EX traps a misaligned access, so the
@@ -226,6 +252,8 @@ package mem_item_pkg;
             this.FPUOutM        = other.FPUOutM;
             this.MoveOperationM = other.MoveOperationM;
             this.FPURegWriteM   = other.FPURegWriteM;
+            this.AmoM           = other.AmoM;
+            this.AmoOpM         = other.AmoOpM;
             // Outputs (*W)
             this.ValidW         = other.ValidW;
             this.chk_readdata   = other.chk_readdata;
@@ -281,6 +309,8 @@ package mem_item_pkg;
             this.FPUOutM        = other.FPUOutM;
             this.MoveOperationM = other.MoveOperationM;
             this.FPURegWriteM   = other.FPURegWriteM;
+            this.AmoM           = other.AmoM;
+            this.AmoOpM         = other.AmoOpM;
         endfunction:copy_inputs
 
 

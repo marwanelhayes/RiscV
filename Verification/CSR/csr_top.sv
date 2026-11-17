@@ -39,6 +39,9 @@ module csr_top;
         .RoundingMode(intf.RoundingMode)
     );
 
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind csr_file csr_sva CsrSva (.*);
+
     initial
     begin
         clk = 0;

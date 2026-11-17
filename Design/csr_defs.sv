@@ -39,6 +39,7 @@
 `define MACHINE_EXTERNAL_INTERRUPT_CAUSE 11
 
 // misa extension bits
+`define MISA_A 0
 `define MISA_F 5
 `define MISA_I 8
 `define MISA_M 12

@@ -46,6 +46,8 @@ module decode_top;
         .ALUSrcE(intf.ALUSrcE),
         .AuipcE(intf.AuipcE),
         .WordOpE(intf.WordOpE),
+        .AmoE(intf.AmoE),
+        .AmoOpE(intf.AmoOpE),
         .CsrOperationE(intf.CsrOperationE),
         .CsrIndexE(intf.CsrIndexE),
         .CsrAccessE(intf.CsrAccessE),
@@ -66,6 +68,9 @@ module decode_top;
         .Rs2FE(intf.Rs2FE),
         .FPUValidE(intf.FPUValidE)
     );
+
+    // Timing assertions (Verification/<unit>/<unit>_sva.sv)
+    bind decode_stage decode_sva DecodeSva (.*);
 
     initial 
     begin

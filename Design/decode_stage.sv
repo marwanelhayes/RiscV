@@ -71,6 +71,8 @@ module decode_stage
     output logic ALUSrcE,                   // ALU second operand select
     output logic AuipcE,                    // ALU first operand is the PC
     output logic WordOpE,                   // RV64 32-bit operation
+    output logic AmoE,                      // A extension instruction
+    output amo_op_t AmoOpE,                 // A extension operation (funct5)
 
     // ── CSR interface ─────────────────────────────────────────────────────────
     output csr_t CsrOperationE,             // CSR operation type
@@ -126,6 +128,8 @@ module decode_stage
     logic ALUSrcD;
     logic StoreD;
     logic WordOpD;
+    logic AmoD;
+    amo_op_t AmoOpD;
     logic [2:0] funct3D;
     logic [6:0] funct7D;
     gpr_t RdD;
@@ -174,6 +178,7 @@ module decode_stage
         .JumpD(JumpD),
         .JalrD(JalrD),
         .WordOpD(WordOpD),
+        .AmoD(AmoD),
         .IllegaleInstructionD(IllegaleInstructionD),
         .FPUControlD(FPUControlD),
         .MoveOperationD(MoveOperationD),
@@ -227,6 +232,8 @@ module decode_stage
             ALUSrcE <= 'b0;
             AuipcE <= 'b0;
             WordOpE <= 'b0;
+            AmoE <= 'b0;
+            AmoOpE <= AMO_ADD;
             JumpE <= 'b0;
             JalrE <= 'b0;
             CsrOperationE <= csrrw; // Default value for CSR operation
@@ -268,6 +275,8 @@ module decode_stage
             ALUSrcE <= 'b0;
             AuipcE <= 'b0;
             WordOpE <= 'b0;
+            AmoE <= 'b0;
+            AmoOpE <= AMO_ADD;
             CsrIndexE <= mstatus; // Reset CSR index
             JumpE <= 'b0;
             JalrE <= 'b0;
@@ -309,6 +318,8 @@ module decode_stage
             ALUSrcE <= ALUSrcD;
             AuipcE <= AuipcD;
             WordOpE <= WordOpD;
+            AmoE <= AmoD;
+            AmoOpE <= AmoOpD;
             JumpE <= JumpD;
             JalrE <= JalrD;
             CsrOperationE <= CsrOperationD; // Pass CSR operation to the next stage
@@ -343,7 +354,7 @@ module decode_stage
         RdD  = gpr_t'(InstructionD[11:7]);
         if((opcodeD == LUI) || (opcodeD == AUIPC) || (opcodeD == JAL))
             Rs1D = zero;
-        if(!((opcodeD == R_TYPE) || (opcodeD == OP_32) || (opcodeD == S_TYPE) || (opcodeD == B_TYPE)))
+        if(!((opcodeD == R_TYPE) || (opcodeD == OP_32) || (opcodeD == S_TYPE) || (opcodeD == B_TYPE) || (opcodeD == AMO)))
             Rs2D = zero;
 
         Rs1FD = fpr_t'(InstructionD[19:15]);
@@ -381,8 +392,11 @@ module decode_stage
     always_comb
     begin
         CsrReadOnlyWriteD = CsrAccessD && (InstructionD[31:30] == 2'b11) &&
-                            ((CsrOperationD == csrrw) || (CsrOperationD == csrrwi) ||
-                             (InstructionD[19:15] != '0));
+                            (
+                                (CsrOperationD == csrrw) || 
+                                (CsrOperationD == csrrwi) ||
+                                (InstructionD[19:15] != '0)
+                            );
     end
 
     always_comb
@@ -390,6 +404,7 @@ module decode_stage
         opcodeD = opcode_t'(InstructionD[6:0]);
         funct3D = InstructionD[14:12];
         funct7D = InstructionD[31:25];
+        AmoOpD = amo_op_t'(InstructionD[31:27]);
         CsrOperationD = csr_t'(InstructionD[14:12]);
         CsrIndexD = csr_index_t'(InstructionD[31:20]); // Extract CSR index from instruction
         RoundModeD = round_mode_t'(InstructionD[14:12]);
