@@ -2,11 +2,13 @@
 # sim_execute.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Execute stage verification
-# Usage: do ../sim_execute.do
+# Usage (from the directory that holds the work library, e.g. Questa/Scratch):
+#   do <repo>/Questa/do/sim_execute.do
 # =============================================================================
 
 quit -sim
-do ../do/compile.do
+set ROOT [file normalize [file join [file dirname [file normalize [status file]]] .. ..]]
+do [file join $ROOT Questa do compile.do]
 
 vsim -64 -voptargs=+acc execute_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
 

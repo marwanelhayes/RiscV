@@ -1,3 +1,12 @@
+// =============================================================================
+// wb_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Write-back stage inside the full core (risc_top).
+//
+// Bound into the Write-back stage instance; copies its ports onto a writeback_interface
+// and publishes it in uvm_config_db, so the Write-back stage environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

@@ -78,6 +78,7 @@ package riscv_iss_pkg;
         // ── Memories (Harvard, as in the core) ──────────────────────────────
         logic [31:0] imem [int];    // word index -> instruction
         logic [7:0]  dmem [int];    // byte address -> byte (absent = 0)
+        logic [7:0]  dmem_init [int]; // data image restored on every reset (load_data)
 
         // ── Inputs of the current step ──────────────────────────────────────
         bit          irq_ext, irq_tmr, irq_sw;
@@ -96,7 +97,7 @@ package riscv_iss_pkg;
             mtvec = '0; mscratch = '0; mepc = '0; mcause = '0; mtval = '0;
             minstret = '0; fflags = '0; frm = '0;
             res_valid = 0; res_addr = '0;
-            dmem.delete();
+            dmem = dmem_init;
         endfunction
 
         // Program image: one 32-bit instruction per line, binary ($readmemb)
@@ -123,6 +124,29 @@ package riscv_iss_pkg;
                     void'($fgets(line, fd));
             end
             $fclose(fd);
+        endfunction
+
+        // Initial data memory: one XLEN-bit little-endian word per line, hex
+        // ($readmemh, as loaded into the TB data memory); word i starts at byte i*XLEN/8
+        function void load_data(string path);
+            int fd, n;
+            xlen_t w;
+            dmem_init.delete();
+            fd = $fopen(path, "r");
+            if(fd == 0)
+            begin
+                $error("riscv_iss: cannot open %s", path);
+                return;
+            end
+            n = 0;
+            while($fscanf(fd, "%h", w) == 1)
+            begin
+                for(int i = 0; i < XLEN/8; i++)
+                    if(w[8*i +: 8] != 0) dmem_init[n*(XLEN/8) + i] = w[8*i +: 8];
+                n++;
+            end
+            $fclose(fd);
+            dmem = dmem_init;
         endfunction
 
         // ── Memory helpers ──────────────────────────────────────────────────

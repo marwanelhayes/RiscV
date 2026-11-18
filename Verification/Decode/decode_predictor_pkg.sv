@@ -27,12 +27,13 @@
 package decode_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import decode_item_pkg::*;
     import decode_reg_block_pkg::*;
 
-    class decode_predictor extends uvm_subscriber #(decode_item);
+    class decode_predictor extends base_predictor #(decode_item);
 
         `uvm_component_utils(decode_predictor)
 
@@ -43,7 +44,6 @@ package decode_predictor_pkg;
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(decode_item) exp_port;
         decode_item q, exp_clone;            // q = ID/EX shadow (expected registered outputs)
         decode_item shadow_input;
 
@@ -51,10 +51,9 @@ package decode_predictor_pkg;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             q = decode_item::type_id::create("q");
             if(!uvm_config_db #(decode_reg_block)::get(this,"","REG_BLOCK",reg_block))
-                `uvm_fatal("DECODE_PRED","predictor couldn't receive reg_block")
+                `uvm_fatal(get_type_name(), "predictor couldn't receive reg_block")
             reg_block.reset();
             bubble(q);
         endfunction:build_phase
@@ -361,7 +360,7 @@ package decode_predictor_pkg;
                     decode(t, q);
             end
             if(!$cast(shadow_input, t.clone()))
-                `uvm_fatal("DECODE_PRED", "Failed to cast shadow input - check for type mismatches")
+                `uvm_fatal(get_type_name(), "Failed to cast shadow input - check for type mismatches")
         endfunction:write
 
     endclass:decode_predictor

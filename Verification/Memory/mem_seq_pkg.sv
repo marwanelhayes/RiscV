@@ -1,57 +1,50 @@
+// =============================================================================
+// mem_seq_pkg.sv
+// -----------------------------------------------------------------------------
+// Memory stage sequences.
+//
+// mem_seq       : 10000 fully random items (resets included).
+// mem_seq_no_rst: 1000000 items without reset, so cache state builds up.
+// The item loop comes from tb_base_pkg::base_seq.
+// =============================================================================
 package mem_seq_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
+    import tb_base_pkg::*;
     import mem_item_pkg::*;
 
-    class mem_seq extends uvm_sequence #(mem_item);
+    // =========================================================================
+    // mem_seq: 10000 random Memory stage items
+    // =========================================================================
+    class mem_seq extends base_seq #(mem_item);
 
-        //Register the class to the factory
         `uvm_object_utils(mem_seq)
 
-        //Overriding the constructor with the child class
         function new (string name = "mem_seq");
             super.new(name);
-        endfunction: new
+            num_items = 10000;
+        endfunction:new
 
-        mem_item item;
+    endclass:mem_seq
 
-        //Overriding the body task
-        virtual task body();
-            item = mem_item::type_id::create("item");
-            repeat(10000)
-            begin: main_sequence
-                start_item(item);
-                    assert(item.randomize());
-                    `uvm_info("SEQ",item.convert2str(),UVM_DEBUG)
-                finish_item(item);
-            end: main_sequence
-        endtask: body
-    endclass: mem_seq
+    // =========================================================================
+    // mem_seq_no_rst: long random run with reset held inactive
+    // =========================================================================
+    class mem_seq_no_rst extends base_seq #(mem_item);
 
-        class mem_seq_no_rst extends uvm_sequence #(mem_item);
-
-        //Register the class to the factory
         `uvm_object_utils(mem_seq_no_rst)
 
-        //Overriding the constructor with the child class
         function new (string name = "mem_seq_no_rst");
             super.new(name);
-        endfunction: new
+            num_items = 1000000;
+        endfunction:new
 
-        mem_item item;
+        virtual function bit randomize_item ();
+            return item.randomize() with {item.rst == 1;};
+        endfunction:randomize_item
 
-        //Overriding the body task
-        virtual task body();
-            item = mem_item::type_id::create("item");
-            repeat(1000000)
-            begin: main_sequence
-                start_item(item);
-                    assert(item.randomize() with {item.rst == 1;});
-                    `uvm_info("SEQ",item.convert2str(),UVM_DEBUG)
-                finish_item(item);
-            end: main_sequence
-        endtask: body
-    endclass: mem_seq_no_rst
-endpackage: mem_seq_pkg
+    endclass:mem_seq_no_rst
+
+endpackage:mem_seq_pkg

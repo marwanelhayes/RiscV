@@ -19,13 +19,14 @@
 package csr_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import csr_item_pkg::*;
     import csr_reg_block_pkg::*;
     import riscv_iss_pkg::*;
 
-    class csr_predictor extends uvm_subscriber #(csr_item);
+    class csr_predictor extends base_predictor #(csr_item);
 
         `uvm_component_utils(csr_predictor)
 
@@ -36,15 +37,13 @@ package csr_predictor_pkg;
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(csr_item) exp_port;
         csr_reg_block reg_block;
         riscv_iss     m;                // CSR state of the ISA model
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             if(!uvm_config_db #(csr_reg_block)::get(this,"","REG_BLOCK",reg_block))
-                `uvm_fatal("CSR_PRED", "predictor could not receive register block")
+                `uvm_fatal(get_type_name(), "predictor could not receive register block")
             m = new();
             mirror();
         endfunction:build_phase

@@ -13,31 +13,28 @@
 //   3. Advance the internal shadow register from the current inputs gated by
 //      CacheHitF (cache refill freezes IF/ID just like the design).
 //
-// The instruction memory image is loaded from INSTR_MEM_PATH defined in
-// shared_pkg so the reference image stays in sync with the design's ROM.
+// The instruction memory image is loaded from the program directory
+// (tb_base_pkg::program_file), the same file the TB instruction memory loads.
 // =============================================================================
 package fetch_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import fetch_item_pkg::*;
 
-    class fetch_predictor extends uvm_subscriber #(fetch_item);
+    class fetch_predictor extends base_predictor #(fetch_item);
 
-        //Register the class to the factory
         `uvm_component_utils(fetch_predictor)
 
-        //Override the constructor function
         function new (string name = "fetch_predictor", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        // Expected-output broadcast port
-        uvm_analysis_port #(fetch_item) exp_port;
         fetch_item shadow_inputs,exp_clone ,exp;
 
-        // Reference memory image (loaded from INSTR_MEM_PATH)
+        // Reference memory image (binary1.txt of the program directory)
         // One entry per 32-bit instruction (the image format), at any XLEN
         localparam int DEPTH = (2**(FINAL_ADDR_WIDTH-2));
         localparam logic [INSTR_WIDTH-1:0] NOP = 32'h00_00_00_13;   // ADDI x0, x0, 0
@@ -50,10 +47,9 @@ package fetch_predictor_pkg;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             exp = fetch_item::type_id::create("exp");
             foreach (memory[i]) memory[i] = '0;
-            $readmemb(INSTR_MEM_PATH, memory);
+            $readmemb(program_file("binary1.txt"), memory);
             q_PCPlus4D     = '0;
             q_InstructionD = NOP;
             q_ValidD       = 1'b0;
@@ -81,7 +77,7 @@ package fetch_predictor_pkg;
                 exp.copy_inputs(shadow_inputs);
 
             if(!$cast(exp_clone, exp.clone()))
-                `uvm_fatal("FETCH_PRED", "Failed to clone expected item - check for non-cloneable fields")
+                `uvm_fatal(get_type_name(), "Failed to clone expected item - check for non-cloneable fields")
             else
                 exp_port.write(exp_clone);
 
@@ -100,7 +96,7 @@ package fetch_predictor_pkg;
                 q_ValidD       = 1'b1;
             end
             if(!$cast(shadow_inputs, t.clone()))
-                `uvm_fatal("FETCH_PRED", "Failed to clone input item for shadow - check for non-cloneable fields")
+                `uvm_fatal(get_type_name(), "Failed to clone input item for shadow - check for non-cloneable fields")
         endfunction:write
 
     endclass:fetch_predictor

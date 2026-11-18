@@ -1,5 +1,7 @@
 # Functional Coverage — Peripheral Verification Environments
 
+The feature list that these covergroups close is in [VPLAN.md](VPLAN.md).
+
 Structural functional-coverage model for every peripheral UVM environment. Each
 covergroup lives in `<env>/<env>_subscriber_pkg.sv`, is fed by the monitor's
 analysis port, and uses explicit bins, crosses and `ignore_bins`/`illegal_bins`
@@ -116,7 +118,7 @@ mismatches. Fixed by widening the parameter to `csr_index_t`.
 - `SelectorM_cg`/`SelectorW_cg` (4), `MoveOperationM_cg` (3); FP flags {0}/{1}
 - `RdM_cg` (`ignore_bins` zero); data sign bins {neg,pos}: ALUOutM, ReadDataW, ALUOutW
 - `AmoOp_cg`: all eleven LR/SC/AMO* operations; `AmoSize_cg`: .W (+ .D at XLEN 64)
-- Predictor (`unused/mem_flat_predictor_pkg.sv`, the one compiled): flat byte-exact memory, ISA load/store semantics, `ReadDataW` compared for loads only, MEM/WB held while `StallW`. A extension: LR/SC reservation and AMO* read-modify-write, committed once when MEM advances. `mem_top` adds a random external freeze (`ExtraStall`) so an SC / AMO* is held in MEM after its access is done.
+- Predictor (`mem_flat_predictor_pkg.sv`): flat byte-exact memory, ISA load/store semantics, `ReadDataW` compared for loads only, MEM/WB held while `StallW`. A extension: LR/SC reservation and AMO* read-modify-write, committed once when MEM advances. `mem_top` adds a random external freeze (`ExtraStall`) so an SC / AMO* is held in MEM after its access is done.
 
 ### WriteBack (`writeback_subscriber_pkg.sv`) — 100%
 - `SelectorW_cg` (4); `PCSrcE_cg`, `StallF_cg`, `TrapIsSet_cg`: {0}/{1}

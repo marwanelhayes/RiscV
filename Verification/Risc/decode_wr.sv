@@ -1,3 +1,12 @@
+// =============================================================================
+// decode_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Decode stage inside the full core (risc_top).
+//
+// Bound into the Decode stage instance; copies its ports onto a decode_interface
+// and publishes it in uvm_config_db, so the Decode stage environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

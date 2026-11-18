@@ -1,54 +1,31 @@
+// =============================================================================
+// writeback_test_pkg.sv
+// -----------------------------------------------------------------------------
+// Write-back stage test: active writeback_env driven by writeback_seq.
+//
+// Configuration, environment, main sequence and objection handling come from
+// tb_base_pkg::block_test.
+// =============================================================================
 package writeback_test_pkg;
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
+    import tb_base_pkg::*;
     import writeback_env_pkg::*;
     import writeback_seq_pkg::*;
     import writeback_config_pkg::*;
 
-    class writeback_test extends uvm_test;
+    // =========================================================================
+    // writeback_test: stand-alone Write-back stage test
+    // =========================================================================
+    class writeback_test extends block_test #(writeback_config, writeback_env, writeback_seq, virtual writeback_interface);
 
-        //Register the class into the factory
         `uvm_component_utils(writeback_test)
 
-        //Override the constructor function
         function new (string name = "writeback_test", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        writeback_env env;
-        writeback_seq main_sequence;
-        writeback_config configuration;
-
-        function void set_config_params();
-            configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual writeback_interface)::get(this,"","INTF",configuration.vif))
-                `uvm_fatal("TEST","Couldn't receive interface")
-        endfunction
-
-        virtual function void build_phase (uvm_phase phase);
-            super.build_phase(phase);
-            configuration = writeback_config::type_id::create("configuration",this);
-            set_config_params();
-            uvm_config_db #(writeback_config)::set(this,"env","CONFG",configuration);
-            env = writeback_env::type_id::create("env",this);
-            main_sequence = writeback_seq::type_id::create("main_sequence",this);
-        endfunction:build_phase
-
-        virtual function void end_of_elaboration_phase (uvm_phase phase);
-            super.end_of_elaboration_phase(phase);
-            uvm_top.print_topology();
-        endfunction:end_of_elaboration_phase
-        
-        virtual task run_phase (uvm_phase phase);
-            phase.raise_objection(this);
-                main_sequence.start(env.agent.seq);
-            phase.drop_objection(this);
-        endtask:run_phase
-
     endclass:writeback_test
-
-
-
 
 endpackage:writeback_test_pkg

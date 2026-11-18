@@ -73,7 +73,7 @@ package flp_item_pkg;
 
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a flp_item")
+                `uvm_fatal(get_type_name(), "rhs is not a flp_item")
                 return 1'b0;
             end
 
@@ -92,25 +92,25 @@ package flp_item_pkg;
                 && (this.RegWriteOut      === other.RegWriteOut)
                 && (this.MoveOperationOut === other.MoveOperationOut);
             if(result_err)
-                `uvm_info("Result Mismatch",$sformatf("Epected : %0f/%0h Actual : %0f/%0h",$bitstoshortreal(other.Result),other.Result,$bitstoshortreal(this.Result),this.Result), UVM_LOW)
+                `uvm_info(get_type_name(), {"Result mismatch: ", $sformatf("Epected : %0f/%0h Actual : %0f/%0h",$bitstoshortreal(other.Result),other.Result,$bitstoshortreal(this.Result),this.Result)}, UVM_LOW)
             if(this.Overflow !== other.Overflow)
-                `uvm_info("Overflow Mismatch",$sformatf("Expected: %0d Actual: %0d", other.Overflow, this.Overflow), UVM_LOW)
+                `uvm_info(get_type_name(), {"Overflow mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.Overflow, this.Overflow)}, UVM_LOW)
             if(this.Underflow !== other.Underflow)
-                `uvm_info("Underflow Mismatch",$sformatf("Expected: %0d Actual: %0d", other.Underflow, this.Underflow), UVM_LOW)
+                `uvm_info(get_type_name(), {"Underflow mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.Underflow, this.Underflow)}, UVM_LOW)
             if(this.NaN !== other.NaN)
-                `uvm_info("NaN Mismatch",$sformatf("Expected: %0d Actual: %0d", other.NaN, this.NaN), UVM_LOW)
+                `uvm_info(get_type_name(), {"NaN mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.NaN, this.NaN)}, UVM_LOW)
             if(this.Inf !== other.Inf)
-                `uvm_info("Inf Mismatch",$sformatf("Expected: %0d Actual: %0d", other.Inf, this.Inf), UVM_LOW)
+                `uvm_info(get_type_name(), {"Inf mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.Inf, this.Inf)}, UVM_LOW)
             if(this.Zero !== other.Zero)
-                `uvm_info("Zero Mismatch",$sformatf("Expected: %0d Actual: %0d", other.Zero, this.Zero), UVM_LOW)
+                `uvm_info(get_type_name(), {"Zero mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.Zero, this.Zero)}, UVM_LOW)
             if(this.InvalidDiv !== other.InvalidDiv)
-                `uvm_info("InvalidDiv Mismatch",$sformatf("Expected: %0d Actual: %0d", other.InvalidDiv, this.InvalidDiv), UVM_LOW)
+                `uvm_info(get_type_name(), {"InvalidDiv mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.InvalidDiv, this.InvalidDiv)}, UVM_LOW)
             if(this.RdFOut !== other.RdFOut)
-                `uvm_info("RdFOut Mismatch",$sformatf("Expected: %s Actual: %s", other.RdFOut.name(), this.RdFOut.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"RdFOut mismatch: ", $sformatf("Expected: %s Actual: %s", other.RdFOut.name(), this.RdFOut.name())}, UVM_LOW)
             if(this.RegWriteOut !== other.RegWriteOut)
-                `uvm_info("RegWriteOut Mismatch",$sformatf("Expected: %0b Actual: %0b", other.RegWriteOut, this.RegWriteOut), UVM_LOW)
+                `uvm_info(get_type_name(), {"RegWriteOut mismatch: ", $sformatf("Expected: %0b Actual: %0b", other.RegWriteOut, this.RegWriteOut)}, UVM_LOW)
             if(this.MoveOperationOut !== other.MoveOperationOut)
-                `uvm_info("MoveOperationOut Mismatch",$sformatf("Expected: %s Actual: %s", other.MoveOperationOut.name(), this.MoveOperationOut.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"MoveOperationOut mismatch: ", $sformatf("Expected: %s Actual: %s", other.MoveOperationOut.name(), this.MoveOperationOut.name())}, UVM_LOW)
             return ok;
         endfunction:do_compare
 
@@ -118,7 +118,7 @@ package flp_item_pkg;
             flp_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a flp_item")
+                `uvm_fatal(get_type_name(), "rhs is not a flp_item")
                 return;
             end
             super.do_copy(rhs);
@@ -150,7 +150,7 @@ package flp_item_pkg;
             flp_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_outputs","rhs is not a flp_item")
+                `uvm_fatal(get_type_name(), "rhs is not a flp_item")
                 return;
             end
             this.busy = other.busy;
@@ -171,7 +171,7 @@ package flp_item_pkg;
             flp_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a flp_item")
+                `uvm_fatal(get_type_name(), "rhs is not a flp_item")
                 return;
             end
             this.rst = other.rst;

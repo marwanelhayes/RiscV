@@ -3,11 +3,13 @@
 // -----------------------------------------------------------------------------
 // RISC-V processor top-level testbench module for UVM verification.
 // =============================================================================
-module risc_top;
+module risc_top
+#(
+    parameter string PROGRAM_DIR = ""   // program image directory: vsim -gPROGRAM_DIR=<dir>
+);
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    import uvm_pkg::uvm_cmdline_processor;
     import shared_pkg::*;
     import risc_test_pkg::*;
 
@@ -81,7 +83,11 @@ module risc_top;
 
     // ── Memory slaves on the core's I/D AXI master ports (as in fetch_top /
     //    mem_top); the core itself holds only the L1 caches.
-    risc_instruction_memory #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) InstrMem
+    // Published to the TB before any initial block runs (variable initializer)
+    bit program_dir_set = tb_base_pkg::set_program_dir(PROGRAM_DIR);
+
+    risc_instruction_memory #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH),
+                              .AXI_SIZE(CACHE_AXI_SIZE), .INIT_FILE({PROGRAM_DIR, "/binary1.txt"})) InstrMem
     (
         .clk(intf.clk),
         .rst(intf.rst),
@@ -224,23 +230,27 @@ module risc_top;
         end
     end
 
+    // Compliance programs also have a data image (dmem.hex). It is loaded at
+    // #1, after the data memory clears itself at time 0 and while reset is held.
     initial
     begin
-        string test_name;
-        uvm_cmdline_processor clp;
-
-        test_name = "risc_test";
-        clp = uvm_cmdline_processor::get_inst();
-        if (clp.get_arg_value("+UVM_TESTNAME=", test_name))
+        int fd;
+        #1;
+        fd = $fopen(tb_base_pkg::program_file("dmem.hex"), "r");
+        if(fd != 0)
         begin
-            if (test_name != "risc_test")
-                test_name = "risc_test";
+            $fclose(fd);
+            $readmemh(tb_base_pkg::program_file("dmem.hex"), DataMem.mem);
         end
+    end
 
+    // +UVM_TESTNAME selects the test (risc_test, risc_compliance_test)
+    initial
+    begin
         uvm_config_db #(virtual risc_interface)::set(null,"","INTF",intf);
         uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH,
             CACHE_AXI_SIZE))::set(null,"","AXI_INTF",daxi_intf);
-        run_test(test_name);
+        run_test("risc_test");
     end
 
 endmodule

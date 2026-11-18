@@ -19,6 +19,7 @@
 package flp_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import flp_item_pkg::*;
@@ -44,7 +45,7 @@ package flp_predictor_pkg;
         output byte       InvalidDiv
     );
 
-    class flp_predictor extends uvm_subscriber #(flp_item);
+    class flp_predictor extends base_predictor #(flp_item);
 
         `uvm_component_utils(flp_predictor)
 
@@ -52,7 +53,6 @@ package flp_predictor_pkg;
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(flp_item) exp_port;
         flp_item exp, exp_clone;
 
         // Reference-model selector. 0 = SystemVerilog tasks (default), 1 = DPI-C
@@ -73,7 +73,6 @@ package flp_predictor_pkg;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             exp = flp_item::type_id::create("exp");
             // Select the reference model: +FLP_DPI -> Python golden via DPI-C,
             // otherwise the built-in SystemVerilog tasks. A config_db boolean
@@ -83,11 +82,11 @@ package flp_predictor_pkg;
             void'(uvm_config_db #(bit)::get(this,"","USE_DPI",use_dpi));
             if(use_dpi)
             begin
-                `uvm_info("FLP_PRED","Reference model: DPI-C Python golden (fpu_golden.py)",UVM_LOW)
+                `uvm_info(get_type_name(), "Reference model: DPI-C Python golden (fpu_golden.py)",UVM_LOW)
                 fpu_ref_init();
             end
             else
-                `uvm_info("FLP_PRED","Reference model: SystemVerilog tasks",UVM_LOW)
+                `uvm_info(get_type_name(), "Reference model: SystemVerilog tasks",UVM_LOW)
             reset_shadow();
         endfunction:build_phase
 
@@ -234,7 +233,7 @@ package flp_predictor_pkg;
                 exp.copy_inputs(t);
             end
             if(!$cast(exp_clone, exp.clone()))
-                `uvm_fatal("CLONE FAILED","Failed to clone expected item in predictor!")
+                `uvm_fatal(get_type_name(), {"CLONE FAILED: ", "Failed to clone expected item in predictor!"})
             else
                 exp_port.write(exp_clone);
 

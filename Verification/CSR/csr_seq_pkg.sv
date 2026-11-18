@@ -1,33 +1,31 @@
+// =============================================================================
+// csr_seq_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR file sequences.
+//
+// csr_seq: 10000 fully random items.
+// The item loop comes from tb_base_pkg::base_seq.
+// =============================================================================
 package csr_seq_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
+    import tb_base_pkg::*;
     import csr_item_pkg::*;
 
-    class csr_seq extends uvm_sequence #(csr_item);
+    // =========================================================================
+    // csr_seq: 10000 random CSR file items
+    // =========================================================================
+    class csr_seq extends base_seq #(csr_item);
 
         `uvm_object_utils(csr_seq)
 
         function new (string name = "csr_seq");
             super.new(name);
-        endfunction: new
+            num_items = 10000;
+        endfunction:new
 
-        csr_item item;
+    endclass:csr_seq
 
-        virtual task body();
-
-            item = csr_item::type_id::create("item");
-            repeat(10000)
-            begin: main_sequence
-                start_item(item);
-                    assert(item.randomize());
-                    `uvm_info("SEQ",item.convert2str(),UVM_DEBUG)
-                finish_item(item);
-            end: main_sequence
-
-        endtask: body
-        
-    endclass: csr_seq
-
-endpackage: csr_seq_pkg
+endpackage:csr_seq_pkg

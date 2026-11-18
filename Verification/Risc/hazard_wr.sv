@@ -1,3 +1,12 @@
+// =============================================================================
+// hazard_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Hazard unit inside the full core (risc_top).
+//
+// Bound into the Hazard unit instance; copies its ports onto a hazard_interface
+// and publishes it in uvm_config_db, so the Hazard unit environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

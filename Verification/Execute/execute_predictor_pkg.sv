@@ -27,13 +27,14 @@
 package execute_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import execute_item_pkg::*;
     import riscv_iss_pkg::*;
     import flp_ref_pkg::*;
 
-    class execute_predictor extends uvm_subscriber #(execute_item);
+    class execute_predictor extends base_predictor #(execute_item);
 
         `uvm_component_utils(execute_predictor)
 
@@ -45,16 +46,15 @@ package execute_predictor_pkg;
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(execute_item) exp_port;
         execute_item q;                 // EX/MEM shadow
         execute_item shadow_inputs;
         riscv_iss    csr;               // CSR state of the ISA model
         logic [31:0] fres_issued;       // FP result of the instruction in EX (issue-cycle operands)
+        x_t          dres_issued;       // Divide result of the instruction in EX (issue-cycle operands)
         bit          stall_e_prev;      // EX was held last cycle: same instruction still in EX
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             q   = execute_item::type_id::create("q");
             csr = new();
             bubble(q);
@@ -165,6 +165,14 @@ package execute_predictor_pkg;
             srcb  = t.ALUSrcE ? t.SignImmE : wdata;
             a_alu = t.AuipcE ? pce : srca;
             result = alu(t.ALUControlE, a_alu, srcb, t.WordOpE);
+            // A divide takes its operands in its first cycle in EX and holds EX
+            // until done (like the FPU below), so its result is a function of
+            // the issue-cycle operands only.
+            if(t.ALUControlE inside {DIV, DIVU, REM, REMU})
+            begin
+                if(t.rst && t.ValidE && !stall_e_prev) dres_issued = result;
+                result = dres_issued;
+            end
             addr   = srca + t.SignImmE;
 
             // ── FPU (operands through the FP forwarding contract) ───────────
@@ -283,7 +291,7 @@ package execute_predictor_pkg;
 
             stall_e_prev = t.rst && t.StallE;
             if(!$cast(shadow_inputs, t.clone()))
-                `uvm_fatal("EXEC_PRED", "Failed to copy inputs to shadow - check for non-cloneable fields")
+                `uvm_fatal(get_type_name(), "Failed to copy inputs to shadow - check for non-cloneable fields")
         endfunction:write
 
     endclass:execute_predictor

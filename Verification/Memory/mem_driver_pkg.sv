@@ -1,35 +1,28 @@
+// =============================================================================
+// mem_driver_pkg.sv
+// -----------------------------------------------------------------------------
+// Memory stage driver: applies each mem_item to the DUT through mem_interface.
+//
+// All behaviour is inherited from tb_base_pkg::base_driver.
+// =============================================================================
 package mem_driver_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
     import mem_item_pkg::*;
 
-    class mem_driver extends uvm_driver #(mem_item);
-        
-        //Register the class to the factory
+    // =========================================================================
+    // mem_driver: drive Memory stage stimulus through the virtual interface
+    // =========================================================================
+    class mem_driver extends base_driver #(mem_item, virtual mem_interface);
+
         `uvm_component_utils(mem_driver)
 
-        virtual mem_interface vif;
-        mem_item drv_item;
-        
-        //Overriding the constructor with the child class
         function new (string name = "mem_driver", uvm_component parent = null);
             super.new(name, parent);
-        endfunction: new
-
-        //Run phase
-        virtual task run_phase(uvm_phase phase);
-            super.run_phase(phase);
-            vif.initialize();
-            forever
-            begin:drive
-                seq_item_port.get_next_item(drv_item);
-                    vif.drv2intf(drv_item);
-                    `uvm_info("DRV",drv_item.convert2str(),UVM_DEBUG)
-                seq_item_port.item_done();
-            end:drive
-        endtask: run_phase
+        endfunction:new
 
     endclass:mem_driver
 
-endpackage: mem_driver_pkg
+endpackage:mem_driver_pkg

@@ -9,12 +9,13 @@
 //   - Perform shift operations (SLL, SRL, SRA)
 //   - Perform comparison operations (SLT, SLTU)
 //   - Perform multiplication (MUL, MULH, MULHSU, MULHU)
-//   - Perform division and remainder (DIV, DIVU, REM, REMU)
 //   - Evaluate branch conditions
+//
+// Division (DIV, DIVU, REM, REMU) is multi-cycle: the divider sits in the
+// execute stage, which selects its result.
 //
 // Instantiates:
 //   - wallace_tree: fast multiplication tree
-//   - non_restoring_divider: division hardware
 // =============================================================================
 import shared_pkg::*;
 
@@ -40,10 +41,7 @@ module risc_alu
 
     // ─── Internal wires – arithmetic units ───────────────────────────────────
     logic signed [2*DATA_WIDTH - 1:0] MulOutput;  // Multiplication result
-    logic signed [DATA_WIDTH-1:0] DivOutput;      // Division quotient
-    logic signed [DATA_WIDTH-1:0] RemOutput;      // Division remainder
     mul_sel_t mul_sel;                             // Multiplication select
-    logic Divsign;                                 // Division sign flag
 
     // ─── Multiplication operand selection ───────────────────────────────────
     always_comb 
@@ -58,30 +56,12 @@ module risc_alu
             mul_sel = error;
     end
 
-    // ─── Division sign selection ─────────────────────────────────────────────
-    always_comb 
-    begin
-        if((alu_control == REM) || (alu_control == DIV))
-            Divsign = 1;                           // Signed division
-        else
-            Divsign = 0;                           // Unsigned division
-    end
-
     // ─── risc_alu: multiplication unit ───────────────────────────────────────
     wallace_tree #(.WIDTH(DATA_WIDTH)) mul (
         .A(SrcA),
         .B(SrcB),
         .sel(mul_sel),
         .P(MulOutput)
-    );
-
-    // ─── risc_alu: division unit ─────────────────────────────────────────────
-    non_restoring_divider #(.WIDTH(DATA_WIDTH)) div (
-        .dividend(SrcA),
-        .divisor(SrcB),
-        .sign(Divsign),
-        .quotient(DivOutput),
-        .remainder(RemOutput)
     );
 
     // ─── ALU operation execution ────────────────────────────────────────────
@@ -118,11 +98,6 @@ module risc_alu
             MULH    :   Y = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
             MULHSU  :   Y = MulOutput[2*DATA_WIDTH-1:DATA_WIDTH];
             MULHU   :   Y = $unsigned(MulOutput[2*DATA_WIDTH-1:DATA_WIDTH]);
-            // ── Divide ────────────────────────────────────────────────────────
-            DIV     :   Y = DivOutput;
-            REM     :   Y = RemOutput;
-            DIVU    :   Y = $unsigned(DivOutput);
-            REMU    :   Y = $unsigned(RemOutput);
         endcase 
     end
 

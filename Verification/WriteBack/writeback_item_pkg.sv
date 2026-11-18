@@ -11,10 +11,8 @@ package writeback_item_pkg;
 
     class writeback_item extends uvm_sequence_item;
         
-        //Register the class in the factory
         `uvm_object_utils(writeback_item)
 
-        //Overriding the build in constructor with the child class
         function new (string name = "writeback_item");
             super.new(name);
         endfunction: new
@@ -60,7 +58,7 @@ package writeback_item_pkg;
 
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a writeback_item")
+                `uvm_fatal(get_type_name(), "rhs is not a writeback_item")
                 return 1'b0;
             end
 
@@ -70,9 +68,9 @@ package writeback_item_pkg;
                 && (this.PCF    === other.PCF);
 
             if(this.ResultW !== other.ResultW)
-                `uvm_info("ResultW Mismatch", $sformatf("Expected: %0h Actual: %0h", this.ResultW, other.ResultW), UVM_LOW)
+                `uvm_info(get_type_name(), {"ResultW mismatch: ", $sformatf("Expected: %0h Actual: %0h", this.ResultW, other.ResultW)}, UVM_LOW)
             if(this.PCF !== other.PCF)
-                `uvm_info("PCF Mismatch", $sformatf("Expected: %0h Actual: %0h", this.PCF, other.PCF), UVM_LOW)
+                `uvm_info(get_type_name(), {"PCF mismatch: ", $sformatf("Expected: %0h Actual: %0h", this.PCF, other.PCF)}, UVM_LOW)
 
             return ok;
         endfunction:do_compare
@@ -81,7 +79,7 @@ package writeback_item_pkg;
             writeback_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a writeback_item")
+                `uvm_fatal(get_type_name(), "rhs is not a writeback_item")
                 return;
             end
             super.do_copy(rhs);
@@ -106,7 +104,7 @@ package writeback_item_pkg;
             writeback_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a writeback_item")
+                `uvm_fatal(get_type_name(), "rhs is not a writeback_item")
                 return;
             end
             this.rst       = other.rst;

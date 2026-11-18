@@ -5,8 +5,8 @@
 //
 // Responsibilities:
 //   - Detect load-use hazards (stall F/D, bubble into EX)
-//   - Hold an FP instruction in EX until the FPU is done (stall F/D/EX,
-//     bubble into MEM)
+//   - Hold an FP instruction (or a divide, folded into FPUValidE at the
+//     top) in EX until its unit is done (stall F/D/EX, bubble into MEM)
 //   - Freeze every stage while either cache misses
 //   - Generate forwarding selects for GPR operands (MEM before WB)
 //   - Generate forwarding selects for FPR operands (f0 included)
@@ -53,7 +53,7 @@ module hazard_unit
     input   logic FPURegWriteW,      // FPR write enable (writeback)
 
     // ─── FPU status ───────────────────────────────────────────────────────────
-    input   logic FPUValidE,         // FP instruction in EX
+    input   logic FPUValidE,         // FP instruction (or waiting divide) in EX
     input   logic FPUDoneE,          // FPU result valid this cycle
 
     // ─── Cache status ───────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ module hazard_unit
     // ─── FPU busy hazard detection ───────────────────────────────────────────
     always_comb
     begin
-        FPUStall = FPUValidE && !FPUDoneE;    // FP instruction waits in EX for its result
+        FPUStall = FPUValidE && !FPUDoneE;    // FP op or divide waits in EX for its result
         MemStall = !ICacheHit || !DCacheHit;  // Any miss freezes the whole pipeline
         Redirect = PCSrcE || TrapIsSet;
     end

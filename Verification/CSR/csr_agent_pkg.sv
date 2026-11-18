@@ -1,48 +1,31 @@
+// =============================================================================
+// csr_agent_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR file agent: driver and sequencer when active, monitor always.
+//
+// All behaviour is inherited from tb_base_pkg::base_agent.
+// =============================================================================
 package csr_agent_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-    
+    import tb_base_pkg::*;
     import csr_driver_pkg::*;
     import csr_monitor_pkg::*;
     import csr_config_pkg::*;
     import csr_item_pkg::*;
 
-    class csr_agent extends uvm_agent;
+    // =========================================================================
+    // csr_agent: CSR file driver, sequencer and monitor
+    // =========================================================================
+    class csr_agent extends base_agent #(csr_item, csr_driver, csr_monitor, csr_config);
 
         `uvm_component_utils(csr_agent)
 
         function new (string name = "csr_agent", uvm_component parent = null);
-            super.new(name,parent);
+            super.new(name, parent);
         endfunction:new
-
-        csr_driver drv;
-        csr_monitor mon;
-        uvm_sequencer #(csr_item) seq;
-        csr_config configuration;
-
-        virtual function void build_phase (uvm_phase phase);
-            super.build_phase(phase);
-            if(!uvm_config_db #(csr_config)::get(this,"","CONFG",configuration))
-                `uvm_error("AGT","CSR agent couldn't receive configuration object")
-            if(configuration.enable == UVM_ACTIVE)
-            begin
-                drv = csr_driver::type_id::create("drv",this);
-                seq = uvm_sequencer #(csr_item)::type_id::create("seq",this);
-            end
-            mon = csr_monitor::type_id::create("mon",this);
-        endfunction:build_phase
-
-        virtual function void connect_phase (uvm_phase phase);
-            super.connect_phase(phase);
-            if(configuration.enable == UVM_ACTIVE)
-            begin
-                drv.vif = configuration.vif;
-                drv.seq_item_port.connect(seq.seq_item_export);
-            end
-            mon.vif = configuration.vif;
-        endfunction:connect_phase
 
     endclass:csr_agent
 
-endpackage: csr_agent_pkg
+endpackage:csr_agent_pkg

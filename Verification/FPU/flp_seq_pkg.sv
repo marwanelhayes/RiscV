@@ -1,21 +1,33 @@
+// =============================================================================
+// flp_seq_pkg.sv
+// -----------------------------------------------------------------------------
+// FPU sequences.
+//
+// flp_seq: random operations (1000000 items, +FLP_ITEMS=<n> for shorter runs).
+// A share of the operands is replaced with IEEE corner values, near-equal
+// pairs and binade-edge pairs, which uniform random bits rarely produce.
+// The item loop comes from tb_base_pkg::base_seq.
+// =============================================================================
 package flp_seq_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
+    import tb_base_pkg::*;
     import flp_item_pkg::*;
 
-    class flp_seq extends uvm_sequence #(flp_item);
+    // =========================================================================
+    // flp_seq: random FPU operations with corner-case operands
+    // =========================================================================
+    class flp_seq extends base_seq #(flp_item);
 
-        //Register the class to the factory
         `uvm_object_utils(flp_seq)
 
-        //Overriding the constructor with the child class
         function new (string name = "flp_seq");
             super.new(name);
-        endfunction: new
-
-        flp_item item;
+            num_items = 1_000_000;
+            void'($value$plusargs("FLP_ITEMS=%d", num_items));   // shorter runs for debugging
+        endfunction:new
 
         // A random IEEE corner value: signed zeros, infinities, quiet and
         // signaling NaNs, subnormals, extreme normals, small integers
@@ -41,38 +53,28 @@ package flp_seq_pkg;
             endcase
         endfunction:corner_value
 
-        //Overriding the body task
-        virtual task body();
+        virtual function bit randomize_item ();
+            if(!item.randomize())
+                return 0;
+            // Uniform random bits rarely hit the IEEE corner cases, so a
+            // share of the operands is drawn from them on purpose.
+            if($urandom_range(0, 99) < 30) item.InA = corner_value();
+            if($urandom_range(0, 99) < 30) item.InB = corner_value();
+            if($urandom_range(0, 99) < 10) item.InB = item.InA ^ $urandom_range(0, 3);   // near-equal
+            // Binade edge (D33): a power of two minus/plus a much smaller
+            // operand (exponent gap 20..30). An effective subtraction then
+            // renormalises one bit left, so the aligned guard/round bits decide
+            // the rounding.
+            if($urandom_range(0, 99) < 5)
+            begin
+                int unsigned e = $urandom_range(40, 220);
+                item.InA = {1'($urandom), 8'(e), 23'h0};
+                item.InB = {1'($urandom), 8'(e - $urandom_range(20, 30)), 23'($urandom)};
+                if($urandom_range(0, 1)) {item.InA, item.InB} = {item.InB, item.InA};
+            end
+            return 1;
+        endfunction:randomize_item
 
-            int unsigned items = 1_000_000;
-            void'($value$plusargs("FLP_ITEMS=%d", items));   // shorter runs for debugging
-            item = flp_item::type_id::create("item");
-            repeat(items)
-            begin: main_sequence
-                start_item(item);
-                    assert(item.randomize());
-                    // Uniform random bits rarely hit the IEEE corner cases, so a
-                    // share of the operands is drawn from them on purpose.
-                    if($urandom_range(0, 99) < 30) item.InA = corner_value();
-                    if($urandom_range(0, 99) < 30) item.InB = corner_value();
-                    if($urandom_range(0, 99) < 10) item.InB = item.InA ^ $urandom_range(0, 3);   // near-equal
-                    // Binade edge (D33): a power of two minus/plus a much smaller
-                    // operand (exponent gap 20..30). An effective subtraction then
-                    // renormalises one bit left, so the aligned guard/round bits decide
-                    // the rounding.
-                    if($urandom_range(0, 99) < 5)
-                    begin
-                        int unsigned e = $urandom_range(40, 220);
-                        item.InA = {1'($urandom), 8'(e), 23'h0};
-                        item.InB = {1'($urandom), 8'(e - $urandom_range(20, 30)), 23'($urandom)};
-                        if($urandom_range(0, 1)) {item.InA, item.InB} = {item.InB, item.InA};
-                    end
-                    `uvm_info("SEQ",item.convert2str(),UVM_DEBUG)
-                finish_item(item);
-            end: main_sequence
+    endclass:flp_seq
 
-        endtask: body
-        
-    endclass: flp_seq
-
-endpackage: flp_seq_pkg
+endpackage:flp_seq_pkg

@@ -12,7 +12,6 @@ package fetch_subscriber_pkg;
 
     class fetch_subscriber extends uvm_subscriber #(fetch_item);
 
-        //Register the class to the factory
         `uvm_component_utils(fetch_subscriber)
 
 

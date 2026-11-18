@@ -1,3 +1,9 @@
+// =============================================================================
+// hazard_interface.sv
+// -----------------------------------------------------------------------------
+// Hazard unit interface: DUT signals, clocking block, and the tasks used by
+// the base driver/monitor (initialize, drv2intf, intf2mon).
+// =============================================================================
 import shared_pkg::*;
 import hazard_item_pkg::*;
 interface hazard_interface  

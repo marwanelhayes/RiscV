@@ -11,10 +11,8 @@ package hazard_item_pkg;
 
     class hazard_item extends uvm_sequence_item;
         
-        //Register the class in the factory
         `uvm_object_utils(hazard_item)
 
-        //Overriding the build in constructor with the child class
         function new (string name = "hazard_item");
             super.new(name);
         endfunction: new
@@ -84,7 +82,7 @@ package hazard_item_pkg;
 
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a hazard_item")
+                `uvm_fatal(get_type_name(), "rhs is not a hazard_item")
                 return 1'b0;
             end
 
@@ -103,29 +101,29 @@ package hazard_item_pkg;
                 && (this.FlushD            === other.FlushD)
                 && (this.FlushM            === other.FlushM);
             if(this.ForwardAE !== other.ForwardAE)
-                `uvm_info("ForwardAE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.ForwardAE, this.ForwardAE), UVM_LOW)
+                `uvm_info(get_type_name(), {"ForwardAE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.ForwardAE, this.ForwardAE)}, UVM_LOW)
             if(this.ForwardBE !== other.ForwardBE)
-                `uvm_info("ForwardBE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.ForwardBE, this.ForwardBE), UVM_LOW)
+                `uvm_info(get_type_name(), {"ForwardBE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.ForwardBE, this.ForwardBE)}, UVM_LOW)
             if(this.ForwardFloatingAE !== other.ForwardFloatingAE)
-                `uvm_info("ForwardFloatingAE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.ForwardFloatingAE, this.ForwardFloatingAE), UVM_LOW)
+                `uvm_info(get_type_name(), {"ForwardFloatingAE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.ForwardFloatingAE, this.ForwardFloatingAE)}, UVM_LOW)
             if(this.ForwardFloatingBE !== other.ForwardFloatingBE)
-                `uvm_info("ForwardFloatingBE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.ForwardFloatingBE, this.ForwardFloatingBE), UVM_LOW)
+                `uvm_info(get_type_name(), {"ForwardFloatingBE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.ForwardFloatingBE, this.ForwardFloatingBE)}, UVM_LOW)
             if(this.StallD !== other.StallD)
-                `uvm_info("StallD Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallD, this.StallD), UVM_LOW)
+                `uvm_info(get_type_name(), {"StallD mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.StallD, this.StallD)}, UVM_LOW)
             if(this.StallF !== other.StallF)
-                `uvm_info("StallF Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallF, this.StallF), UVM_LOW)
+                `uvm_info(get_type_name(), {"StallF mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.StallF, this.StallF)}, UVM_LOW)
             if(this.FlushE !== other.FlushE)
-                `uvm_info("FlushE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushE, this.FlushE), UVM_LOW)
+                `uvm_info(get_type_name(), {"FlushE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.FlushE, this.FlushE)}, UVM_LOW)
             if(this.FlushD !== other.FlushD)
-                `uvm_info("FlushD Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushD, this.FlushD), UVM_LOW)
+                `uvm_info(get_type_name(), {"FlushD mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.FlushD, this.FlushD)}, UVM_LOW)
             if(this.StallE !== other.StallE)
-                `uvm_info("StallE Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallE, this.StallE), UVM_LOW)
+                `uvm_info(get_type_name(), {"StallE mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.StallE, this.StallE)}, UVM_LOW)
             if(this.StallM !== other.StallM)
-                `uvm_info("StallM Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallM, this.StallM), UVM_LOW)
+                `uvm_info(get_type_name(), {"StallM mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.StallM, this.StallM)}, UVM_LOW)
             if(this.StallW !== other.StallW)
-                `uvm_info("StallW Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.StallW, this.StallW), UVM_LOW)
+                `uvm_info(get_type_name(), {"StallW mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.StallW, this.StallW)}, UVM_LOW)
             if(this.FlushM !== other.FlushM)
-                `uvm_info("FlushM Mismatch",$sformatf("Expected: %0h, Actual: %0h", other.FlushM, this.FlushM), UVM_LOW)
+                `uvm_info(get_type_name(), {"FlushM mismatch: ", $sformatf("Expected: %0h, Actual: %0h", other.FlushM, this.FlushM)}, UVM_LOW)
             return ok;
         endfunction:do_compare
 
@@ -133,7 +131,7 @@ package hazard_item_pkg;
         virtual function void do_copy (uvm_object rhs);
             hazard_item other;
             if(!$cast(other, rhs)) begin
-                `uvm_fatal("do_copy","rhs is not a hazard_item")
+                `uvm_fatal(get_type_name(), "rhs is not a hazard_item")
                 return;
             end
             
@@ -179,7 +177,7 @@ package hazard_item_pkg;
         virtual function void copy_inputs (uvm_object rhs);
             hazard_item other;
             if(!$cast(other, rhs)) begin
-                `uvm_fatal("do_copy","rhs is not a hazard_item")
+                `uvm_fatal(get_type_name(), "rhs is not a hazard_item")
                 return;
             end
             

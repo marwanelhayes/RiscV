@@ -1,3 +1,12 @@
+// =============================================================================
+// execute_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Execute stage inside the full core (risc_top).
+//
+// Bound into the Execute stage instance; copies its ports onto a execute_interface
+// and publishes it in uvm_config_db, so the Execute stage environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

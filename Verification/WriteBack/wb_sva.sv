@@ -18,12 +18,17 @@ module wb_sva (
 
     a_trap: assert property (TrapIsSet |=> PCF == $past(CsrOutPC))
         else uvm_report_error("SVA_WB", "PC did not take the trap/mret target");
+    a_trap_cover: cover property (TrapIsSet |=> PCF == $past(CsrOutPC));
     a_branch: assert property (!TrapIsSet && PCSrcE |=> PCF == $past(PCBranchE))
         else uvm_report_error("SVA_WB", "PC did not take the branch target");
+    a_branch_cover: cover property (!TrapIsSet && PCSrcE |=> PCF == $past(PCBranchE));
     a_stall: assert property (!TrapIsSet && !PCSrcE && StallF |=> $stable(PCF))
         else uvm_report_error("SVA_WB", "PC changed while StallF");
+    a_stall_cover: cover property (!TrapIsSet && !PCSrcE && StallF |=> $stable(PCF));
     a_seq: assert property (!TrapIsSet && !PCSrcE && !StallF |=> PCF == $past(PCPlus4F))
         else uvm_report_error("SVA_WB", "PC did not advance to PC+4");
+    a_seq_cover: cover property (!TrapIsSet && !PCSrcE && !StallF |=> PCF == $past(PCPlus4F));
     a_known: assert property (!$isunknown(PCF))
         else uvm_report_error("SVA_WB", "X on PCF");
+    a_known_cover: cover property (!$isunknown(PCF));
 endmodule

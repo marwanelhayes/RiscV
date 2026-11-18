@@ -73,6 +73,7 @@ module cache_sva #(
     endproperty
     a_hit_onehot: assert property(p_hit_onehot)
         else uvm_report_error("SVA_CACHE", $sformatf("hit_array not one-hot (%b) - aliasing tags", hit_array));
+    a_hit_onehot_cover: cover property (p_hit_onehot);
 
     // ── A2: no two valid ways in any set share a tag (no duplicate lines) ────
     always @(posedge clk)
@@ -95,6 +96,7 @@ module cache_sva #(
     endproperty
     a_idle_hit_matches_tags: assert property(p_idle_hit_matches_tags)
         else uvm_report_error("SVA_CACHE", "CacheHit does not match hit_array");
+    a_idle_hit_matches_tags_cover: cover property (p_idle_hit_matches_tags);
 
     // ── A4: replacement policy (set-associative only) ────────────────────────
     //     The victim must be an invalid way whenever one exists; if every way
@@ -116,6 +118,12 @@ module cache_sva #(
                         ref_age[s][j]++;
                 ref_age[s][w] = 0;
             endfunction
+
+            // A2 cover: a set holds two valid lines, so the duplicate-tag check
+            // above compares real lines (it is vacuous while every set has one)
+            always @(posedge clk)
+                if(rst)
+                    a_no_dup_tag_cover: cover(valid_reg[CpuIdx][0] && valid_reg[CpuIdx][1]);
 
             function automatic int ref_lru(int s);
                 ref_lru = 0;
@@ -141,13 +149,19 @@ module cache_sva #(
                     if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !(|hit_array))
                     begin
                         if(any_invalid(CpuIdx))
-                            assert(!valid_reg[CpuIdx][victim_way])
+                        begin
+                            a_victim_invalid: assert(!valid_reg[CpuIdx][victim_way])
                                 else uvm_report_error("SVA_CACHE", $sformatf("victim way %0d valid while an invalid way exists (set %0d)",
                                             victim_way, CpuIdx));
+                            a_victim_invalid_cover: cover(!valid_reg[CpuIdx][victim_way]);
+                        end
                         else
-                            assert(victim_way == ref_lru(CpuIdx))
+                        begin
+                            a_victim_lru: assert(victim_way == ref_lru(CpuIdx))
                                 else uvm_report_error("SVA_CACHE", $sformatf("all ways valid but victim %0d != true-LRU way %0d (set %0d)",
                                             victim_way, ref_lru(CpuIdx), CpuIdx));
+                            a_victim_lru_cover: cover(victim_way == ref_lru(CpuIdx));
+                        end
                     end
 
                     if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && (|hit_array))
@@ -166,17 +180,24 @@ module cache_sva #(
 
     a_miss_starts: assert property ((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE)
         else uvm_report_error("SVA_CACHE", "miss did not start a refill the next cycle");
+    a_miss_starts_cover: cover property ((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE);
     a_busy_hit_is_rt: assert property ((CPUReadEn || CPUWriteEn) && CacheHit && (state != AXI_IDLE) |-> read_through_hit_reg)
         else uvm_report_error("SVA_CACHE", "hit reported while busy outside the read-through pulse");
+    a_busy_hit_is_rt_cover: cover property ((CPUReadEn || CPUWriteEn) && CacheHit && (state != AXI_IDLE) |-> read_through_hit_reg);
     a_rt_pulse: assert property (read_through_hit_reg |=> !read_through_hit_reg)
         else uvm_report_error("SVA_CACHE", "read-through hit longer than one cycle");
+    a_rt_pulse_cover: cover property (read_through_hit_reg |=> !read_through_hit_reg);
     a_rt_data: assert property (read_through_hit && CPUReadEn && !CPUWriteEn |=> read_through_hit_reg && CPUReadData == $past(MRRData))
         else uvm_report_error("SVA_CACHE", "read-through did not return the arriving beat the next cycle");
+    a_rt_data_cover: cover property (read_through_hit && CPUReadEn && !CPUWriteEn |=> read_through_hit_reg && CPUReadData == $past(MRRData));
     a_refill_ends: assert property ((state == AXI_RD_DATA) && MRRValid && MRReady && MRRLast |=> state == AXI_IDLE)
         else uvm_report_error("SVA_CACHE", "last refill beat did not return the FSM to IDLE");
+    a_refill_ends_cover: cover property ((state == AXI_RD_DATA) && MRRValid && MRReady && MRRLast |=> state == AXI_IDLE);
     a_line_aligned: assert property ($rose(MARValid) |-> MARAddr[OFF_W-1:0] == '0)
         else uvm_report_error("SVA_CACHE", "refill burst address not line aligned");
+    a_line_aligned_cover: cover property ($rose(MARValid) |-> MARAddr[OFF_W-1:0] == '0);
     a_known: assert property (!$isunknown({state, CacheHit}))
         else uvm_report_error("SVA_CACHE", "X on state/CacheHit");
+    a_known_cover: cover property (!$isunknown({state, CacheHit}));
 
 endmodule

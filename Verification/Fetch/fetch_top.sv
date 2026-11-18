@@ -3,7 +3,10 @@
 // -----------------------------------------------------------------------------
 // Fetch stage top-level testbench module for UVM verification.
 // =============================================================================
-module fetch_top;
+module fetch_top
+#(
+    parameter string PROGRAM_DIR = ""   // program image directory: vsim -gPROGRAM_DIR=<dir>
+);
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
@@ -62,7 +65,11 @@ module fetch_top;
         .MRRValid(axi_intf.MRRValid)
     );
 
-    risc_instruction_memory #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) InstrMem
+    // Published to the TB before any initial block runs (variable initializer)
+    bit program_dir_set = tb_base_pkg::set_program_dir(PROGRAM_DIR);
+
+    risc_instruction_memory #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH),
+                              .AXI_SIZE(CACHE_AXI_SIZE), .INIT_FILE({PROGRAM_DIR, "/binary1.txt"})) InstrMem
     (
         .clk(intf.clk),
         .rst(intf.rst),

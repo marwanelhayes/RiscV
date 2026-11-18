@@ -1,22 +1,27 @@
+// =============================================================================
+// execute_config_pkg.sv
+// -----------------------------------------------------------------------------
+// Execute stage environment configuration: agent mode and virtual interface.
+//
+// All behaviour is inherited from tb_base_pkg::base_config.
+// =============================================================================
 package execute_config_pkg;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
 
-    class execute_config extends uvm_object;
+    // =========================================================================
+    // execute_config: agent mode and execute_interface handle
+    // =========================================================================
+    class execute_config extends base_config #(virtual execute_interface);
 
-        //Register the class into the factory
         `uvm_object_utils(execute_config)
 
-        //Override the constructor function
         function new (string name = "execute_config");
             super.new(name);
         endfunction:new
 
-        uvm_active_passive_enum enable;
-        virtual execute_interface vif;
-
     endclass:execute_config
-
 
 endpackage:execute_config_pkg

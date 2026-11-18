@@ -1,22 +1,27 @@
+// =============================================================================
+// decode_config_pkg.sv
+// -----------------------------------------------------------------------------
+// Decode stage environment configuration: agent mode and virtual interface.
+//
+// All behaviour is inherited from tb_base_pkg::base_config.
+// =============================================================================
 package decode_config_pkg;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
 
-    class decode_config extends uvm_object;
+    // =========================================================================
+    // decode_config: agent mode and decode_interface handle
+    // =========================================================================
+    class decode_config extends base_config #(virtual decode_interface);
 
-        //Register the class into the factory
-        `uvm_object_param_utils(decode_config)
+        `uvm_object_utils(decode_config)
 
-        //Override the constructor function
         function new (string name = "decode_config");
             super.new(name);
         endfunction:new
 
-        uvm_active_passive_enum enable;
-        virtual decode_interface vif;
-
     endclass:decode_config
-
 
 endpackage:decode_config_pkg

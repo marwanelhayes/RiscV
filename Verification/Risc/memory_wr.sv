@@ -1,3 +1,12 @@
+// =============================================================================
+// memory_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Memory stage inside the full core (risc_top).
+//
+// Bound into the Memory stage instance; copies its ports onto a mem_interface
+// and publishes it in uvm_config_db, so the Memory stage environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

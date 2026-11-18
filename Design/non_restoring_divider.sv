@@ -1,93 +1,117 @@
 // =============================================================================
 // non_restoring_divider.sv
 // -----------------------------------------------------------------------------
-// Non-restoring divider for integer division in ALU.
+// Iterative non-restoring divider for the integer DIV/DIVU/REM/REMU (+W) ops.
+//
+// Responsibilities:
+//   - Latch the operands on start (when idle), as magnitudes for a signed op
+//   - Retire two quotient bits per cycle: WIDTH/2 busy cycles, then done
+//   - Restore the remainder and apply the result signs on the outputs
+//   - Keep done and the result while hold is high (the consumer is stalled)
+//
+// Divide by zero (quotient all ones, remainder = dividend) and signed
+// overflow (quotient = dividend, remainder 0) fall out of the iteration.
 // =============================================================================
-module non_restoring_divider #(parameter WIDTH = 32) 
+module non_restoring_divider
+#(
+    parameter int WIDTH = 32
+)
 (
-    input   logic signed [WIDTH-1:0] dividend,
-    input   logic signed [WIDTH-1:0] divisor,
-    input   logic sign,
-    output  logic signed [WIDTH-1:0] quotient,
-    output  logic signed [WIDTH-1:0] remainder
+    // ─── Clock and reset ───────────────────────────────────────────────────────
+    input  logic clk,
+    input  logic rst,
+
+    // ─── Handshake ────────────────────────────────────────────────────────────
+    input  logic start,                    // Divide waiting in EX (taken when idle)
+    input  logic hold,                     // Consumer stalled: keep done and the result
+    output logic done,                     // Result valid until the consumer advances
+
+    // ─── Operands ─────────────────────────────────────────────────────────────
+    input  logic sign,                     // Signed division
+    input  logic [WIDTH-1:0] dividend,
+    input  logic [WIDTH-1:0] divisor,
+
+    // ─── Results ──────────────────────────────────────────────────────────────
+    output logic [WIDTH-1:0] quotient,
+    output logic [WIDTH-1:0] remainder
 );
 
-    logic signed [WIDTH:0] A;
-    logic [WIDTH-1:0] Q;
-    logic [WIDTH-1:0] M;
-    logic NegativeQuotient;
-    int i;
+    localparam int STEPS = WIDTH / 2;      // Cycles of two quotient bits each
 
-    assign NegativeQuotient = dividend[WIDTH-1] ^ divisor[WIDTH-1];
+    // ─── Internal registers – iteration state ─────────────────────────────────
+    logic signed [WIDTH:0] A;              // Partial remainder
+    logic [WIDTH-1:0] Q;                   // Dividend bits, then quotient bits
+    logic [WIDTH-1:0] M;                   // Divisor magnitude
+    logic [$clog2(STEPS+1)-1:0] Count;     // Busy cycles left
+    logic busy;
+    logic NegQ, NegR;                      // Negate quotient / remainder
 
-    always_comb 
+    // ─── Internal wires ───────────────────────────────────────────────────────
+    logic signed [WIDTH:0] ANext, R;
+    logic [WIDTH-1:0] QNext;
+
+    // Two non-restoring steps
+    always_comb
     begin
-        A = '0;
-        Q = '0;
-        M = '0;
-
-        if(sign)
+        ANext = A;
+        QNext = Q;
+        for(int i = 0; i < 2; i++)
         begin
-            Q = dividend[WIDTH-1] ? -dividend : dividend;
-            M = divisor[WIDTH-1] ? -divisor : divisor;
+            if(ANext[WIDTH])
+                ANext = {ANext[WIDTH-1:0], QNext[WIDTH-1]} + {1'b0, M};
+            else
+                ANext = {ANext[WIDTH-1:0], QNext[WIDTH-1]} - {1'b0, M};
+            QNext = {QNext[WIDTH-2:0], ~ANext[WIDTH]};
         end
-        else
+    end
+
+    always_ff @(posedge clk or negedge rst)
+    begin
+        if(!rst)
         begin
-            Q = dividend;
-            M = divisor;
+            A <= '0;
+            Q <= '0;
+            M <= '0;
+            Count <= '0;
+            busy <= 1'b0;
+            done <= 1'b0;
+            NegQ <= 1'b0;
+            NegR <= 1'b0;
         end
-
-        foreach(dividend[i])
-        begin: non_restoring_division
-            if(A[WIDTH])
+        else if(busy)
+        begin
+            A <= ANext;
+            Q <= QNext;
+            Count <= Count - 1'b1;
+            if(Count == 1)
             begin
-                A = {A[WIDTH-1:0], Q[WIDTH-1]};
-                A = A + M; 
+                busy <= 1'b0;
+                done <= 1'b1;
             end
-            else
-            begin 
-                A = {A[WIDTH-1:0], Q[WIDTH-1]};
-                A = A - M;
-            end
-            Q = {Q[WIDTH-2:0], ~A[WIDTH]};
-        end: non_restoring_division
+        end
+        else if(done)
+        begin
+            if(!hold)
+                done <= 1'b0;              // Result consumed
+        end
+        else if(start)
+        begin
+            A <= '0;
+            Q <= (sign && dividend[WIDTH-1]) ? -dividend : dividend;
+            M <= (sign && divisor[WIDTH-1]) ? -divisor : divisor;
+            NegQ <= sign && (dividend[WIDTH-1] ^ divisor[WIDTH-1]) && (divisor != '0);
+            NegR <= sign && dividend[WIDTH-1];
+            Count <= STEPS;
+            busy <= 1'b1;
+        end
+    end
 
-        if(A[WIDTH])
-        begin:restoration
-            A = A + M ;
-        end: restoration
-
-        if(divisor==0)
-        begin : DivByZero
-            if(sign)
-            begin
-                quotient = '1;
-                remainder = dividend;
-            end
-            else
-            begin
-                quotient = '1;
-                remainder = dividend;
-            end  
-        end : DivByZero
-        else if (sign && (dividend == {1'b1, {(WIDTH-1){1'b0}}}) && (divisor == -1)) 
-        begin : Overflow
-            quotient  = dividend; 
-            remainder = '0;
-        end : Overflow
-        else
-        begin: NormalCase
-            if (sign)
-            begin:SignCase
-                quotient = NegativeQuotient ? -Q : Q;
-                remainder = dividend[WIDTH-1]? -A : A;
-            end:SignCase
-            else
-            begin:UnsignedCase
-                quotient = Q;
-                remainder = A;
-            end:UnsignedCase
-        end: NormalCase
+    // ─── Results ──────────────────────────────────────────────────────────────
+    always_comb
+    begin
+        R = A[WIDTH] ? (A + {1'b0, M}) : A;   // Final restoration
+        quotient = NegQ ? -Q : Q;
+        remainder = NegR ? -R[WIDTH-1:0] : R[WIDTH-1:0];
     end
 
 endmodule

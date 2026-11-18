@@ -22,29 +22,25 @@
 package hazard_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import hazard_item_pkg::*;
 
-    class hazard_predictor extends uvm_subscriber #(hazard_item);
+    class hazard_predictor extends base_predictor #(hazard_item);
 
-        //Register the class to the factory
         `uvm_component_utils(hazard_predictor)
 
-        //Override the constructor function
         function new (string name = "hazard_predictor", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        // Expected-output broadcast port
-        uvm_analysis_port #(hazard_item) exp_port;
         hazard_item exp_clone , exp;
 
         logic LWStall, FPUStall, CacheStall, Redirect;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             exp = hazard_item::type_id::create("exp");
         endfunction:build_phase
 
@@ -103,7 +99,7 @@ package hazard_predictor_pkg;
             exp.copy_inputs(t);
             compute(t);
             if(!$cast(exp_clone, exp.clone()))
-                `uvm_fatal("HAZARD_PRED", "Failed to clone expected item - check for non-cloneable fields or type mismatches")
+                `uvm_fatal(get_type_name(), "Failed to clone expected item - check for non-cloneable fields or type mismatches")
             else
                 exp_port.write(exp_clone);
         endfunction:write

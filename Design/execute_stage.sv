@@ -6,6 +6,7 @@
 // Responsibilities:
 //   - Execute ALU operations (arithmetic, logical, shift, compare)
 //   - Execute floating-point operations via FPU
+//   - Run the multi-cycle divider (DIV/DIVU/REM/REMU) and hold EX while it works
 //   - Handle branch evaluation and jump targets
 //   - Perform data forwarding from later pipeline stages
 //   - Manage CSR read/write operations and take traps in the same cycle
@@ -15,6 +16,7 @@
 // Instantiates:
 //   - risc_alu: integer ALU
 //   - risc_fpu: floating-point unit
+//   - non_restoring_divider: iterative integer divider
 //   - risc_mux2, risc_mux3, risc_mux4: operand selection muxes
 //   - csr_file: control and status register file
 // =============================================================================
@@ -135,7 +137,8 @@ module execute_stage
     output logic FPURegWriteM,                     // FPR write enable
     output move_operation_t MoveOperationM,         // FPU move operation
     output logic FPUBusyE,                          // FPU busy flag
-    output logic FPUDoneE                           // FPU result valid this cycle
+    output logic FPUDoneE,                          // FPU result valid this cycle
+    output logic DivWaitE                           // Divide in EX, result not ready
 );
 
     localparam bit IS_RV64 = (DATA_WIDTH == 64);
@@ -161,6 +164,9 @@ module execute_stage
     logic [DATA_WIDTH-1:0] CsrReadE;
     logic [DATA_WIDTH-1:0] PCE;
     logic [DATA_WIDTH-1:0] AddressE;                  // Load/store address
+    logic DivE;                                       // Valid divide/remainder in EX
+    logic DivDoneE;                                   // Divider result valid
+    logic [DATA_WIDTH-1:0] QuotientE, RemainderE;     // Divider results
     round_mode_t DynRoundMode,ActualRoundMode;
 
     risc_alu #(.DATA_WIDTH(DATA_WIDTH)) ALU
@@ -200,6 +206,23 @@ module execute_stage
         .RegWrite(FPURegWriteE),
         .MoveOperation(MoveOperationE),
         .MoveOperationOut()
+    );
+
+    // The divider is a blocking EX-stage unit like the FPU: a divide stays in
+    // EX (the hazard unit stalls it) until done, then moves on with its result.
+    // It takes its operands in the first cycle, while forwarding is current.
+    non_restoring_divider #(.WIDTH(DATA_WIDTH)) DIVIDER
+    (
+        .clk(clk),
+        .rst(rst),
+        .start(DivE),
+        .hold(StallE),                // A freeze in the done cycle keeps the result
+        .done(DivDoneE),
+        .sign(ALUControlE inside {DIV, REM}),
+        .dividend(SrcAALUE),
+        .divisor(SrcBALUE),
+        .quotient(QuotientE),
+        .remainder(RemainderE)
     );
 
 
@@ -395,9 +418,15 @@ module execute_stage
     // the ALU result field, so forwarding and write-back need no FPU path.
     always_comb
     begin
+        DivE = ValidE && (ALUControlE inside {DIV, DIVU, REM, REMU});
+        DivWaitE = DivE && !DivDoneE;
         ResultE = ALUOutE[DATA_WIDTH-1:0];
+        if(ALUControlE inside {DIV, DIVU})
+            ResultE = QuotientE;
+        else if(ALUControlE inside {REM, REMU})
+            ResultE = RemainderE;
         if(IS_RV64 && WordOpE)
-            ResultE = DATA_WIDTH'(signed'(ALUOutE[31:0]));
+            ResultE = DATA_WIDTH'(signed'(ResultE[31:0]));
         if(MoveOperationE == FPUToReg)
             ResultE = DATA_WIDTH'(signed'(FPUResultE[31:0]));
         AddressE = ALUOutE[DATA_WIDTH-1:0];

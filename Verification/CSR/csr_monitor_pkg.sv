@@ -1,37 +1,28 @@
+// =============================================================================
+// csr_monitor_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR file monitor: samples csr_interface and publishes each csr_item.
+//
+// All behaviour is inherited from tb_base_pkg::base_monitor.
+// =============================================================================
 package csr_monitor_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
     import csr_item_pkg::*;
 
-    class csr_monitor extends uvm_monitor;
+    // =========================================================================
+    // csr_monitor: sample the CSR file and publish a copy of each item
+    // =========================================================================
+    class csr_monitor extends base_monitor #(csr_item, virtual csr_interface);
 
         `uvm_component_utils(csr_monitor)
 
         function new (string name = "csr_monitor", uvm_component parent = null);
-            super.new(name,parent);
+            super.new(name, parent);
         endfunction:new
 
-        uvm_analysis_port #(csr_item) mon_port;
-        csr_item mon_item, cloned_item;
-        virtual csr_interface vif;
-
-        virtual function void build_phase (uvm_phase phase);
-            super.build_phase(phase);
-            mon_port = new("mon_port",this);
-            mon_item = csr_item::type_id::create("mon_item");
-        endfunction:build_phase
-
-        virtual task run_phase (uvm_phase phase);
-            super.run_phase(phase);
-            forever
-            begin:monitoring
-                vif.intf2mon(mon_item);
-                if(!$cast(cloned_item, mon_item.clone()))
-                    `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
-                mon_port.write(cloned_item);
-                `uvm_info("MON",cloned_item.convert2str(),UVM_HIGH)
-            end:monitoring
-        endtask:run_phase
     endclass:csr_monitor
+
 endpackage:csr_monitor_pkg

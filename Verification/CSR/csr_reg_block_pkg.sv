@@ -14,7 +14,7 @@ package csr_reg_block_pkg;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
-    `include "../../Design/csr_defs.sv"
+    `include "csr_defs.sv"     // Design/ is on the include path (compile.do +incdir)
 
     class csr_reg extends uvm_reg;
         `uvm_object_utils(csr_reg)

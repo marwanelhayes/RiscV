@@ -1,9 +1,20 @@
+// =============================================================================
+// mem_env_pkg.sv
+// -----------------------------------------------------------------------------
+// Memory stage environment.
+//
+// Agent, coverage subscriber, predictor and scoreboard come from
+// tb_base_pkg::base_env (monitor -> subscriber, predictor, scoreboard).
+//
+// The predictor is the flat-memory ISA model (mem_flat_predictor). Adds the
+// data-memory register model (RAL) and a checker that compares it with the DUT
+// data memory by backdoor.
+// =============================================================================
 package mem_env_pkg;
-    
-    //Importing uvm classes
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
+    import tb_base_pkg::*;
     import mem_agent_pkg::*;
     import mem_scoreboard_pkg::*;
     import mem_subscriber_pkg::*;
@@ -12,50 +23,29 @@ package mem_env_pkg;
     import mem_reg_block_pkg::*;
     import mem_ral_checker_pkg::*;
 
-    class mem_env extends uvm_env;
+    // =========================================================================
+    // mem_env: Memory stage agent, coverage, predictor and scoreboard
+    // =========================================================================
+    class mem_env extends base_env #(mem_config, mem_agent, mem_scoreboard, mem_subscriber, mem_flat_predictor);
 
-        //Register the class into the factory
         `uvm_component_utils(mem_env)
 
-        //Override the constructor function
         function new (string name = "mem_env", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
-        mem_agent agent;
-        mem_scoreboard scoreboard;
-        mem_subscriber  sub;
-        mem_flat_predictor predictor;
-        mem_config configuration;
         mem_reg_block   reg_block;
         mem_ral_checker memory_checker;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            if(! uvm_config_db #(mem_config)::get(this,"","CONFG",configuration))
-                `uvm_error("ENV","Environment couldn't receive configuration object")
-            uvm_config_db #(mem_config)::set(this,"agent","CONFG",configuration);
             reg_block = mem_reg_block::type_id::create("mem_reg_block");
             reg_block.build();
             reg_block.lock_model();
             uvm_config_db #(mem_reg_block)::set(this, "memory_checker", "REG_BLOCK", reg_block);
-            agent      = mem_agent     ::type_id::create("agent",this);
-            scoreboard = mem_scoreboard::type_id::create("scoreboard",this);
-            sub        = mem_subscriber::type_id::create("sub",this);
-            predictor  = mem_flat_predictor::type_id::create("predictor",this);
             memory_checker = mem_ral_checker::type_id::create("memory_checker",this);
         endfunction:build_phase
 
-        virtual function void connect_phase (uvm_phase phase);
-            super.connect_phase(phase);
-            // Monitor feeds the coverage subscriber, the predictor, and the
-            // actual-side FIFO of the scoreboard (Cookbook in-order pattern).
-            agent.mon.mon_port.connect(sub.analysis_export);
-            agent.mon.mon_port.connect(predictor.analysis_export);
-            agent.mon.mon_port.connect(scoreboard.actual_fifo.analysis_export);
-            // Predictor publishes expected transactions to the scoreboard.
-            predictor.exp_port.connect(scoreboard.expected_fifo.analysis_export);
-        endfunction:connect_phase
-
     endclass:mem_env
-endpackage:mem_env_pkg
+
+endpackage:mem_env_pkg

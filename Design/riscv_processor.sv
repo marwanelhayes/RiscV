@@ -182,6 +182,7 @@ module riscv_processor
     wire FPUValidE;                        // Valid FPU operation
     wire FPUBusyE;                         // FPU busy flag
     wire FPUDoneE;                         // FPU result valid
+    wire DivWaitE;                         // Divide in EX, result not ready
 
     // ─── MEM stage interconnects ──────────────────────────────────────────────
     wire ValidM;                              // EX/MEM holds a real instruction
@@ -432,7 +433,8 @@ module riscv_processor
         .ForwardFloatingBE(ForwardFloatingBE),
         .FPUValidE(FPUValidE),
         .FPUBusyE(FPUBusyE),
-        .FPUDoneE(FPUDoneE)
+        .FPUDoneE(FPUDoneE),
+        .DivWaitE(DivWaitE)
     );
 
     // ─── riscv_processor: memory_stage ─────────────────────────────────────────
@@ -573,7 +575,7 @@ module riscv_processor
         .Rs2FE(Rs2FE),
         .FPURegWriteM(FPURegWriteM),
         .FPURegWriteW(FPURegWriteW),
-        .FPUValidE(FPUValidE),
+        .FPUValidE(FPUValidE || DivWaitE),  // A waiting divide holds EX like an FP op
         .FPUDoneE(FPUDoneE)
     );
 

@@ -1,3 +1,12 @@
+// =============================================================================
+// csr_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the CSR file inside the full core (risc_top).
+//
+// Bound into the CSR file instance; copies its ports onto a csr_interface
+// and publishes it in uvm_config_db, so the CSR file environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

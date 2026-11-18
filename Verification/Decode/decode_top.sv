@@ -1,3 +1,9 @@
+// =============================================================================
+// decode_top.sv
+// -----------------------------------------------------------------------------
+// Decode stage testbench top: decode_stage DUT, decode_interface, timing
+// assertions, and run_test(decode_test).
+// =============================================================================
 module decode_top;
 
     import uvm_pkg::*;

@@ -11,10 +11,8 @@ package mem_item_pkg;
 
     class mem_item extends uvm_sequence_item;
         
-        //Register the class in the factory
         `uvm_object_utils(mem_item)
 
-        //Overriding the build in constructor with the child class
         function new (string name = "mem_item");
             super.new(name);
         endfunction: new
@@ -153,7 +151,7 @@ package mem_item_pkg;
 
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a mem_item")
+                `uvm_fatal(get_type_name(), "rhs is not a mem_item")
                 return 1'b0;
             end
 
@@ -178,41 +176,41 @@ package mem_item_pkg;
                 && (this.MoveOperationW === other.MoveOperationW)
                 && (this.FPURegWriteW === other.FPURegWriteW);
             if(this.ValidW !== other.ValidW)
-                `uvm_info("ValidW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.ValidW, this.ValidW), UVM_LOW)
+                `uvm_info(get_type_name(), {"ValidW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.ValidW, this.ValidW)}, UVM_LOW)
             if(other.chk_readdata && (this.ReadDataW !== other.ReadDataW))
-                `uvm_info("ReadDataW Mismatch", $sformatf("Expected: %0h Actual: %0h", other.ReadDataW, this.ReadDataW), UVM_LOW)
+                `uvm_info(get_type_name(), {"ReadDataW mismatch: ", $sformatf("Expected: %0h Actual: %0h", other.ReadDataW, this.ReadDataW)}, UVM_LOW)
             if(this.RdW !== other.RdW)
-                `uvm_info("RdW Mismatch", $sformatf("Expected: %s Actual: %s", other.RdW.name(), this.RdW.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"RdW mismatch: ", $sformatf("Expected: %s Actual: %s", other.RdW.name(), this.RdW.name())}, UVM_LOW)
             if(this.RegWriteW !== other.RegWriteW)
-                `uvm_info("RegWriteW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.RegWriteW, this.RegWriteW), UVM_LOW)
+                `uvm_info(get_type_name(), {"RegWriteW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.RegWriteW, this.RegWriteW)}, UVM_LOW)
             if(this.SelectorW !== other.SelectorW)
-                `uvm_info("SelectorW Mismatch", $sformatf("Expected: %s Actual: %s", other.SelectorW.name(), this.SelectorW.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"SelectorW mismatch: ", $sformatf("Expected: %s Actual: %s", other.SelectorW.name(), this.SelectorW.name())}, UVM_LOW)
             if(this.PCPlus4W !== other.PCPlus4W)
-                `uvm_info("PCPlus4W Mismatch", $sformatf("Expected: %0h Actual: %0h", other.PCPlus4W, this.PCPlus4W), UVM_LOW)
+                `uvm_info(get_type_name(), {"PCPlus4W mismatch: ", $sformatf("Expected: %0h Actual: %0h", other.PCPlus4W, this.PCPlus4W)}, UVM_LOW)
             if(this.CsrOutW !== other.CsrOutW)
-                `uvm_info("CsrOutW Mismatch", $sformatf("Expected: %0h Actual: %0h", other.CsrOutW, this.CsrOutW), UVM_LOW)
+                `uvm_info(get_type_name(), {"CsrOutW mismatch: ", $sformatf("Expected: %0h Actual: %0h", other.CsrOutW, this.CsrOutW)}, UVM_LOW)
             if(this.ALUOutW !== other.ALUOutW)
-                `uvm_info("ALUOutW Mismatch", $sformatf("Expected: %0h Actual: %0h", other.ALUOutW, this.ALUOutW), UVM_LOW)
+                `uvm_info(get_type_name(), {"ALUOutW mismatch: ", $sformatf("Expected: %0h Actual: %0h", other.ALUOutW, this.ALUOutW)}, UVM_LOW)
             if(this.RdFW !== other.RdFW)
-                `uvm_info("RdFW Mismatch", $sformatf("Expected: %s Actual: %s", other.RdFW.name(), this.RdFW.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"RdFW mismatch: ", $sformatf("Expected: %s Actual: %s", other.RdFW.name(), this.RdFW.name())}, UVM_LOW)
             if(this.OverflowW !== other.OverflowW)
-                `uvm_info("OverflowW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.OverflowW, this.OverflowW), UVM_LOW)
+                `uvm_info(get_type_name(), {"OverflowW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.OverflowW, this.OverflowW)}, UVM_LOW)
             if(this.UnderflowW !== other.UnderflowW)
-                `uvm_info("UnderflowW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.UnderflowW, this.UnderflowW), UVM_LOW)
+                `uvm_info(get_type_name(), {"UnderflowW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.UnderflowW, this.UnderflowW)}, UVM_LOW)
             if(this.NaNW !== other.NaNW)
-                `uvm_info("NaNW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.NaNW, this.NaNW), UVM_LOW)
+                `uvm_info(get_type_name(), {"NaNW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.NaNW, this.NaNW)}, UVM_LOW)
             if(this.InfW !== other.InfW)
-                `uvm_info("InfW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.InfW, this.InfW), UVM_LOW)
+                `uvm_info(get_type_name(), {"InfW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.InfW, this.InfW)}, UVM_LOW)
             if(this.ZeroW !== other.ZeroW)
-                `uvm_info("ZeroW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.ZeroW, this.ZeroW), UVM_LOW)
+                `uvm_info(get_type_name(), {"ZeroW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.ZeroW, this.ZeroW)}, UVM_LOW)
             if(this.InvalidDivW !== other.InvalidDivW)
-                `uvm_info("InvalidDivW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.InvalidDivW, this.InvalidDivW), UVM_LOW)
+                `uvm_info(get_type_name(), {"InvalidDivW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.InvalidDivW, this.InvalidDivW)}, UVM_LOW)
             if(this.FPUOutW !== other.FPUOutW)
-                `uvm_info("FPUOutW Mismatch", $sformatf("Expected: %0h Actual: %0h", other.FPUOutW, this.FPUOutW), UVM_LOW)
+                `uvm_info(get_type_name(), {"FPUOutW mismatch: ", $sformatf("Expected: %0h Actual: %0h", other.FPUOutW, this.FPUOutW)}, UVM_LOW)
             if(this.MoveOperationW !== other.MoveOperationW)
-                `uvm_info("MoveOperationW Mismatch", $sformatf("Expected: %s Actual: %s", other.MoveOperationW.name(), this.MoveOperationW.name()), UVM_LOW)
+                `uvm_info(get_type_name(), {"MoveOperationW mismatch: ", $sformatf("Expected: %s Actual: %s", other.MoveOperationW.name(), this.MoveOperationW.name())}, UVM_LOW)
             if(this.FPURegWriteW !== other.FPURegWriteW)
-                `uvm_info("FPURegWriteW Mismatch", $sformatf("Expected: %0d Actual: %0d", other.FPURegWriteW, this.FPURegWriteW), UVM_LOW)
+                `uvm_info(get_type_name(), {"FPURegWriteW mismatch: ", $sformatf("Expected: %0d Actual: %0d", other.FPURegWriteW, this.FPURegWriteW)}, UVM_LOW)
             return ok;
         endfunction:do_compare
 
@@ -223,7 +221,7 @@ package mem_item_pkg;
             mem_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a mem_item")
+                `uvm_fatal(get_type_name(), "rhs is not a mem_item")
                 return;
             end
             super.do_copy(rhs);
@@ -282,7 +280,7 @@ package mem_item_pkg;
             mem_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a mem_item")
+                `uvm_fatal(get_type_name(), "rhs is not a mem_item")
                 return;
             end
             this.rst            = other.rst;

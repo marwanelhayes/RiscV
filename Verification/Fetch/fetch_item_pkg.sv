@@ -12,10 +12,8 @@ package fetch_item_pkg;
     class fetch_item extends uvm_sequence_item;
 
         
-        //Register the class in the factory
         `uvm_object_utils(fetch_item)
 
-        //Overriding the build in constructor with the child class
         function new (string name = "fetch_item");
             super.new(name);
         endfunction: new
@@ -69,7 +67,7 @@ package fetch_item_pkg;
             
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a fetch_item")
+                `uvm_fatal(get_type_name(), "rhs is not a fetch_item")
                 return 1'b0;
             end
             
@@ -77,14 +75,14 @@ package fetch_item_pkg;
             ok = super_ok && (this.PCPlus4D == other.PCPlus4D) && (this.InstructionD == other.InstructionD) &&
                  (this.ValidD === other.ValidD) && (this.PCPlus4F == other.PCPlus4F);
             if(this.ValidD !== other.ValidD)
-                `uvm_info("ValidD Mismatch", $sformatf("Expected: %0d Actual: %0d", this.ValidD, other.ValidD), UVM_LOW)
+                `uvm_info(get_type_name(), {"ValidD mismatch: ", $sformatf("Expected: %0d Actual: %0d", this.ValidD, other.ValidD)}, UVM_LOW)
 
             if(this.PCPlus4D !== other.PCPlus4D)
-                `uvm_info("PCPlus4D Mismatch", $sformatf("Expected: %0h Actual: %0h", this.PCPlus4D, other.PCPlus4D), UVM_LOW)
+                `uvm_info(get_type_name(), {"PCPlus4D mismatch: ", $sformatf("Expected: %0h Actual: %0h", this.PCPlus4D, other.PCPlus4D)}, UVM_LOW)
             if(this.InstructionD !== other.InstructionD)
-                `uvm_info("InstructionD Mismatch", $sformatf("Expected: %0h Actual: %0h", this.InstructionD, other.InstructionD), UVM_LOW)
+                `uvm_info(get_type_name(), {"InstructionD mismatch: ", $sformatf("Expected: %0h Actual: %0h", this.InstructionD, other.InstructionD)}, UVM_LOW)
             if(this.PCPlus4F !== other.PCPlus4F)
-                `uvm_info("PCPlus4F Mismatch", $sformatf("Expected: %0h Actual: %0h", this.PCPlus4F, other.PCPlus4F), UVM_LOW)
+                `uvm_info(get_type_name(), {"PCPlus4F mismatch: ", $sformatf("Expected: %0h Actual: %0h", this.PCPlus4F, other.PCPlus4F)}, UVM_LOW)
             
             return ok;
         endfunction:do_compare
@@ -93,7 +91,7 @@ package fetch_item_pkg;
             fetch_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a fetch_item")
+                `uvm_fatal(get_type_name(), "rhs is not a fetch_item")
                 return;
             end
             super.do_copy(rhs);
@@ -116,7 +114,7 @@ package fetch_item_pkg;
             fetch_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a fetch_item")
+                `uvm_fatal(get_type_name(), "rhs is not a fetch_item")
                 return;
             end
             this.rst = other.rst;

@@ -3,21 +3,31 @@
 # regress.sh
 # -----------------------------------------------------------------------------
 # Headless regression: every testbench top x every XLEN x N random seeds,
-# one PASS/FAIL table at the end. Exit status is 0 only if every run passes.
+# optionally the riscv-tests compliance suite on risc_top, then one PASS/FAIL
+# table and the merged functional coverage. Exit status is 0 only if every run
+# passes.
 #
-# Per XLEN the sources are compiled once in a scratch area outside the repo
-# (compile.do with +define+XLEN=<n> added to every vlog). Per seed a fresh
-# random program is generated with the same seed that drives -sv_seed, so a
-# failing row is reproduced exactly with: regress.sh -x <xlen> -s <seed> -t <top>
+# Per XLEN the sources are compiled once (compile.do with XLEN set) in a
+# scratch area outside the repo. Per seed a fresh random program is generated
+# with the same seed that drives -sv_seed, so a failing row is reproduced
+# exactly with: regress.sh -x <xlen> -s <seed> -t <top>
 #
 # A run passes when it reaches the UVM report summary with 0 UVM_ERROR and
-# 0 UVM_FATAL. Logs and UCDBs stay in $WORK/x<xlen>/q/run/logs.
+# 0 UVM_FATAL. Per XLEN, the UCDBs of all runs are merged into merged.ucdb and
+# summarised in coverage.txt (one line per covergroup type).
 #
-# Usage: Questa/regress.sh [-n N] [-s "seed ..."] [-x "32 64"] [-t "top ..."]
+# Layout of $WORK/x<xlen>:
+#   run/            work library, logs/ (one log + UCDB per run)
+#   prog/           program of the current seed (fetch_top, risc_top)
+#   compliance/     riscv-tests program directories (-c)
+#   merged.ucdb     all runs merged; coverage.txt its per-covergroup summary
+#
+# Usage: Questa/regress.sh [-n N] [-s "seed ..."] [-x "32 64"] [-t "top ..."] [-c]
 #   -n N     number of random seeds (default 3)
 #   -s LIST  explicit seeds instead of random ones
 #   -x LIST  XLEN values (default "32 64")
-#   -t LIST  testbench tops (default: all nine)
+#   -t LIST  testbench tops (default: all nine; -t "" runs none)
+#   -c       also run the riscv-tests compliance suite (Verification/Compliance)
 #   WORK     scratch directory (default /tmp/riscv_regress)
 # =============================================================================
 set -u
@@ -28,13 +38,15 @@ NSEEDS=3
 SEEDS=""
 XLENS="32 64"
 TOPS="risc_top fetch_top decode_top execute_top mem_top writeback_top hazard_top csr_top flp_top"
+COMPLIANCE=0
 
-while getopts "n:s:x:t:" opt; do
+while getopts "n:s:x:t:c" opt; do
     case $opt in
         n) NSEEDS=$OPTARG ;;
         s) SEEDS=$OPTARG ;;
         x) XLENS=$OPTARG ;;
         t) TOPS=$OPTARG ;;
+        c) COMPLIANCE=1 ;;
         *) sed -n '/^# Usage/,/^# ===/p' "$0"; exit 2 ;;
     esac
 done
@@ -45,64 +57,105 @@ fi
 DPI_DIR=$REPO/Verification/FPU/dpi
 SPIKE_LIB=$REPO/Verification/Risc/spike/libspike_dpi   # built by Verification/Risc/spike/Makefile
 RESULTS=()
+COVERAGE=()
 FAILED=0
 
+# run_one <xlen> <seed> <top> <name> [vsim args...]: one simulation and its result row
+run_one() {
+    local xlen=$1 seed=$2 top=$3 name=$4; shift 4
+    local log=logs/$name.log errs fatals cov status
+    vsim -c -64 "$@" -voptargs=+acc "$top" +cover -sv_seed "$seed" \
+        +UVM_VERBOSITY=UVM_LOW +UVM_MAX_QUIT_COUNT=100 \
+        -do "onfinish stop; run -all; coverage save logs/$name.ucdb; coverage report -summary; quit -f" \
+        </dev/null > "$log" 2>&1
+
+    errs=$(sed -n 's/^# UVM_ERROR : *\([0-9]*\)$/\1/p' "$log" | tail -1)
+    fatals=$(sed -n 's/^# UVM_FATAL : *\([0-9]*\)$/\1/p' "$log" | tail -1)
+    cov=$(awk '/Covergroups/ {print $NF; exit}' "$log")
+    if grep -q "UVM Report Summary" "$log" && [ "${errs:-1}" = 0 ] && [ "${fatals:-1}" = 0 ]; then
+        status=PASS
+    else
+        status=FAIL; FAILED=1
+    fi
+    RESULTS+=("$(printf '%-5s %-8s %-24s %-5s err=%-6s fatal=%-3s cov=%s' \
+        "$xlen" "$seed" "$name" "$status" "${errs:-?}" "${fatals:-?}" "${cov:--}")")
+}
+
 for xlen in $XLENS; do
-    # Scratch layout mirrors the repo so the fixed ../../ paths in the TB resolve:
-    # $S/{Design,Verification} -> repo, $S/Python = per-seed program, cwd $S/q/run
     S=$WORK/x$xlen
     rm -rf "$S"
-    mkdir -p "$S/q/do" "$S/q/run/logs" "$S/Python"
-    ln -s "$REPO/Design" "$S/Design"
-    ln -s "$REPO/Verification" "$S/Verification"
-    sed "s/vlog -work work/vlog -work work +define+XLEN=$xlen/" "$REPO/Questa/do/compile.do" > "$S/q/do/compile.do"
+    mkdir -p "$S/run/logs" "$S/prog"
+    cd "$S/run" || exit 1
 
-    cd "$S/q/run" || exit 1
     echo "[XLEN=$xlen] compiling..."
-    vsim -c -do "do ../do/compile.do; quit -f" </dev/null > logs/compile.log 2>&1
+    vsim -c -do "set XLEN $xlen; do $REPO/Questa/do/compile.do; quit -f" </dev/null > logs/compile.log 2>&1
     if grep -q "^\*\* Error\|Errors: [1-9]" logs/compile.log; then
         grep -m10 "Error" logs/compile.log
-        RESULTS+=("$(printf '%-5s %-8s %-14s %-5s %s' "$xlen" "-" "compile" "FAIL" "see $S/q/run/logs/compile.log")")
+        RESULTS+=("$(printf '%-5s %-8s %-24s %-5s %s' "$xlen" "-" "compile" "FAIL" "see $S/run/logs/compile.log")")
         FAILED=1
         continue
     fi
 
-    for seed in $SEEDS; do
-        python3 "$REPO/Python/riscv_testcase_generator.py" --xlen "$xlen" --seed "$seed" --out-dir "$S/Python" > /dev/null || exit 1
-        for top in $TOPS; do
-            log=logs/$top.s$seed.log
-            extra="-64"
-            if [ "$top" = flp_top ] && [ -f "$DPI_DIR/libfpu_ref.so" ]; then
-                export FLP_DPI_DIR=$DPI_DIR
-                extra="-64 -sv_lib $DPI_DIR/libfpu_ref +FLP_DPI"
-            fi
-            if [ "$top" = risc_top ] && [ -f "$SPIKE_LIB.so" ]; then
-                extra="-64 -sv_lib $SPIKE_LIB +SPIKE"          # Spike lock-step next to the ISS
-            fi
-            echo "[XLEN=$xlen seed=$seed] $top"
-            # shellcheck disable=SC2086
-            vsim -c $extra -voptargs=+acc "$top" +cover -sv_seed "$seed" \
-                +UVM_VERBOSITY=UVM_LOW +UVM_MAX_QUIT_COUNT=100 \
-                -do "onfinish stop; run -all; coverage save logs/$top.s$seed.ucdb; coverage report -summary; quit -f" \
-                </dev/null > "$log" 2>&1
-
-            errs=$(sed -n 's/^# UVM_ERROR : *\([0-9]*\)$/\1/p' "$log" | tail -1)
-            fatals=$(sed -n 's/^# UVM_FATAL : *\([0-9]*\)$/\1/p' "$log" | tail -1)
-            cov=$(awk '/Covergroups/ {print $NF; exit}' "$log")
-            if grep -q "UVM Report Summary" "$log" && [ "${errs:-1}" = 0 ] && [ "${fatals:-1}" = 0 ]; then
-                status=PASS
-            else
-                status=FAIL; FAILED=1
-            fi
-            RESULTS+=("$(printf '%-5s %-8s %-14s %-5s err=%-6s fatal=%-3s cov=%s' \
-                "$xlen" "$seed" "$top" "$status" "${errs:-?}" "${fatals:-?}" "${cov:--}")")
+    # ── Random programs and unit environments ───────────────────────────────
+    if [ -n "$TOPS" ]; then
+        for seed in $SEEDS; do
+            python3 "$REPO/Python/riscv_testcase_generator.py" --xlen "$xlen" --seed "$seed" --out-dir "$S/prog" > /dev/null || exit 1
+            for top in $TOPS; do
+                extra=()
+                case $top in
+                    fetch_top) extra=(-gPROGRAM_DIR="$S/prog") ;;
+                    risc_top)  extra=(-gPROGRAM_DIR="$S/prog")
+                               [ -f "$SPIKE_LIB.so" ] && extra+=(-sv_lib "$SPIKE_LIB" +SPIKE) ;;   # Spike lock-step next to the ISS
+                    flp_top)   if [ -f "$DPI_DIR/libfpu_ref.so" ]; then
+                                   export FLP_DPI_DIR=$DPI_DIR
+                                   extra=(-sv_lib "$DPI_DIR/libfpu_ref" +FLP_DPI)
+                               fi ;;
+                esac
+                echo "[XLEN=$xlen seed=$seed] $top"
+                run_one "$xlen" "$seed" "$top" "$top.s$seed" "${extra[@]}"
+            done
         done
-    done
+    fi
+
+    # ── riscv-tests compliance suite on risc_top ────────────────────────────
+    # Spike is not used here: its data memory starts empty, while these
+    # programs preload theirs (the ISS lock-step still checks every commit).
+    if [ $COMPLIANCE = 1 ]; then
+        echo "[XLEN=$xlen] building riscv-tests..."
+        if ! python3 "$REPO/Verification/Compliance/build_tests.py" --xlen "$xlen" --out "$S/compliance" > logs/compliance_build.log 2>&1; then
+            tail -3 logs/compliance_build.log
+            RESULTS+=("$(printf '%-5s %-8s %-24s %-5s %s' "$xlen" "-" "compliance build" "FAIL" "see $S/run/logs/compliance_build.log")")
+            FAILED=1
+        fi
+        while read -r name rest; do
+            if [ "$name" = SKIP ]; then
+                RESULTS+=("$(printf '%-5s %-8s %-24s %-5s %s' "$xlen" "-" "${rest%% *}" "SKIP" "${rest#* }")")
+                continue
+            fi
+            echo "[XLEN=$xlen] $name"
+            run_one "$xlen" 1 risc_top "$name" -gPROGRAM_DIR="$rest" +UVM_TESTNAME=risc_compliance_test
+        done < <(grep -E '^(SKIP )?rv[0-9]+' logs/compliance_build.log)
+    fi
+
+    # ── Merged functional coverage of every run of this XLEN ────────────────
+    if ls logs/*.ucdb > /dev/null 2>&1; then
+        vcover merge -out "$S/merged.ucdb" logs/*.ucdb > logs/merge.log 2>&1
+        vcover report -cvg "$S/merged.ucdb" 2>/dev/null | awk -v x="$xlen" '
+            /^=== Instance: / { inst = $3; sub(/^\//, "", inst); sub(/_pkg$/, "", inst) }
+            /^ *Covergroups /  { printf "%-5s %-24s %s\n", x, inst, $NF }' > "$S/coverage.txt"
+        while read -r line; do COVERAGE+=("$line"); done < "$S/coverage.txt"
+    fi
 done
 
 echo
-printf '%-5s %-8s %-14s %-5s %s\n' XLEN SEED TOP RESULT DETAIL
+printf '%-5s %-8s %-24s %-5s %s\n' XLEN SEED RUN RESULT DETAIL
 printf '%s\n' "${RESULTS[@]}"
+if [ ${#COVERAGE[@]} -gt 0 ]; then
+    echo
+    echo "Merged functional coverage (all runs of each XLEN: \$WORK/x<xlen>/merged.ucdb)"
+    printf '%-5s %-24s %s\n' XLEN COVERGROUP COVERAGE
+    printf '%s\n' "${COVERAGE[@]}"
+fi
 echo
-[ $FAILED = 0 ] && echo "ALL PASS" || echo "FAILURES (logs in $WORK/x<xlen>/q/run/logs)"
+[ $FAILED = 0 ] && echo "ALL PASS" || echo "FAILURES (logs in $WORK/x<xlen>/run/logs)"
 exit $FAILED

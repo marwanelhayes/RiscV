@@ -1,4 +1,8 @@
-// UVM RAL model for the instruction ROM used by fetch_top.
+// =============================================================================
+// fetch_reg_block_pkg.sv
+// -----------------------------------------------------------------------------
+// UVM RAL model of the instruction memory used by fetch_top (backdoor only).
+// =============================================================================
 package fetch_reg_block_pkg;
 
     import uvm_pkg::*;

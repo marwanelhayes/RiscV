@@ -1,4 +1,13 @@
- import uvm_pkg::*;
+// =============================================================================
+// fetch_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the Fetch stage inside the full core (risc_top).
+//
+// Bound into the Fetch stage instance; copies its ports onto a fetch_interface
+// and publishes it in uvm_config_db, so the Fetch stage environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
+import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;
 interface fetch_wr 

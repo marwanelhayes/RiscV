@@ -1,3 +1,10 @@
+// =============================================================================
+// flp_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// FPU functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package flp_subscriber_pkg;
 
     import uvm_pkg::*;
@@ -10,7 +17,6 @@ package flp_subscriber_pkg;
 
     class flp_subscriber extends uvm_subscriber #(flp_item);
 
-        //Register the class to the factory
         `uvm_component_param_utils(flp_subscriber)
 
 

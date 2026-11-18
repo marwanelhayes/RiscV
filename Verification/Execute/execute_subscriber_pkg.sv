@@ -1,3 +1,10 @@
+// =============================================================================
+// execute_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// Execute stage functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package execute_subscriber_pkg;
 
     import uvm_pkg::*;
@@ -7,7 +14,6 @@ package execute_subscriber_pkg;
 
     class execute_subscriber extends uvm_subscriber #(execute_item);
 
-        //Register the class to the factory
         `uvm_component_param_utils(execute_subscriber)
 
 

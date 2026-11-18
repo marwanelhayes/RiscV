@@ -20,7 +20,13 @@
 //     the oldest register write the ISS performed.
 //
 // The program ends at a self-loop (JAL x0, 0); the checker then triggers the
-// global "ISS_DONE" uvm_event. risc_test drains the pipeline and triggers
+// global "ISS_DONE" uvm_event.
+//
+// Compliance programs (riscv-tests, see Verification/Compliance) also have a
+// data image (dmem.hex, preloaded into the ISS here and into the TB data memory
+// by risc_top) and a tohost address (tohost.txt). Their end is the first store
+// to tohost: 1 means the test passed, any other value v means test case v>>1
+// failed. risc_test drains the pipeline and triggers
 // "ISS_FINAL", on which the checker verifies that every expected write was
 // seen (still inside the UVM run phase, so the errors are counted).
 //
@@ -34,6 +40,7 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;
 import riscv_iss_pkg::*;
+import tb_base_pkg::*;
 
 module commit_checker
 (
@@ -113,19 +120,30 @@ module commit_checker
     bit          m_new, w_new;            // EX/MEM, MEM/WB loaded at the last edge
     bit          check_trap_csrs;         // a trap was taken at the last edge
     bit          done;
+    bit          tohost_on;               // compliance program: end on a store to tohost
+    xlen_t       tohost_addr, tohost_val;
     int unsigned commits, traps, interrupts, errors;
     uvm_event    done_ev, final_ev;
 
     initial
     begin
         iss = new();
-        iss.load_image(INSTR_MEM_PATH);
+        iss.load_image(program_file("binary1.txt"));
+        if(file_exists(program_file("dmem.hex")))
+            iss.load_data(program_file("dmem.hex"));
+        if(file_exists(program_file("tohost.txt")))
+        begin
+            int fd;
+            fd = $fopen(program_file("tohost.txt"), "r");
+            tohost_on = ($fscanf(fd, "%h", tohost_addr) == 1);
+            $fclose(fd);
+        end
         done_ev  = uvm_event_pool::get_global("ISS_DONE");
         final_ev = uvm_event_pool::get_global("ISS_FINAL");
         use_spike = $test$plusargs("SPIKE");
         if(use_spike)
         begin
-            if(spike_init(XL, INSTR_MEM_PATH, MVENDORID_VALUE) != 0)
+            if(spike_init(XL, program_file("binary1.txt"), MVENDORID_VALUE) != 0)
                 `uvm_fatal("SPIKE_CHK", "spike_init failed")
             spike_reset();
             spike_on = 1;
@@ -137,7 +155,14 @@ module commit_checker
         if(commits == 0)
             `uvm_error("ISS_CHK", "no instruction was committed")
         if(!done)
-            `uvm_error("ISS_CHK", "the program never reached its end (self-loop)")
+            `uvm_error("ISS_CHK", tohost_on ? "the program never wrote tohost" : "the program never reached its end (self-loop)")
+        else if(tohost_on)
+        begin
+            if(tohost_val == 1)
+                `uvm_info("COMPLIANCE", "PASS: the test wrote tohost = 1", UVM_LOW)
+            else
+                `uvm_error("COMPLIANCE", $sformatf("FAIL: test case %0d failed (tohost = %h)", tohost_val >> 1, tohost_val))
+        end
         `uvm_info("ISS_CHK", $sformatf("summary: %0d commits, %0d traps, %0d interrupts, %0d mismatches",
                                        commits, traps, interrupts, errors), UVM_LOW)
         if(use_spike)
@@ -148,6 +173,12 @@ module commit_checker
                                              spike_commits, spike_errors, spike_on ? "" : " (comparison stopped)"), UVM_LOW)
         end
     end
+
+    function automatic bit file_exists(string path);
+        int fd = $fopen(path, "r");
+        if(fd != 0) $fclose(fd);
+        return fd != 0;
+    endfunction
 
     function automatic string fmt(iss_commit_t c);
         return $sformatf("pc=%h insn=%h trap=%0d cause=%h rd_we=%0d x%0d=%h frd_we=%0d f%0d=%h st=%0d next=%h",
@@ -340,7 +371,15 @@ module commit_checker
                 if(r.frd_we) fpr_q.push_back('{r.frd, XL'(r.frd_val), r.pc});
                 if(r.st_we)  st_q.push_back('{r.st_addr, r.st_size, r.st_data, r.pc});
 
-                if(!r.trap && (r.insn == SELF_LOOP))
+                if(tohost_on && !r.trap && r.st_we && (r.st_addr == tohost_addr))
+                begin
+                    done = 1;
+                    tohost_val = r.st_data;
+                    `uvm_info("ISS_CHK", $sformatf("tohost = %h written at pc %h: %0d commits, %0d traps",
+                                                   r.st_data, r.pc, commits, traps), UVM_LOW)
+                    done_ev.trigger();
+                end
+                else if(!tohost_on && !r.trap && (r.insn == SELF_LOOP))
                 begin
                     done = 1;
                     `uvm_info("ISS_CHK", $sformatf("program end reached at pc %h: %0d commits, %0d traps (%0d interrupts)",

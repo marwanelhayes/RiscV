@@ -2,11 +2,13 @@
 # sim_decode.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Decode stage verification
-# Usage: do ../sim_decode.do
+# Usage (from the directory that holds the work library, e.g. Questa/Scratch):
+#   do <repo>/Questa/do/sim_decode.do
 # =============================================================================
 
 quit -sim
-do ../do/compile.do
+set ROOT [file normalize [file join [file dirname [file normalize [status file]]] .. ..]]
+do [file join $ROOT Questa do compile.do]
 
 vsim -64 -voptargs=+acc decode_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100
 

@@ -1,4 +1,9 @@
-// Continuously checks the CSR RAL mirror against the DUT through backdoor paths.
+// =============================================================================
+// csr_reg_checker_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR register checker: compares the CSR RAL mirror with the DUT by
+// backdoor, continuously and in a final sweep (do_final_sweep).
+// =============================================================================
 package csr_reg_checker_pkg;
 
     import uvm_pkg::*;
@@ -21,9 +26,9 @@ package csr_reg_checker_pkg;
         virtual function void build_phase(uvm_phase phase);
             super.build_phase(phase);
             if(!uvm_config_db #(csr_reg_block)::get(this, "", "REG_BLOCK", reg_block))
-                `uvm_fatal("CSR_RAL", "checker could not receive register block")
+                `uvm_fatal(get_type_name(), "checker could not receive register block")
             if(!uvm_config_db #(virtual csr_interface)::get(this, "", "INTF", vif))
-                `uvm_fatal("CSR_RAL", "checker could not receive interface")
+                `uvm_fatal(get_type_name(), "checker could not receive interface")
         endfunction
 
         task compare_reg(csr_reg r, string check_name, output bit ok);
@@ -37,7 +42,7 @@ package csr_reg_checker_pkg;
             void'(r.predict(expected, .kind(UVM_PREDICT_DIRECT)));
             ok = (status == UVM_IS_OK) && (actual[FINAL_DATA_WIDTH-1:0] === expected[FINAL_DATA_WIDTH-1:0]);
             if(!ok)
-                `uvm_error("CSR_RAL", $sformatf(
+                `uvm_error(get_type_name(), $sformatf(
                     "%s %s mismatch: DUT=0x%0h mirror=0x%0h status=%s",
                     check_name, r.get_name(), actual[FINAL_DATA_WIDTH-1:0], expected[FINAL_DATA_WIDTH-1:0],
                     status.name()))
@@ -75,12 +80,12 @@ package csr_reg_checker_pkg;
             repeat(2) @(negedge vif.clk);
             check_all("final", failures);
             if(failures == 0)
-                `uvm_info("CSR_RAL", "final backdoor sweep: all CSRs match", UVM_LOW)
+                `uvm_info(get_type_name(), "final backdoor sweep: all CSRs match", UVM_LOW)
         endtask
 
         virtual function void report_phase(uvm_phase phase);
             super.report_phase(phase);
-            `uvm_info("CSR_RAL", $sformatf(
+            `uvm_info(get_type_name(), $sformatf(
                 "backdoor checks: success=%0d fail=%0d", success, fail), UVM_LOW)
         endfunction
     endclass

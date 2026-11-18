@@ -1,3 +1,9 @@
+// =============================================================================
+// writeback_interface.sv
+// -----------------------------------------------------------------------------
+// Write-back stage interface: DUT signals, clocking block, and the tasks used
+// by the base driver/monitor (initialize, drv2intf, intf2mon).
+// =============================================================================
 import shared_pkg::*;
 import writeback_item_pkg::*;
 interface writeback_interface 

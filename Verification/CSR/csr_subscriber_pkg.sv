@@ -1,3 +1,10 @@
+// =============================================================================
+// csr_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR file functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package csr_subscriber_pkg;
 
     import uvm_pkg::*;

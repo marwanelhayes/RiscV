@@ -1,4 +1,9 @@
-// RAL backdoor checks for the AXI-visible backing data RAM.
+// =============================================================================
+// mem_ral_checker_pkg.sv
+// -----------------------------------------------------------------------------
+// Data memory checker: RAL backdoor checks of the AXI-visible data memory
+// (initial image and continuous mirror comparison).
+// =============================================================================
 package mem_ral_checker_pkg;
 
     import uvm_pkg::*;
@@ -29,10 +34,10 @@ package mem_ral_checker_pkg;
         virtual function void build_phase(uvm_phase phase);
             super.build_phase(phase);
             if(!uvm_config_db #(mem_reg_block)::get(this, "", "REG_BLOCK", reg_block))
-                `uvm_fatal("DMEM_RAL", "checker could not receive register block")
+                `uvm_fatal(get_type_name(), "checker could not receive register block")
             if(!uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH,
                     FINAL_ADDR_WIDTH, CACHE_AXI_SIZE))::get(this, "", "AXI_INTF", vif))
-                `uvm_fatal("DMEM_RAL", "checker could not receive AXI interface")
+                `uvm_fatal(get_type_name(), "checker could not receive AXI interface")
         endfunction
 
         task check_initial_image();
@@ -44,7 +49,7 @@ package mem_ral_checker_pkg;
                 reg_block.data_memory.peek(status, i, actual);
                 if((status != UVM_IS_OK) || (actual[FINAL_DATA_WIDTH-1:0] !== '0)) begin
                     fail++;
-                    `uvm_error("DMEM_RAL", $sformatf(
+                    `uvm_error(get_type_name(), $sformatf(
                         "reset word %0d is 0x%0h, expected zero",
                         i, actual[FINAL_DATA_WIDTH-1:0]))
                 end
@@ -67,7 +72,7 @@ package mem_ral_checker_pkg;
             reg_block.data_memory.peek(status, beat_addr >> $clog2(FINAL_DATA_WIDTH/8), prior);
             if(status != UVM_IS_OK) begin
                 fail++;
-                `uvm_error("DMEM_RAL", "pre-write backdoor peek failed")
+                `uvm_error(get_type_name(), "pre-write backdoor peek failed")
                 return;
             end
 
@@ -93,7 +98,7 @@ package mem_ral_checker_pkg;
             if((status != UVM_IS_OK) ||
                (after[FINAL_DATA_WIDTH-1:0] !== expected[FINAL_DATA_WIDTH-1:0])) begin
                 fail++;
-                `uvm_error("DMEM_RAL", $sformatf(
+                `uvm_error(get_type_name(), $sformatf(
                     "AXI write mismatch at 0x%0h: RAM=0x%0h expected=0x%0h",
                     beat_addr, after[FINAL_DATA_WIDTH-1:0],
                     expected[FINAL_DATA_WIDTH-1:0]))
@@ -127,7 +132,7 @@ package mem_ral_checker_pkg;
                     if(vif.MWValid && vif.MWReady) begin
                         if(!write_active) begin
                             fail++;
-                            `uvm_error("DMEM_RAL", "write data accepted prior a write address")
+                            `uvm_error(get_type_name(), "write data accepted prior a write address")
                         end
                         else begin
                             // Latch WLAST at the handshake: check_write_beat()
@@ -145,7 +150,7 @@ package mem_ral_checker_pkg;
 
         virtual function void report_phase(uvm_phase phase);
             super.report_phase(phase);
-            `uvm_info("DMEM_RAL", $sformatf("backdoor write checks: success=%0d fail=%0d",
+            `uvm_info(get_type_name(), $sformatf("backdoor write checks: success=%0d fail=%0d",
                 success, fail), UVM_LOW)
         endfunction
     endclass

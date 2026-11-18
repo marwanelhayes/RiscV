@@ -22,11 +22,12 @@
 package writeback_predictor_pkg;
 
     import uvm_pkg::*;
+    import tb_base_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
     import writeback_item_pkg::*;
 
-    class writeback_predictor extends uvm_subscriber #(writeback_item);
+    class writeback_predictor extends base_predictor #(writeback_item);
 
         `uvm_component_utils(writeback_predictor)
 
@@ -34,7 +35,6 @@ package writeback_predictor_pkg;
             super.new(name,parent);
         endfunction:new
 
-        uvm_analysis_port #(writeback_item) exp_port;
         writeback_item exp, exp_clone, shadow_inputs;
 
         // ── PCF pipeline-register shadow ─────────────────────────────────────
@@ -42,7 +42,6 @@ package writeback_predictor_pkg;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
-            exp_port = new("exp_port",this);
             exp = writeback_item::type_id::create("exp");
             reset_shadow();
         endfunction:build_phase
@@ -100,7 +99,7 @@ package writeback_predictor_pkg;
 
             // Clone before publishing so the FIFO never holds the mutating exp.
             if(!$cast(exp_clone, exp.clone()))
-                `uvm_fatal("WB_PRED", "Failed to clone expected item - check for non-cloneable fields")
+                `uvm_fatal(get_type_name(), "Failed to clone expected item - check for non-cloneable fields")
             else
                 exp_port.write(exp_clone);
 
@@ -109,7 +108,7 @@ package writeback_predictor_pkg;
             if(t.rst)
                 update_shadow(t);
             if(!$cast(shadow_inputs, t.clone()))
-                `uvm_fatal("WB_PRED", "Failed to copy inputs to shadow - check for non-cloneable fields")
+                `uvm_fatal(get_type_name(), "Failed to copy inputs to shadow - check for non-cloneable fields")
         endfunction:write
 
     endclass:writeback_predictor

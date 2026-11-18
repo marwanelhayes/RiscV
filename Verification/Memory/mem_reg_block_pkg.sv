@@ -1,4 +1,8 @@
-// UVM RAL model for the backing data RAM used by mem_top.
+// =============================================================================
+// mem_reg_block_pkg.sv
+// -----------------------------------------------------------------------------
+// UVM RAL model of the data memory used by mem_top (backdoor only).
+// =============================================================================
 package mem_reg_block_pkg;
 
     import uvm_pkg::*;

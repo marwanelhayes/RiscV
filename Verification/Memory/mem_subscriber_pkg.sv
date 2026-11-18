@@ -1,3 +1,10 @@
+// =============================================================================
+// mem_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// Memory stage functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package mem_subscriber_pkg;
 
     import uvm_pkg::*;
@@ -7,7 +14,6 @@ package mem_subscriber_pkg;
 
     class mem_subscriber extends uvm_subscriber #(mem_item);
 
-        //Register the class to the factory
         `uvm_component_utils(mem_subscriber)
 
 

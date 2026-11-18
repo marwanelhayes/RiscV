@@ -132,33 +132,35 @@ module flp_mul
         logic sticky;
         logic round_up;
         logic to_inf;
+        logic signed [EXP_BITS+2:0] shift;  // right shift into the subnormal range
 
         m = {mantissa, g, r, s};
         e = exponent_in;
 
         // Normalise left (cancellation / subnormal operands), stopping at
-        // the minimum normal exponent.
-        for (int i = 0; i < FRAC_BITS + 3; i++)
+        // the minimum normal exponent. Shift by 16/8/4/2/1 (32 first for
+        // double) when the top k bits are zero and the exponent stays >= 1;
+        // m[0] is sticky and stays in place.
+        for (int k = 2**($clog2(FRAC_BITS + 3) - 1); k >= 1; k = k / 2)
         begin
-            if (!m[FRAC_BITS+3] && (e > 1))
+            if (((m[FRAC_BITS+3:1] >> (FRAC_BITS + 3 - k)) == '0) && (e > k))
             begin
-                m = {m[FRAC_BITS+2:1], 1'b0, m[0]};
-                e = e - 1'b1;
+                m = {m[FRAC_BITS+3:1] << k, m[0]};
+                e = e - k;
             end
         end
 
         // Denormalise right below the minimum normal exponent; shifted-out
         // bits collapse into sticky.
-        for (int i = 0; i < FRAC_BITS + 3; i++)
-        begin
-            if (e < 1)
-            begin
-                m = {1'b0, m[FRAC_BITS+3:2], m[1] | m[0]};
-                e = e + 1'b1;
-            end
-        end
         if (e < 1)
         begin
+            shift = 1 - e;
+            if (shift > FRAC_BITS + 3)
+            begin
+                shift = FRAC_BITS + 3;
+            end
+            m = {m[FRAC_BITS+3:1] >> shift,
+                 m[0] | (|(m[FRAC_BITS+3:1] & ~({(FRAC_BITS+3){1'b1}} << shift)))};
             e = 1;
         end
 
@@ -422,12 +424,14 @@ module flp_mul
                     prod = prod >> 1;
                     exp_round = exp_round + 1'b1;
                 end
-                for (int i = 0; i < 2*FRAC_BITS; i++)
+                // Shift by 32/16/8/4/2/1 (64 first for double) while the
+                // top k bits are zero and the exponent stays >= 1.
+                for (int k = 2**($clog2(2*FRAC_BITS) - 1); k >= 1; k = k / 2)
                 begin
-                    if (!prod[2*FRAC_BITS] && (exp_round > 1))
+                    if (((prod[2*FRAC_BITS:0] >> (2*FRAC_BITS + 1 - k)) == '0) && (exp_round > k))
                     begin
-                        prod = prod << 1;
-                        exp_round = exp_round - 1'b1;
+                        prod = prod << k;
+                        exp_round = exp_round - k;
                     end
                 end
 

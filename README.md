@@ -169,11 +169,10 @@ Related files:
 
 ## Important Repo-Specific Notes
 
-- There are many checked-in generated files under `Questa/Scratch/` and `Syn/`. Be careful not to treat them as source of truth when editing functionality.
+- `Questa/Scratch/`, `Syn/Risc/` and the generator outputs in `Python/` are generated, local-only files (see `untrack_generated.sh`). Do not treat them as source of truth.
 - The main source of truth for architectural intent is the RTL under `Design/` plus the scoreboards under `Verification/`.
-- `risc_test_pkg.sv` reads `../../Python/program_info.txt` (relative to `Questa/Scratch/`). The Python generator still has hard-coded Windows output paths:
+- The testbench reads its program (`binary1.txt`, `program_info.txt`) from the directory given by the `PROGRAM_DIR` parameter of `fetch_top` / `risc_top` (`-gPROGRAM_DIR=<dir>`); the do files and `regress.sh` resolve every other path from their own location. The Python generator still has hard-coded Windows default output paths (use `--out-dir`):
   - [`Python/riscv_testcase_generator.py`](/home/marwan-ahmed/Work/RiscV/Python/riscv_testcase_generator.py)
-- If simulation/program loading is moved to another machine, those paths are likely to need adjustment first.
 - `FINAL_ADDR_WIDTH = 10` sizes the instruction/data memories (and their RAL `uvm_mem` models) at 256 words.
 
 ## Practical Workflow

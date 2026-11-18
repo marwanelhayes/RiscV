@@ -2,20 +2,22 @@
 # sim_risc.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for full RISC-V processor verification
-# Usage: do ../sim_risc.do
+# Usage (from the directory that holds the work library, e.g. Questa/Scratch):
+#   do <repo>/Questa/do/sim_risc.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
-do ../do/compile.do
+set ROOT [file normalize [file join [file dirname [file normalize [status file]]] .. ..]]
+do [file join $ROOT Questa do compile.do]
 
 # Load simulation
 # Spike lock-step next to the ISS when the DPI library is built
-# (cd ../../Verification/Risc/spike && make)
-set spike_lib [file normalize ../../Verification/Risc/spike/libspike_dpi]
+# (cd $ROOT/Verification/Risc/spike && make)
+set spike_lib [file normalize $ROOT/Verification/Risc/spike/libspike_dpi]
 if {[file exists $spike_lib.so]} {
-    vsim -64 -sv_lib $spike_lib +SPIKE -voptargs=+acc -lib work risc_top +UVM_VERBOSITY=UVM_LOW
+    vsim -64 -sv_lib $spike_lib +SPIKE -voptargs=+acc -lib work risc_top -gPROGRAM_DIR=$ROOT/Python +UVM_VERBOSITY=UVM_LOW
 } else {
-    vsim -64 -voptargs=+acc -lib work risc_top +UVM_VERBOSITY=UVM_LOW
+    vsim -64 -voptargs=+acc -lib work risc_top -gPROGRAM_DIR=$ROOT/Python +UVM_VERBOSITY=UVM_LOW
 }
 
 # Add signals to wave

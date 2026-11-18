@@ -31,9 +31,9 @@ package decode_reg_checker_pkg;
         virtual function void build_phase(uvm_phase phase);
             super.build_phase(phase);
             if(!uvm_config_db #(decode_reg_block)::get(this,"","REG_BLOCK",reg_block))
-                `uvm_fatal("REGCHK","reg_checker couldn't receive reg_block")
+                `uvm_fatal(get_type_name(), "reg_checker couldn't receive reg_block")
             if(!uvm_config_db #(virtual decode_interface)::get(this,"","INTF",vif))
-                `uvm_fatal("REGCHK","reg_checker couldn't receive interface")
+                `uvm_fatal(get_type_name(), "reg_checker couldn't receive interface")
         endfunction
 
         // Backdoor-compare one register to its mirror. peek() is blocking -> task.
@@ -50,9 +50,9 @@ package decode_reg_checker_pkg;
             void'(r.predict(mir, .kind(UVM_PREDICT_DIRECT))); // undo peek's auto-predict
             ok = 1'b0;
             if(status != UVM_IS_OK)
-                `uvm_error("REGCHK",$sformatf("%s %s backdoor peek failed", kind, r.get_name()))
+                `uvm_error(get_type_name(), $sformatf("%s %s backdoor peek failed", kind, r.get_name()))
             else if(hw !== mir)
-                `uvm_error("REGCHK",$sformatf("%s %s mismatch: DUT=0x%0h mirror=0x%0h",
+                `uvm_error(get_type_name(), $sformatf("%s %s mismatch: DUT=0x%0h mirror=0x%0h",
                     kind, r.get_name(), hw, mir))
             else
                 ok = 1'b1;
@@ -102,14 +102,14 @@ package decode_reg_checker_pkg;
                 if(!ok) fin_fail++;
             end
             if(fin_fail != 0)
-                `uvm_error("REGCHK",$sformatf("Final backdoor sweep: %0d register(s) mismatched", fin_fail))
+                `uvm_error(get_type_name(), $sformatf("Final backdoor sweep: %0d register(s) mismatched", fin_fail))
             else
-                `uvm_info("REGCHK","Final backdoor sweep: all 64 registers match mirror",UVM_LOW)
+                `uvm_info(get_type_name(), "Final backdoor sweep: all 64 registers match mirror",UVM_LOW)
         endtask
 
         virtual function void report_phase(uvm_phase phase);
             super.report_phase(phase);
-            `uvm_info("REGCHK",$sformatf("Continuous backdoor: success=%0d fail=%0d",
+            `uvm_info(get_type_name(), $sformatf("Continuous backdoor: success=%0d fail=%0d",
                 cont_success, cont_fail),UVM_LOW)
         endfunction
 

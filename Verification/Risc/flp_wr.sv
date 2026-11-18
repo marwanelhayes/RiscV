@@ -1,3 +1,12 @@
+// =============================================================================
+// flp_wr.sv
+// -----------------------------------------------------------------------------
+// Bind wrapper for the FPU inside the full core (risc_top).
+//
+// Bound into the FPU instance; copies its ports onto a flp_interface
+// and publishes it in uvm_config_db, so the FPU environment
+// monitors the stage passively inside riscv_processor.
+// =============================================================================
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 import shared_pkg::*;

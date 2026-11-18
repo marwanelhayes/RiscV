@@ -106,7 +106,7 @@ package csr_item_pkg;
             bit ok;
             if(!$cast(e, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a csr_item")
+                `uvm_fatal(get_type_name(), "rhs is not a csr_item")
                 return 1'b0;
             end
             ok = super.do_compare(rhs, comparer);
@@ -121,7 +121,7 @@ package csr_item_pkg;
             csr_item o;
             if(!$cast(o, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a csr_item")
+                `uvm_fatal(get_type_name(), "rhs is not a csr_item")
                 return;
             end
             super.do_copy(rhs);
@@ -138,7 +138,7 @@ package csr_item_pkg;
             csr_item o;
             if(!$cast(o, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a csr_item")
+                `uvm_fatal(get_type_name(), "rhs is not a csr_item")
                 return;
             end
             this.rst = o.rst;

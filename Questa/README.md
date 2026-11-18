@@ -1,6 +1,8 @@
 # Questa Simulation Setup
 
 ## Overview
+What is verified, by which test and checker, is in [`Verification/VPLAN.md`](../Verification/VPLAN.md).
+
 This folder contains Questa simulation scripts for the RISC-V 5-stage pipeline processor.
 
 ## Folder Structure
@@ -18,18 +20,22 @@ Questa/
 │   ├── sim_csr.do       # Simulate CSR verification
 │   ├── sim_hazard.do    # Simulate Hazard unit verification
 │   └── sim_risc.do      # Simulate full processor verification
-├── Scratch/             # Working directory: Questa project, work library, logs, UCDBs
+├── regress.sh           # Headless regression (all tops x XLEN x seeds, compliance, merged coverage)
+├── Scratch/             # Local working directory (not tracked): Questa project, work library, logs, UCDBs
 └── README.md            # This file
 ```
 
 ## Quick Start
 
-All scripts use paths relative to `Questa/Scratch/` (`../../Design`, `../../Verification`, `../do`).
+Every script finds the repository from its own location (`[status file]` in the do files, `$0` in `regress.sh`), so they run from any directory; the work library is created in the current directory. `Questa/Scratch/` is the usual place for interactive runs.
+
+The programs for `fetch_top` and `risc_top` are read from the directory given by their `PROGRAM_DIR` parameter (`-gPROGRAM_DIR=<dir>`, see `Verification/Common/tb_base_pkg.sv`). `sim_fetch.do` and `sim_risc.do` pass `<repo>/Python`; create the program there first with `python3 Python/riscv_testcase_generator.py --out-dir Python`.
 
 ### 1. Compile All Files
 ```tcl
 cd <repo>/Questa/Scratch
-do ../do/compile.do
+do ../do/compile.do                 # XLEN 32
+set XLEN 64; do ../do/compile.do    # RV64 core
 ```
 
 ### 2. Add Files to Project (Scratch Area)
@@ -65,7 +71,13 @@ Regression (all tops × XLEN 32/64 × random seeds, one PASS/FAIL table, works i
 Questa/regress.sh                          # 3 random seeds, XLEN 32 and 64, all nine tops
 Questa/regress.sh -n 10                    # 10 random seeds
 Questa/regress.sh -x 64 -s 1234 -t mem_top # reproduce one failing row
+Questa/regress.sh -c                       # also run the riscv-tests compliance suite on risc_top
+Questa/regress.sh -t "" -c                 # compliance suite only
 ```
+
+**Merged coverage:** after the runs of each XLEN, all UCDBs are merged with `vcover merge` into `$WORK/x<xlen>/merged.ucdb`, and the end of the regression prints one coverage line per covergroup type (also in `$WORK/x<xlen>/coverage.txt`). Open the merged database with `vsim -viewcov $WORK/x32/merged.ucdb` or report it with `vcover report -details`.
+
+**Compliance (`-c`):** `Verification/Compliance/build_tests.py` builds the riscv-tests rv<XLEN>ui/um/ua/uf/mi `-p-` programs (unmodified sources, a link script for the core's 4 KiB memories) and each one runs on `risc_top` with `+UVM_TESTNAME=risc_compliance_test`. A test passes when it writes `tohost = 1` and the ISS lock-step reports no mismatch. Needs `riscv64-unknown-elf-gcc` and the riscv-tests sources in `third_party/riscv-tests` (`git clone --recursive https://github.com/riscv-software-src/riscv-tests third_party/riscv-tests`). Programs that do not fit the memories are listed as SKIP.
 
 **Spike lock-step (risc_top):** when `Verification/Risc/spike/libspike_dpi.so` exists, `regress.sh` and `sim_risc.do` load it with `+SPIKE`, and the commit checker steps Spike next to the in-house ISS on every commit (`SPIKE_CHK` messages). Build it with `cd Verification/Risc/spike && make` once Spike is installed (steps in that Makefile). The core profile Spike runs with is listed at the top of `spike_dpi.cc`.
 
@@ -93,12 +105,12 @@ Each simulation do file adds specific signals to the waveform:
 ## Requirements
 
 - Questa SIM (Mentor Graphics/Siemens EDA)
-- UVM 1.2 (bundled with Questa; set as the default `mtiUvm` in the Questa install's modelsim.ini and in `Scratch/test.mpf`)
+- UVM 1.2 (bundled with Questa; set as the default `mtiUvm` in the Questa install's modelsim.ini)
 - Design source files in `Design/`, verification files in `Verification/`
 
 ## Notes
 
-- All do files use paths relative to `Questa/Scratch/`
+- Do files resolve paths from their own location; run them from the directory that should hold the work library
 - Waveforms display top DUT signals for each verification environment
 - The scratch area (`Questa/Scratch/`) is where the Questasim project and compiled libraries are stored
 - Use `add_files.do` to add files to a new Questa project in the scratch area

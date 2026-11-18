@@ -2,23 +2,25 @@
 # sim_fpu.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for FPU verification
-# Usage: do ../sim_fpu.do
+# Usage (from the directory that holds the work library, e.g. Questa/Scratch):
+#   do <repo>/Questa/do/sim_fpu.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
 quit -sim
-do ../do/compile.do
+set ROOT [file normalize [file join [file dirname [file normalize [status file]]] .. ..]]
+do [file join $ROOT Questa do compile.do]
 
 # Load simulation
 # -----------------------------------------------------------------------------
 # Reference-model selection:
 #   - SystemVerilog tasks (default): just run this do-file.
 #   - DPI-C Python golden: build the lib first
-#         cd ../../Verification/FPU/dpi && make
+#         cd $ROOT/Verification/FPU/dpi && make
 #     then add +FLP_DPI to the vsim plusargs below.
 # The DPI shared library is loaded automatically when it exists; FLP_DPI_DIR
 # tells the embedded Python where to find fpu_golden.py.
-set flp_dpi_dir [file normalize ../../Verification/FPU/dpi]
+set flp_dpi_dir [file normalize $ROOT/Verification/FPU/dpi]
 if {[file exists $flp_dpi_dir/libfpu_ref.so]} {
     setenv FLP_DPI_DIR $flp_dpi_dir
     vsim -64 -sv_lib $flp_dpi_dir/libfpu_ref -voptargs=+acc flp_top +cover +UVM_VERBOSITY=UVM_MEDIUM +UVM_MAX_QUIT_COUNT=100 +FLP_DPI   

@@ -2,12 +2,14 @@
 # sim_mem.do
 # -----------------------------------------------------------------------------
 # Questa simulation do file for Memory stage verification
-# Usage: do ../sim_mem.do
+# Usage (from the directory that holds the work library, e.g. Questa/Scratch):
+#   do <repo>/Questa/do/sim_mem.do
 # =============================================================================
 
 # Compile design and verification (if not already compiled)
 quit -sim
-do ../do/compile.do
+set ROOT [file normalize [file join [file dirname [file normalize [status file]]] .. ..]]
+do [file join $ROOT Questa do compile.do]
 
 # Load simulation
 vsim -64 -voptargs=+acc mem_top +cover +UVM_VERBOSITY=UVM_HIGH +UVM_MAX_QUIT_COUNT=100

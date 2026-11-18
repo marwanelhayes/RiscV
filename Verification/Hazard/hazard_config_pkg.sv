@@ -1,22 +1,27 @@
+// =============================================================================
+// hazard_config_pkg.sv
+// -----------------------------------------------------------------------------
+// Hazard unit environment configuration: agent mode and virtual interface.
+//
+// All behaviour is inherited from tb_base_pkg::base_config.
+// =============================================================================
 package hazard_config_pkg;
 
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
 
-    class hazard_config extends uvm_object;
+    // =========================================================================
+    // hazard_config: agent mode and hazard_interface handle
+    // =========================================================================
+    class hazard_config extends base_config #(virtual hazard_interface);
 
-        //Register the class into the factory
         `uvm_object_utils(hazard_config)
 
-        //Override the constructor function
         function new (string name = "hazard_config");
             super.new(name);
         endfunction:new
 
-        uvm_active_passive_enum enable;
-        virtual hazard_interface vif;
-
     endclass:hazard_config
-
 
 endpackage:hazard_config_pkg

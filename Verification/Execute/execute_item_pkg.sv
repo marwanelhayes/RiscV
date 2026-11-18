@@ -222,7 +222,7 @@ package execute_item_pkg;
             bit ok;
             if(!$cast(e, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not an execute_item")
+                `uvm_fatal(get_type_name(), "rhs is not an execute_item")
                 return 1'b0;
             end
             ok = super.do_compare(rhs, comparer);
@@ -255,7 +255,7 @@ package execute_item_pkg;
             execute_item o;
             if(!$cast(o, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not an execute_item")
+                `uvm_fatal(get_type_name(), "rhs is not an execute_item")
                 return;
             end
             super.do_copy(rhs);
@@ -297,7 +297,7 @@ package execute_item_pkg;
             execute_item o;
             if(!$cast(o, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not an execute_item")
+                `uvm_fatal(get_type_name(), "rhs is not an execute_item")
                 return;
             end
             this.rst = o.rst;

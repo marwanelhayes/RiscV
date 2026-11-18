@@ -28,5 +28,14 @@ module hazard_sva (
                 else uvm_report_error("SVA_HAZARD", "FP instruction left EX before done");
             a_miss_freeze: assert final ((!ICacheHit || !DCacheHit) -> StallW)
                 else uvm_report_error("SVA_HAZARD", "cache miss did not freeze the pipeline");
+
+            // Covers: an immediate cover of "a -> b" would count every cycle
+            // (it is true whenever a is false), so each one covers a && b,
+            // the case where the assertion above actually checked something.
+            a_chain_cover:       cover final (StallD && StallE && StallM && StallW);
+            a_bubble_e_cover:    cover final (StallD && !StallE && FlushE);
+            a_bubble_m_cover:    cover final (StallE && !StallM && FlushM);
+            a_fpu_wait_cover:    cover final (FPUValidE && !FPUDoneE && StallE);
+            a_miss_freeze_cover: cover final ((!ICacheHit || !DCacheHit) && StallW);
         end
 endmodule

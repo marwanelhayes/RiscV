@@ -1,3 +1,11 @@
+// =============================================================================
+// AXI_Assertions.sv
+// -----------------------------------------------------------------------------
+// AXI protocol assertions for one master port (AW/W/B/AR/R channels):
+// VALID held until READY, payload stable while stalled, burst/last rules.
+//
+// Bound into the DUT by fetch_top and mem_top.
+// =============================================================================
 import shared_pkg::*;
 
 module AXI_Assertions #(

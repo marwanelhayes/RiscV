@@ -12,6 +12,7 @@ module execute_top;
     import shared_pkg::*;
 
     bit clk;
+    logic DivWaitE;                   // Divide in EX, result not ready (DUT output)
 
     execute_interface intf (clk);
 
@@ -96,20 +97,21 @@ module execute_top;
         .FPURegWriteM(intf.FPURegWriteM),
         .MoveOperationM(intf.MoveOperationM),
         .FPUBusyE(intf.FPUBusyE),
-        .FPUDoneE(intf.FPUDoneE)
+        .FPUDoneE(intf.FPUDoneE),
+        .DivWaitE(DivWaitE)
     );
 
     // ── Hazard-unit contract for a stand-alone EX stage ──────────────────────
-    // A cache freeze (MemStallBit) holds EX and EX/MEM; an FP instruction
-    // holds EX until the FPU is done and leaves a bubble in EX/MEM; a trap
-    // squashes the EX instruction.
-    logic FPUWait;
+    // A cache freeze (MemStallBit) holds EX and EX/MEM; an FP instruction or a
+    // divide holds EX until its unit is done and leaves a bubble in EX/MEM; a
+    // trap squashes the EX instruction.
+    logic ExWait;
     always_comb
     begin
-        FPUWait     = intf.FPUValidE && intf.ValidE && !intf.FPUDoneE;
-        intf.StallE = intf.MemStallBit || FPUWait;
+        ExWait      = (intf.FPUValidE && intf.ValidE && !intf.FPUDoneE) || DivWaitE;
+        intf.StallE = intf.MemStallBit || ExWait;
         intf.StallM = intf.MemStallBit;
-        intf.FlushM = !intf.MemStallBit && (intf.TrapIsSet || FPUWait);
+        intf.FlushM = !intf.MemStallBit && (intf.TrapIsSet || ExWait);
     end
 
     // Passive FPU and CSR sub-env taps (bound here, not inside the RTL).

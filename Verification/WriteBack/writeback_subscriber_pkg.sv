@@ -1,3 +1,10 @@
+// =============================================================================
+// writeback_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// Write-back stage functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package writeback_subscriber_pkg;
 
     import uvm_pkg::*;
@@ -7,7 +14,6 @@ package writeback_subscriber_pkg;
 
     class writeback_subscriber extends uvm_subscriber #(writeback_item);
 
-        //Register the class to the factory
         `uvm_component_utils(writeback_subscriber)
 
 

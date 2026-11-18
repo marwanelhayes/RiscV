@@ -91,10 +91,8 @@ package decode_item_pkg;
         bit chk_fp  = 1;      // FP fields are meaningful
         bit chk_csr = 1;      // CSR fields are meaningful
 
-        //Register the class in the factory
         `uvm_object_utils(decode_item)
 
-        //Overriding the build in constructor with the child class
         function new (string name = "decode_item");
             super.new(name);
         endfunction: new
@@ -180,7 +178,7 @@ package decode_item_pkg;
             bit ok;
             if(!$cast(e, rhs))
             begin
-                `uvm_fatal("do_compare","rhs is not a decode_item")
+                `uvm_fatal(get_type_name(), "rhs is not a decode_item")
                 return 1'b0;
             end
             ok = super.do_compare(rhs, comparer);
@@ -224,7 +222,7 @@ package decode_item_pkg;
             decode_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("do_copy","rhs is not a decode_item")
+                `uvm_fatal(get_type_name(), "rhs is not a decode_item")
                 return;
             end
             super.do_copy(rhs);
@@ -285,7 +283,7 @@ package decode_item_pkg;
             decode_item other;
             if(!$cast(other, rhs))
             begin
-                `uvm_fatal("copy_inputs","rhs is not a decode_item")
+                `uvm_fatal(get_type_name(), "rhs is not a decode_item")
                 return;
             end
             this.rst          = other.rst;

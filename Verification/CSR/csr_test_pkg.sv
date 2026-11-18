@@ -1,12 +1,26 @@
+// =============================================================================
+// csr_test_pkg.sv
+// -----------------------------------------------------------------------------
+// CSR file test: active csr_env driven by csr_seq.
+//
+// Configuration, environment, main sequence and objection handling come from
+// tb_base_pkg::block_test.
+//
+// After the main sequence the reg checker sweeps every CSR (model == DUT).
+// =============================================================================
 package csr_test_pkg;
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
-
+    import tb_base_pkg::*;
     import csr_env_pkg::*;
     import csr_seq_pkg::*;
     import csr_config_pkg::*;
 
-    class csr_test extends uvm_test;
+    // =========================================================================
+    // csr_test: stand-alone CSR file test
+    // =========================================================================
+    class csr_test extends block_test #(csr_config, csr_env, csr_seq, virtual csr_interface);
 
         `uvm_component_utils(csr_test)
 
@@ -14,36 +28,9 @@ package csr_test_pkg;
             super.new(name,parent);
         endfunction:new
 
-        csr_env env;
-        csr_seq main_sequence;
-        csr_config configuration;
-
-        function void set_config_params();
-            configuration.enable = UVM_ACTIVE;
-            if(!uvm_config_db #(virtual csr_interface)::get(this,"","INTF",configuration.vif))
-                `uvm_fatal("TEST","Couldn't receive interface")
-        endfunction
-
-        virtual function void build_phase (uvm_phase phase);
-            super.build_phase(phase);
-            configuration = csr_config::type_id::create("configuration",this);
-            set_config_params();
-            uvm_config_db #(csr_config)::set(this,"env","CONFG",configuration);
-            env = csr_env::type_id::create("env",this);
-            main_sequence = csr_seq::type_id::create("main_sequence",this);
-        endfunction:build_phase
-
-        virtual function void end_of_elaboration_phase (uvm_phase phase);
-            super.end_of_elaboration_phase(phase);
-            uvm_top.print_topology();
-        endfunction:end_of_elaboration_phase
-        
-        virtual task run_phase (uvm_phase phase);
-            phase.raise_objection(this);
-                main_sequence.start(env.agent.seq);
-                env.reg_checker.do_final_sweep();
-            phase.drop_objection(this);
-        endtask:run_phase
+        virtual task post_main ();
+            env.reg_checker.do_final_sweep();
+        endtask:post_main
 
     endclass:csr_test
 

@@ -1,43 +1,28 @@
+// =============================================================================
+// writeback_monitor_pkg.sv
+// -----------------------------------------------------------------------------
+// Write-back stage monitor: samples writeback_interface and publishes each writeback_item.
+//
+// All behaviour is inherited from tb_base_pkg::base_monitor.
+// =============================================================================
 package writeback_monitor_pkg;
-    
+
     import uvm_pkg::*;
     `include "uvm_macros.svh"
+    import tb_base_pkg::*;
     import writeback_item_pkg::*;
 
-    class writeback_monitor extends uvm_monitor;
+    // =========================================================================
+    // writeback_monitor: sample the Write-back stage and publish a copy of each item
+    // =========================================================================
+    class writeback_monitor extends base_monitor #(writeback_item, virtual writeback_interface);
 
-        //Register the class into the factory
         `uvm_component_utils(writeback_monitor)
 
-        //Override the constructor function
         function new (string name = "writeback_monitor", uvm_component parent = null);
-            super.new(name,parent);
+            super.new(name, parent);
         endfunction:new
-
-        uvm_analysis_port #(writeback_item) mon_port;
-        writeback_item mon_item, cloned_item;
-        virtual writeback_interface vif;
-
-        virtual function void build_phase (uvm_phase phase);
-            super.build_phase(phase);
-            mon_port = new("mon_port",this);
-            mon_item = writeback_item::type_id::create("mon_item");
-        endfunction:build_phase
-        
-        virtual task run_phase (uvm_phase phase);
-            super.run_phase(phase);
-            forever
-            begin:monitoring
-                vif.intf2mon(mon_item);
-                if(!$cast(cloned_item, mon_item.clone()))
-                    `uvm_fatal("CLONE_FAIL","Failed to clone the monitor item")
-                mon_port.write(cloned_item);
-                `uvm_info("MON",cloned_item.convert2str,UVM_HIGH)
-            end:monitoring
-        
-        endtask:run_phase
 
     endclass:writeback_monitor
 
-
-endpackage: writeback_monitor_pkg
+endpackage:writeback_monitor_pkg

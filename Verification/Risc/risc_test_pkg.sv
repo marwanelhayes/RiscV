@@ -1,8 +1,20 @@
+// =============================================================================
+// risc_test_pkg.sv
+// -----------------------------------------------------------------------------
+// Full-core tests.
+//
+// risc_test           : random program (Python/riscv_testcase_generator.py) with
+//                       random interrupt pulses; every stage environment is
+//                       passive and commit_checker lock-steps the ISS (and Spike).
+// risc_compliance_test: one riscv-tests program (Verification/Compliance), no
+//                       interrupts; ends on the tohost write.
+// =============================================================================
 package risc_test_pkg;
     
     import uvm_pkg::*;
     `include "uvm_macros.svh"
     import shared_pkg::*;
+    import tb_base_pkg::*;
 
     import fetch_config_pkg::*;
     import fetch_env_pkg::*;
@@ -22,18 +34,15 @@ package risc_test_pkg;
     import hazard_config_pkg::*;
     import hazard_env_pkg::*;
 
-    class risc_test extends uvm_test;
+    class risc_test extends base_test;
 
-        //Register the class into the factory
         `uvm_component_utils(risc_test)
 
-        //Override the constructor function
         function new (string name = "risc_test", uvm_component parent = null);
             super.new(name,parent);
         endfunction:new
 
         localparam int MEM_DEPTH = 2**(FINAL_ADDR_WIDTH-2);          // 32-bit instruction words
-        localparam string PROGRAM_INFO_PATH = "../../Python/program_info.txt"; // relative to Questa/Scratch
         localparam int PROGRAM_EXIT_DRAIN_CYCLES = 64;    // covers a D-cache write-back + refill
         localparam int PROGRAM_SAFETY_MARGIN_CYCLES = 64;
         localparam int PROGRAM_MAX_CYCLE_FACTOR = 16;
@@ -57,6 +66,7 @@ package risc_test_pkg;
         virtual risc_interface intf;
         int program_words;
         int wait_cycles;
+        bit drive_irq = 1;      // random interrupt pulses during the program
 
         function void load_program_metadata();
             int file_descriptor;
@@ -65,10 +75,10 @@ package risc_test_pkg;
             program_words = MEM_DEPTH;
             wait_cycles = (MEM_DEPTH * PROGRAM_MAX_CYCLE_FACTOR) + PROGRAM_SAFETY_MARGIN_CYCLES;
 
-            file_descriptor = $fopen(PROGRAM_INFO_PATH, "r");
+            file_descriptor = $fopen(program_file("program_info.txt"), "r");
             if (file_descriptor == 0)
             begin
-                `uvm_warning("TEST", $sformatf("Could not open %s, using full memory depth", PROGRAM_INFO_PATH))
+                `uvm_warning(get_type_name(), $sformatf("Could not open %s, using full memory depth", program_file("program_info.txt")))
                 return;
             end
 
@@ -79,7 +89,7 @@ package risc_test_pkg;
             begin
                 program_words = MEM_DEPTH;
                 wait_cycles = (MEM_DEPTH * PROGRAM_MAX_CYCLE_FACTOR) + PROGRAM_SAFETY_MARGIN_CYCLES;
-                `uvm_warning("TEST", "Program metadata is invalid, using full memory depth")
+                `uvm_warning(get_type_name(), "Program metadata is invalid, using full memory depth")
                 return;
             end
 
@@ -101,25 +111,25 @@ package risc_test_pkg;
             HazardConfiguration.enable = UVM_PASSIVE;
             
             if(!uvm_config_db #(virtual fetch_interface)::get(this,"","INTF",FetchConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive fetch interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive fetch interface")
             
             if(!uvm_config_db #(virtual decode_interface)::get(this,"","INTF",DecodeConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive decode interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive decode interface")
             
             if(!uvm_config_db #(virtual execute_interface)::get(this,"","INTF",ExecuteConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive execute interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive execute interface")
             
             if(!uvm_config_db #(virtual writeback_interface)::get(this,"","INTF",WritebackConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive writeback interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive writeback interface")
             
             if(!uvm_config_db #(virtual mem_interface)::get(this,"","INTF",MemoryConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive memory interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive memory interface")
 
             if(!uvm_config_db #(virtual risc_interface)::get(this,"","INTF",intf))
-                `uvm_fatal("TEST","Couldn't receive risc interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive risc interface")
 
             if(!uvm_config_db #(virtual hazard_interface)::get(this,"","INTF",HazardConfiguration.vif))
-                `uvm_fatal("TEST","Couldn't receive hazard interface")
+                `uvm_fatal(get_type_name(), "Couldn't receive hazard interface")
         
         endfunction
 
@@ -163,10 +173,6 @@ package risc_test_pkg;
             MemoryEnvironment.reg_block.set_hdl_path_root("risc_top.DataMem");
         endfunction:connect_phase
 
-        virtual function void end_of_elaboration_phase (uvm_phase phase);
-            super.end_of_elaboration_phase(phase);
-            uvm_top.print_topology();
-        endfunction:end_of_elaboration_phase
         
         // Random short pulses on one interrupt line. A pulse is shorter than
         // the trap handler, so a taken interrupt is not re-taken; one that
@@ -197,8 +203,9 @@ package risc_test_pkg;
 
             phase.raise_objection(this);
             intf.initialize();
-            `uvm_info("TEST", $sformatf("Starting the test: program_words = %0d, cycle budget = %0d",
+            `uvm_info(get_type_name(), $sformatf("Starting the test: program_words = %0d, cycle budget = %0d",
                                         program_words, wait_cycles), UVM_LOW)
+            if(drive_irq)
             fork
                 drive_interrupts();
             join_none
@@ -206,7 +213,7 @@ package risc_test_pkg;
                 done_ev.wait_trigger();
                 begin
                     repeat(wait_cycles) @(posedge intf.clk);
-                    `uvm_error("TEST", $sformatf("program end not reached within %0d cycles", wait_cycles))
+                    `uvm_error(get_type_name(), $sformatf("program end not reached within %0d cycles", wait_cycles))
                 end
             join_any
             disable fork;
@@ -222,6 +229,23 @@ package risc_test_pkg;
         endtask:run_phase
 
     endclass:risc_test
+
+    // =========================================================================
+    // risc_compliance_test: one riscv-tests program (Verification/Compliance)
+    // =========================================================================
+    // Same environment and checkers as risc_test; the program ends with a store
+    // to tohost (see commit_checker) and runs without interrupt pulses, which a
+    // self-checking test would report as an unexpected trap.
+    class risc_compliance_test extends risc_test;
+
+        `uvm_component_utils(risc_compliance_test)
+
+        function new (string name = "risc_compliance_test", uvm_component parent = null);
+            super.new(name,parent);
+            drive_irq = 0;
+        endfunction:new
+
+    endclass:risc_compliance_test
 
 
 

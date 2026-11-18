@@ -1,3 +1,10 @@
+// =============================================================================
+// decode_subscriber_pkg.sv
+// -----------------------------------------------------------------------------
+// Decode stage functional coverage: one covergroup sampled on every monitored item.
+//
+// See Verification/COVERAGE_README.md for the bins and their rationale.
+// =============================================================================
 package decode_subscriber_pkg;
 
     import uvm_pkg::*;
@@ -7,7 +14,6 @@ package decode_subscriber_pkg;
 
     class decode_subscriber extends uvm_subscriber #(decode_item);
 
-        //Register the class to the factory
         `uvm_component_utils(decode_subscriber)
 
 
