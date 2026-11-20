@@ -41,6 +41,7 @@ module opcode_decoder
     output logic Store,             // Store instruction flag
     output logic WordOp,            // RV64 32-bit operation (OP-IMM-32 / OP-32)
     output logic Amo,               // A extension instruction (LR, SC, AMO*)
+    output logic FenceI,            // Instruction-fetch fence
     output logic MMode,             // Machine mode flag
     output logic IllegaleInstruction,  // Illegal instruction flag
     output logic FPU                // FPU instruction flag
@@ -68,6 +69,7 @@ module opcode_decoder
         Store = 1'b0;
         WordOp = 1'b0;
         Amo = 1'b0;
+        FenceI = 1'b0;
         CsrAccess = 1'b0;
         MMode = 1'b0;
         FPU = 1'b0;
@@ -195,10 +197,11 @@ module opcode_decoder
                 MemWrite = (funct5 != AMO_LR);
                 IllegaleInstruction = !((load_store_t'(funct3) == W) || (IS_RV64 && (load_store_t'(funct3) == D))) || IllegalAmoOp || ((funct5 == AMO_LR) && (Rs2 != zero));
             end
-            // ── MISC-MEM: FENCE is a NOP on a single in-order hart ────────────
+            // ── MISC-MEM: FENCE and FENCE.I ─────────────────────────────────
             MISC_MEM: 
             begin
-                IllegaleInstruction = (funct3 != 3'b000);    // FENCE.I needs Zifencei
+                FenceI = (funct3 == 3'b001);
+                IllegaleInstruction = (funct3 != 3'b000) && !FenceI;
             end
             // ── CSR: Control and Status Registers ─────────────────────────────
             CSR: 

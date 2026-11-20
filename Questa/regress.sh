@@ -3,7 +3,7 @@
 # regress.sh
 # -----------------------------------------------------------------------------
 # Headless regression: every testbench top x every XLEN x N random seeds,
-# optionally the riscv-tests compliance suite on risc_top, then one PASS/FAIL
+# optionally compliance or directed FENCE.I programs on risc_top, then one PASS/FAIL
 # table and the merged functional coverage. Exit status is 0 only if every run
 # passes.
 #
@@ -19,15 +19,16 @@
 # Layout of $WORK/x<xlen>:
 #   run/            work library, logs/ (one log + UCDB per run)
 #   prog/           program of the current seed (fetch_top, risc_top)
-#   compliance/     riscv-tests program directories (-c)
+#   compliance/     compliance program directories (-c or -f)
 #   merged.ucdb     all runs merged; coverage.txt its per-covergroup summary
 #
-# Usage: Questa/regress.sh [-n N] [-s "seed ..."] [-x "32 64"] [-t "top ..."] [-c]
+# Usage: Questa/regress.sh [-n N] [-s "seed ..."] [-x "32 64"] [-t "top ..."] [-c|-f]
 #   -n N     number of random seeds (default 3)
 #   -s LIST  explicit seeds instead of random ones
 #   -x LIST  XLEN values (default "32 64")
 #   -t LIST  testbench tops (default: all nine; -t "" runs none)
 #   -c       also run the riscv-tests compliance suite (Verification/Compliance)
+#   -f       run just the two FENCE.I tests from that suite
 #   WORK     scratch directory (default /tmp/riscv_regress)
 # =============================================================================
 set -u
@@ -39,14 +40,16 @@ SEEDS=""
 XLENS="32 64"
 TOPS="risc_top fetch_top decode_top execute_top mem_top writeback_top hazard_top csr_top flp_top"
 COMPLIANCE=0
+FENCE_I=0
 
-while getopts "n:s:x:t:c" opt; do
+while getopts "n:s:x:t:cf" opt; do
     case $opt in
         n) NSEEDS=$OPTARG ;;
         s) SEEDS=$OPTARG ;;
         x) XLENS=$OPTARG ;;
         t) TOPS=$OPTARG ;;
         c) COMPLIANCE=1 ;;
+        f) FENCE_I=1 ;;
         *) sed -n '/^# Usage/,/^# ===/p' "$0"; exit 2 ;;
     esac
 done
@@ -59,6 +62,9 @@ SPIKE_LIB=$REPO/Verification/Risc/spike/libspike_dpi   # built by Verification/R
 RESULTS=()
 COVERAGE=()
 FAILED=0
+NOSPIKE=""     # " NOSPIKE" on a row that wanted Spike lock-step but ran ISS-only
+SPIKE_WARN="WARN: $SPIKE_LIB.so missing: rows marked NOSPIKE ran ISS-only (build: make -C Verification/Risc/spike)"
+[ -f "$SPIKE_LIB.so" ] || echo "$SPIKE_WARN"
 
 # run_one <xlen> <seed> <top> <name> [vsim args...]: one simulation and its result row
 run_one() {
@@ -77,8 +83,8 @@ run_one() {
     else
         status=FAIL; FAILED=1
     fi
-    RESULTS+=("$(printf '%-5s %-8s %-24s %-5s err=%-6s fatal=%-3s cov=%s' \
-        "$xlen" "$seed" "$name" "$status" "${errs:-?}" "${fatals:-?}" "${cov:--}")")
+    RESULTS+=("$(printf '%-5s %-8s %-24s %-5s err=%-6s fatal=%-3s cov=%s%s' \
+        "$xlen" "$seed" "$name" "$status" "${errs:-?}" "${fatals:-?}" "${cov:--}" "$NOSPIKE")")
 }
 
 for xlen in $XLENS; do
@@ -101,11 +107,12 @@ for xlen in $XLENS; do
         for seed in $SEEDS; do
             python3 "$REPO/Python/riscv_testcase_generator.py" --xlen "$xlen" --seed "$seed" --out-dir "$S/prog" > /dev/null || exit 1
             for top in $TOPS; do
-                extra=()
+                extra=(); NOSPIKE=""
                 case $top in
                     fetch_top) extra=(-gPROGRAM_DIR="$S/prog") ;;
                     risc_top)  extra=(-gPROGRAM_DIR="$S/prog")
-                               [ -f "$SPIKE_LIB.so" ] && extra+=(-sv_lib "$SPIKE_LIB" +SPIKE) ;;   # Spike lock-step next to the ISS
+                               if [ -f "$SPIKE_LIB.so" ]; then extra+=(-sv_lib "$SPIKE_LIB" +SPIKE)   # Spike lock-step next to the ISS
+                               else NOSPIKE=" NOSPIKE"; fi ;;
                     flp_top)   if [ -f "$DPI_DIR/libfpu_ref.so" ]; then
                                    export FLP_DPI_DIR=$DPI_DIR
                                    extra=(-sv_lib "$DPI_DIR/libfpu_ref" +FLP_DPI)
@@ -117,12 +124,12 @@ for xlen in $XLENS; do
         done
     fi
 
-    # ── riscv-tests compliance suite on risc_top ────────────────────────────
-    # Spike is not used here: its data memory starts empty, while these
-    # programs preload theirs (the ISS lock-step still checks every commit).
-    if [ $COMPLIANCE = 1 ]; then
-        echo "[XLEN=$xlen] building riscv-tests..."
-        if ! python3 "$REPO/Verification/Compliance/build_tests.py" --xlen "$xlen" --out "$S/compliance" > logs/compliance_build.log 2>&1; then
+    # ── Compliance programs on risc_top (SV ISS lock-step) ────────────────────
+    if [ $COMPLIANCE = 1 ] || [ $FENCE_I = 1 ]; then
+        selection=()
+        [ $COMPLIANCE = 0 ] && selection=(--fence-i)
+        echo "[XLEN=$xlen] building compliance programs..."
+        if ! python3 "$REPO/Verification/Compliance/build_tests.py" --xlen "$xlen" --out "$S/compliance" "${selection[@]}" > logs/compliance_build.log 2>&1; then
             tail -3 logs/compliance_build.log
             RESULTS+=("$(printf '%-5s %-8s %-24s %-5s %s' "$xlen" "-" "compliance build" "FAIL" "see $S/run/logs/compliance_build.log")")
             FAILED=1
@@ -133,7 +140,12 @@ for xlen in $XLENS; do
                 continue
             fi
             echo "[XLEN=$xlen] $name"
-            run_one "$xlen" 1 risc_top "$name" -gPROGRAM_DIR="$rest" +UVM_TESTNAME=risc_compliance_test
+            # Spike only on the directed privilege test: riscv-tests use F loads/stores the ISS does not model
+            extra=(); NOSPIKE=""
+            if [[ $name == *priv_u_mode ]]; then
+                [ -f "$SPIKE_LIB.so" ] && extra=(-sv_lib "$SPIKE_LIB" +SPIKE) || NOSPIKE=" NOSPIKE"
+            fi
+            run_one "$xlen" 1 risc_top "$name" -gPROGRAM_DIR="$rest" +UVM_TESTNAME=risc_compliance_test "${extra[@]}"
         done < <(grep -E '^(SKIP )?rv[0-9]+' logs/compliance_build.log)
     fi
 
@@ -157,5 +169,6 @@ if [ ${#COVERAGE[@]} -gt 0 ]; then
     printf '%s\n' "${COVERAGE[@]}"
 fi
 echo
+[ -f "$SPIKE_LIB.so" ] || echo "$SPIKE_WARN"
 [ $FAILED = 0 ] && echo "ALL PASS" || echo "FAILURES (logs in $WORK/x<xlen>/run/logs)"
 exit $FAILED

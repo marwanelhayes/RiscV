@@ -28,6 +28,8 @@ module csr_top;
         .CsrAccess(intf.CsrAccess),
         .CsrIn(intf.CsrIn),
         .Commit(intf.Commit),
+        .Wfi(intf.Wfi),
+        .MTime(intf.MTime),
         .TimerInterrupt(intf.TimerInterrupt),
         .ExternalInterrupt(intf.ExternalInterrupt),
         .SoftwareInterrupt(intf.SoftwareInterrupt),
@@ -36,7 +38,9 @@ module csr_top;
         .CsrOut(intf.CsrOut),
         .TrapIsSet(intf.TrapIsSet),
         .TrapTaken(intf.TrapTaken),
-        .RoundingMode(intf.RoundingMode)
+        .RoundingMode(intf.RoundingMode),
+        .PrivMode(intf.PrivMode),
+        .WfiStall(intf.WfiStall)
     );
 
     // Timing assertions (Verification/<unit>/<unit>_sva.sv)

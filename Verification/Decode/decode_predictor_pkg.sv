@@ -72,7 +72,7 @@ package decode_predictor_pkg;
             e.MemWriteE = 0; e.MemReadE = 0; e.BranchE = 0; e.JumpE = 0; e.JalrE = 0;
             e.ALUSrcE = 0; e.AuipcE = 0; e.WordOpE = 0; e.CsrAccessE = 0; e.AmoE = 0; e.AmoOpE = AMO_ADD;
             e.CsrOperationE = csrrw; e.CsrIndexE = mstatus;
-            e.EcallE = 0; e.EbreakE = 0; e.MRetE = 0; e.IllegaleInstructionE = 0;
+            e.EcallE = 0; e.EbreakE = 0; e.MRetE = 0; e.WfiE = 0; e.IllegaleInstructionE = 0;
             e.RdFE = f0; e.Rs1FE = f0; e.Rs2FE = f0; e.RD1FE = '0; e.RD2FE = '0;
             e.FPUControlE = NOOPERATION; e.RoundModeE = RNE; e.FPURegWriteE = 0;
             e.MoveOperationE = FPUToFPU; e.FPUValidE = 0;
@@ -97,7 +97,7 @@ package decode_predictor_pkg;
         // ── Rs1D / Rs2D contract: x0 when the format has no such field ──────
         function automatic gpr_t rs1_of(logic [31:0] in);
             opcode_t op = opcode_t'(in[6:0]);
-            return (op inside {LUI, AUIPC, JAL}) ? zero : gpr_t'(in[19:15]);
+            return (op inside {LUI, AUIPC, JAL, MISC_MEM}) ? zero : gpr_t'(in[19:15]);
         endfunction:rs1_of
 
         function automatic gpr_t rs2_of(logic [31:0] in);
@@ -242,7 +242,7 @@ package decode_predictor_pkg;
                 end
                 MISC_MEM: begin
                     e.chk_alu = 0;
-                    legal = (f3 == 3'b000);                         // FENCE; FENCE.I not claimed
+                    legal = f3 inside {3'b000, 3'b001};             // FENCE, FENCE.I
                 end
                 CSR: begin
                     e.chk_alu = 0;
@@ -253,7 +253,7 @@ package decode_predictor_pkg;
                                 12'h000: begin legal = 1; e.EcallE = 1; end
                                 12'h001: begin legal = 1; e.EbreakE = 1; end
                                 12'h302: begin legal = 1; e.MRetE = 1; end
-                                12'h105: legal = 1;                 // WFI = NOP
+                                12'h105: begin legal = 1; e.WfiE = 1; end   // WFI: retires, then EX waits
                             endcase
                     end
                     else if(f3 != 3'b100)
@@ -358,6 +358,13 @@ package decode_predictor_pkg;
                     bubble(q);
                 else if(!t.StallE)
                     decode(t, q);
+                else
+                begin
+                    // Held in EX (e.g. behind WFI): the operands follow write-back,
+                    // so they stay right once the producer has left WB
+                    if(t.RegWriteW && (t.RdW != zero) && (t.RdW == q.Rs1E)) q.RD1E = t.ResultW;
+                    if(t.RegWriteW && (t.RdW != zero) && (t.RdW == q.Rs2E)) q.RD2E = t.ResultW;
+                end
             end
             if(!$cast(shadow_input, t.clone()))
                 `uvm_fatal(get_type_name(), "Failed to cast shadow input - check for type mismatches")

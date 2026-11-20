@@ -69,6 +69,7 @@ module execute_stage
     input TimerInterrupt,                     // Timer interrupt pending
     input ExternalInterrupt,                   // External interrupt pending
     input SoftwareInterrupt,                  // Software interrupt pending
+    input [63:0] MTime,                       // Machine timer (time/timeh)
 
     // ── Control signals ───────────────────────────────────────────────────────
     input selector_t SelectorE,                // Write-back data select
@@ -83,8 +84,10 @@ module execute_stage
 
     // ── Special instructions ─────────────────────────────────────────────────
     input MRetE,                               // MRET instruction flag
+    input FenceIE,                             // Instruction-fetch fence in EX
     input EcallE,                              // ECALL instruction flag
     input EbreakE,                             // EBREAK instruction flag
+    input WfiE,                                // WFI instruction flag
     input IllegaleInstructionE,                // Illegal instruction flag
 
     // ── FPR inputs from decode stage ─────────────────────────────────────────
@@ -106,6 +109,8 @@ module execute_stage
 
     // ── Outputs to memory stage ─────────────────────────────────────────────
     output logic ValidM,                              // EX/MEM holds a real instruction
+    output logic FenceIM,                             // Instruction-fetch fence in MEM
+    output logic FenceIStartE,                        // Accepted fence squashes younger instructions
     output logic signed [DATA_WIDTH-1:0] ALUOutM,      // ALU result
     output logic signed [DATA_WIDTH-1:0] WriteDataM,   // Data to store
     output gpr_t RdM,                                 // Destination register
@@ -138,7 +143,8 @@ module execute_stage
     output move_operation_t MoveOperationM,         // FPU move operation
     output logic FPUBusyE,                          // FPU busy flag
     output logic FPUDoneE,                          // FPU result valid this cycle
-    output logic DivWaitE                           // Divide in EX, result not ready
+    output logic DivWaitE,                          // Divide in EX, result not ready
+    output logic WfiStallE                          // Hold EX after WFI until an interrupt is pending
 );
 
     localparam bit IS_RV64 = (DATA_WIDTH == 64);
@@ -156,6 +162,7 @@ module execute_stage
     logic TakenE;                                     // Branch/jump is taken
     logic Commit;                                     // EX instruction advances this cycle
     logic TrapTaken;                                  // EX instruction is squashed by a trap
+    priv_mode_t PrivModeE;                            // Current privilege mode
     traps_t TrapsE;
     logic [DATA_WIDTH-1:0] TvalE;                     // Trap value of the exception
     logic [FLP_WIDTH-1:0] FPUInAE,FPUInBE, FPUInAETemp;
@@ -292,6 +299,8 @@ module execute_stage
         .Rs(Rs1E),
         .Traps(TrapsE),
         .mret(MRetE),
+        .Wfi(WfiE),
+        .MTime(MTime),
         .PC(PCE),
         .Address(TvalE),
         .CsrAccess(CsrAccessE),
@@ -305,7 +314,9 @@ module execute_stage
         .CsrOut(CsrReadE),
         .TrapIsSet(TrapIsSet),
         .TrapTaken(TrapTaken),
-        .RoundingMode(DynRoundMode)
+        .RoundingMode(DynRoundMode),
+        .PrivMode(PrivModeE),
+        .WfiStall(WfiStallE)
     );
 
     always_ff @(posedge clk or negedge rst)
@@ -313,6 +324,7 @@ module execute_stage
         if (!rst)
         begin
             ValidM <= 0;
+            FenceIM <= 0;
             RegWriteM <= 0;
             SelectorM <= ALUToReg;
             MemWriteM <= 0;
@@ -339,6 +351,7 @@ module execute_stage
         else if (FlushM)
         begin
             ValidM <= 0;
+            FenceIM <= 0;
             RegWriteM <= 0;
             SelectorM <= ALUToReg;
             MemWriteM <= 0;
@@ -365,6 +378,7 @@ module execute_stage
         else if (!StallM)
         begin
             ValidM <= ValidE;
+            FenceIM <= FenceIStartE;
             RegWriteM <= RegWriteE;
             SelectorM <= SelectorE;
             MemWriteM <= MemWriteE;
@@ -452,6 +466,8 @@ module execute_stage
         PCSrcE = Commit && TakenE && !TrapTaken;
     end
 
+    assign FenceIStartE = Commit && FenceIE && !TrapIsSet;
+
 
     // ─── Synchronous exceptions of the EX instruction ───────────────────────
     always_comb
@@ -473,7 +489,7 @@ module execute_stage
         end
         else if(EcallE)
         begin
-            TrapsE = EcallMOrMachineExternalInterrupt;
+            TrapsE = (PrivModeE == UserMode) ? EcallUOrUserExternalInterrupt : EcallMOrMachineExternalInterrupt;
         end
         else if(MemReadE && !MemWriteE)                   // AMO* (read + write) traps as a store
         begin

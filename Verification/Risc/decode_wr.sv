@@ -55,6 +55,7 @@ interface decode_wr
     input logic EcallE,
     input logic EbreakE,
     input logic MRetE,
+    input logic WfiE,
     input logic IllegaleInstructionE,
     input logic [2:0] funct3E,
     input logic [FINAL_DATA_WIDTH-1:0] PCPlus4E,
@@ -118,6 +119,7 @@ interface decode_wr
         decode_intf.EcallE = EcallE;
         decode_intf.EbreakE = EbreakE;
         decode_intf.MRetE = MRetE;
+        decode_intf.WfiE = WfiE;
         decode_intf.IllegaleInstructionE = IllegaleInstructionE;
         decode_intf.funct3E = funct3E;
         decode_intf.PCPlus4E = PCPlus4E;

@@ -30,42 +30,26 @@ Semantics: after FENCE.I, instruction fetches on this hart observe every store
 this hart made before the FENCE.I. Nothing about other harts (they need an IPI +
 their own FENCE.I; for SMP Linux this goes through SBI `remote_fence_i`).
 
-## 3. What exists today
+## 3. Implementation
 
-| Item | Status | Evidence |
-|---|---|---|
-| Decode | **illegal** (`MISC_MEM` accepts only funct3 `000`) | `Design/opcode_decoder.sv:177-180` |
-| Generator | emits FENCE.I as an *illegal* test | `Python/riscv_testcase_generator.py:328` |
-| I-cache invalidate | missing | `Design/cache.sv` has no invalidate input |
-| D-cache write-back flush | missing (write-back, write-allocate policy; dirty lines only leave on eviction) | `Design/cache.sv:21-33` |
-| Memory organisation | Harvard: separate I and D memories, so stores can never become visible to fetch at all | `Verification/Risc/risc_top.sv` (`InstrMem`, `DataMem`) |
+The decoder recognizes MISC-MEM funct3 `001` and ignores the reserved operands.
+An accepted fence clears the younger pipeline stages and enters MEM. An
+interrupt or exception that redirects the fence in EX suppresses maintenance.
 
-The last row is the real blocker: until the SoC has one RAM behind an interconnect
-([modules/AXI_INTERCONNECT_MEMORY_MAP.md](modules/AXI_INTERCONNECT_MEMORY_MAP.md)),
-FENCE.I cannot even be defined in this system.
+1. MEM pulses `CPUFlushAll`. The D-cache finishes outstanding AXI traffic,
+   scans all sets and ways, and writes each valid dirty line back to memory.
+   Cleaned lines stay valid.
+2. On `CPUFlushDone`, MEM pulses `CPUInvalidateAll`. The I-cache drains
+   any outstanding refill before clearing its valid bits.
+3. `FenceIBusyM` holds the pipeline until `CPUInvalidateDone`. Fetch then
+   restarts at the saved `PCPlus4M`.
 
-## 4. What must change
+The processor exposes separate instruction and data AXI ports. Both ports
+must reach the same physical RAM for writable executable addresses. The
+full-core testbench arbitrates read bursts to a single 4 KiB RAM and routes
+D-cache write-backs to that RAM.
 
-1. Decode `funct3 = 001` under MISC-MEM as `FenceID` (ignore imm/rs1/rd).
-2. FENCE.I is **serializing**: when it commits, flush F/D (and E if commit moves to
-   M), then
-   1. D-cache: write back every dirty line (`CPUFlushAll`, wait `CPUFlushDone`),
-   2. I-cache: invalidate every line (`CPUInvalidateAll`, one cycle if `valid` is a
-      flop array),
-   3. refetch at `PC + 4`.
-3. Hazard unit gets a request `FenceIBusyM` that freezes the pipeline like a miss.
-
-Cheaper alternatives, in order of simplicity:
-
-| Option | Cost | Caveat |
-|---|---|---|
-| A. Write-back + invalidate as above | one FSM state in `cache.sv` that walks all sets | Flushing 32 lines is trivial at this cache size |
-| B. Make the D-cache write-through for the first boot (no dirty lines) + I-cache invalidate | changes D-cache policy, more AXI traffic | FENCE.I becomes "invalidate I-cache only" |
-| C. Snooping I-cache | way more logic | not justified for one hart |
-
-Option A matches PLAN_B B2.0; keep it.
-
-## 5. Verification hooks
+## 4. Verification hooks
 
 - `rv32ui-p-fence_i` / `rv64ui-p-fence_i`
   ([riscv-tests](https://github.com/riscv-software-src/riscv-tests)).

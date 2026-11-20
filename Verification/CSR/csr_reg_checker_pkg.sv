@@ -66,7 +66,7 @@ package csr_reg_checker_pkg;
 
         virtual task run_phase(uvm_phase phase);
             int failures;
-            // ponytail: 11 peeks/cycle is intentionally simple; select only
+            // ponytail: 12 peeks/cycle is intentionally simple; select only
             // touched CSRs if this becomes a measured simulation bottleneck.
             forever begin
                 @(negedge vif.clk);

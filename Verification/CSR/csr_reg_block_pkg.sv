@@ -5,8 +5,8 @@
 //
 // csr_file keeps each CSR as explicit registers (no CSR array), so every RAL
 // register is built from the fields that have storage, each with its own
-// backdoor path. Bits without storage (constant or derived: mstatus.MPP/FS/
-// SD, misa, mip, the counters' live increment) are not part of the RAL; the
+// backdoor path. Bits without storage (constant or derived: mstatus.FS/
+// SD/UXL, misa, mip, the counters' live increment) are not part of the RAL; the
 // predictor checks their read value through CsrOut instead.
 // =============================================================================
 package csr_reg_block_pkg;
@@ -55,9 +55,13 @@ package csr_reg_block_pkg;
             r = add_csr(frm,      "frm");      r.add_stored_field("value", 0, 3, "Frm");
             r = add_csr(mstatus,  "mstatus");  r.add_stored_field("mie", `MIE, 1, "MStatusMIE");
                                                r.add_stored_field("mpie", `MPIE, 1, "MStatusMPIE");
+                                               r.add_stored_field("mpp", `MPPS, 2, "MStatusMPP");
+                                               r.add_stored_field("mprv", `MPRV, 1, "MStatusMPRV");
+                                               r.add_stored_field("tw", `TW, 1, "MStatusTW");
             r = add_csr(mie,      "mie");      r.add_stored_field("msie", `MS_I, 1, "MieMSIE");
                                                r.add_stored_field("mtie", `MT_I, 1, "MieMTIE");
                                                r.add_stored_field("meie", `ME_I, 1, "MieMEIE");
+            r = add_csr(mcounteren, "mcounteren"); r.add_stored_field("value", 0, 3, "Mcounteren");
             r = add_csr(mtvec,    "mtvec");    r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Mtvec");
             r = add_csr(mscratch, "mscratch"); r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Mscratch");
             r = add_csr(mepc,     "mepc");     r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Mepc");

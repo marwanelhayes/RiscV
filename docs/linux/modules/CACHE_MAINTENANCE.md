@@ -7,15 +7,14 @@ Plan blocks B2.0, B7.2. Back to [index](../README.md).
 ## 1. Purpose
 
 `cache.sv` is a solid L1 (set-associative, true LRU, write-back/write-allocate, AXI4
-burst master, byte enables — `Design/cache.sv:1-41`). Linux needs four things it
-does not have:
+burst master, byte enables — `Design/cache.sv:1-41`). The Linux plan tracks four cache features.
 
 | Need | Why | Today |
 |---|---|---|
-| D-cache **flush all** (write back dirty lines) | FENCE.I must make stores visible to fetch | no port |
-| I-cache **invalidate all** | FENCE.I | no port |
+| D-cache **flush all** (write back dirty lines) | FENCE.I must make stores visible to fetch | Implemented with `CPUFlushAll` and `CPUFlushDone` |
+| I-cache **invalidate all** | FENCE.I | Implemented with `CPUInvalidateAll` and `CPUInvalidateDone` |
 | **Uncached** single-beat access | CLINT/PLIC/UART registers must never be cached, read twice, or burst-filled; a UART RBR read pops a byte | every access is cacheable; a miss always fetches a full line (`Design/cache.sv:535-544`, `MARLen = LINE_WORDS-1`) |
-| **Bus-error → access fault** | holes in the address map, ROM writes, PMA violations | on a non-`OKAY` refill the line is left invalid, the FSM returns to IDLE and the CPU re-requests — infinite retry, nothing reaches the pipeline (`Design/cache.sv:600-630`) |
+| **Bus-error → access fault** | holes in the address map, ROM writes, PMA violations | write-back (`BRESP`) error: completed as written back, line clean, nothing raised; `cache_sva` reports `SVA_CACHE_BERR` (`Design/cache.sv` `AXI_WR_RESP`). Refill (`RRESP`) error, B7.2: the line is left invalid, the FSM returns to IDLE and the CPU re-requests, so it retries forever and nothing reaches the pipeline (`Design/cache.sv` `AXI_RD_DATA`) |
 
 ## 2. Ports added (PLAN_B §3.5 names)
 
@@ -23,12 +22,14 @@ does not have:
 input  logic CPUUncached,      // from pma.sv: Cacheable(PA) == 0
 input  logic CPUFlushAll,      // D-cache: write back every dirty line, keep lines valid
 input  logic CPUInvalidateAll, // I-cache: clear every valid bit
-output logic CPUFlushDone,     // one-cycle pulse when the maintenance op completes
+output logic CPUFlushDone,     // one-cycle pulse when the flush completes
+output logic CPUInvalidateDone, // one-cycle pulse after invalidation
 output logic CPUBusError       // the access completed with SLVERR/DECERR
 ```
 
-`CacheHit` keeps its meaning "0 = pipeline must stall", so maintenance and uncached
-accesses need no new hazard signal: hold `CacheHit` low until done.
+A cache deasserts `CacheHit` during its maintenance operation. MEM holds
+`FenceIBusyM` across both operations until the instruction cache acknowledges
+invalidation.
 
 ## 3. Behaviour
 
@@ -68,14 +69,14 @@ MMIO accesses in program order, so `FENCE` with I/O bits can stay a NOP.
 
 ## 5. Verification hooks
 
-- `Verification/Memory/cache_sva.sv` already binds into both caches with an
-  independent LRU reference. Add:
-  - after `CPUFlushDone`: no line valid ∧ dirty;
-  - after invalidate: no line valid;
-  - `CPUUncached` access: no tag/valid/data array write, AXI `xLen == 0`;
-  - non-OKAY response: no line becomes valid; `CPUBusError` pulses exactly once.
-- `Verification/Protocol/axi_random_stall.sv` exists but is **not bound anywhere**
-  (`grep` finds only its own definition); use it to randomise latency during flush
-  and uncached traffic.
-- Memory model: add an error-injection knob (respond `SLVERR` at configured
-  addresses) — prerequisite for testing access faults at all.
+- `Verification/Memory/cache_sva.sv` checks every set and way for a clean
+  D-cache at flush completion and an empty I-cache at invalidate completion.
+- Planned B7.2 checks cover single-beat uncached accesses without allocation
+  and a single `CPUBusError` pulse on a failed access.
+- `Verification/Protocol/axi_random_stall.sv` sits between the D-cache and shared
+  RAM in `risc_top`. Set `+AXI_STALL_PCT` to exercise delayed flush traffic.
+- Error injection: `+AXI_BRESP_ERR_PCT=<n>` on `axi_random_stall` (in `mem_top` and
+  `risc_top`) turns n% of write responses into `SLVERR`. `mem_berr_test`
+  (`+AXI_BRESP_ERR_PCT=<n> +MEM_FENCEI`) expects the `SVA_CACHE_BERR` reports and
+  checks the line is clean after each write-back. Refill (`RRESP`) injection is still
+  open for B7.2.

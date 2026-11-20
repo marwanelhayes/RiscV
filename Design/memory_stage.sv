@@ -48,6 +48,7 @@ module memory_stage
 
     // ── MEM/WB register inputs ────────────────────────────────────────────────
     input ValidM,                                   // EX/MEM holds a real instruction
+    input FenceIM,                                  // Instruction-fetch fence in MEM
     input signed [DATA_WIDTH-1:0] ALUOutM,          // Address computed by ALU
     input signed [DATA_WIDTH-1:0] WriteDataM,       // Data to store
     input [DATA_WIDTH-1:0] PCPlus4M,                // PC+4 from execute
@@ -63,6 +64,12 @@ module memory_stage
 
     // ── Pipeline control from hazard unit ────────────────────────────────────
     input StallW,                                  // Hold MEM/WB
+
+    // ── Instruction-cache maintenance ────────────────────────────────────────
+    input CPUInvalidateDone,
+    output logic CPUInvalidateAll,
+    output logic FenceIBusyM,                       // Hold the fence in MEM
+    output logic FenceIRestartM,                    // Restart fetch at PCPlus4M
 
     // ── FPU inputs from execute stage ─────────────────────────────────────────
     input fpr_t RdFM,                               // FPR destination
@@ -163,6 +170,30 @@ module memory_stage
     logic AmoWritePhase;                        // AMO* read half done, write next
     logic AtomicDone;                           // SC / AMO* done, waiting for MEM/WB
     logic [DATA_WIDTH-1:0] AtomicResult;        // AMO* old value / SC status
+
+    fence_state_t FenceState;
+    logic CPUFlushAll, CPUFlushDone;
+
+    // ─── FENCE.I: write back data before invalidating instructions ────────────
+    assign CPUFlushAll = ValidM && FenceIM && (FenceState == FENCE_IDLE);
+    assign CPUInvalidateAll = (FenceState == FENCE_FLUSH) && CPUFlushDone;
+    assign FenceIRestartM = (FenceState == FENCE_INVALIDATE) && CPUInvalidateDone;
+    assign FenceIBusyM = ValidM && FenceIM && !FenceIRestartM;
+
+    always_ff @(posedge clk or negedge rst)
+    begin
+        if (!rst)
+            FenceState <= FENCE_IDLE;
+        else
+        begin
+            case (FenceState)
+                FENCE_IDLE:       if (CPUFlushAll)       FenceState <= FENCE_FLUSH;
+                FENCE_FLUSH:      if (CPUInvalidateAll)   FenceState <= FENCE_INVALIDATE;
+                FENCE_INVALIDATE: if (FenceIRestartM)    FenceState <= FENCE_IDLE;
+                default:                                 FenceState <= FENCE_IDLE;
+            endcase
+        end
+    end
 
     // ─── Load alignment and sign/zero extension ──────────────────────────────
     always_comb
@@ -305,6 +336,10 @@ module memory_stage
         .CPUByteEn(ByteEnM),
         .CPUWriteEn(CacheWriteEnM),
         .CPUReadEn(CacheReadEnM),
+        .CPUFlushAll(CPUFlushAll),
+        .CPUFlushDone(CPUFlushDone),
+        .CPUInvalidateAll(1'b0),
+        .CPUInvalidateDone(),
         .CPUReadData(ReadDataM),
         .CacheHit(CacheHitC),    
         .MAWAddr(MAWAddr),

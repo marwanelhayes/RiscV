@@ -3,9 +3,8 @@
  * -----------------------------------------------------------------------------
  * Link script for riscv-tests programs run on risc_top.
  *
- * The core has separate 4 KiB instruction and data memories, both starting at
- * address 0 (FINAL_ADDR_WIDTH = 12 in Design/shared_pkg.sv). The image is laid
- * out as one 4 KiB space that is loaded into both memories:
+ * The full-core bench has one 4 KiB RAM starting at address 0
+ * (FINAL_ADDR_WIDTH = 12 in Design/shared_pkg.sv). Its layout is
  *   0x000 - 0xBFF : code (.text.init, .text)
  *   0xC00 - 0xFFF : tohost, data, bss
  * A program whose code or data does not fit fails to link and is skipped.

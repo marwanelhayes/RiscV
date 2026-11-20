@@ -39,9 +39,13 @@ module cache_sva #(
     input logic                 rst,
     input logic                 CPUReadEn,
     input logic                 CPUWriteEn,
+    input logic                 CPUFlushDone,
+    input logic                 CPUInvalidateDone,
+    input logic                 maintenance_active,
     input logic                 CacheHit,
     input logic [WAY-1:0]       hit_array,
     input wire logic            valid_reg [SETS][WAY],
+    input wire logic            dirty_reg [SETS][WAY],
     input wire logic [TAG_W-1:0] tags_reg [SETS][WAY],
     input logic [IDX_W-1:0]     CpuIdx,
     input logic [TAG_W-1:0]     CpuTag,
@@ -56,7 +60,13 @@ module cache_sva #(
     input logic                 MRReady,
     input logic                 MRRLast,
     input logic                 read_through_hit,
-    input logic                 read_through_hit_reg
+    input logic                 read_through_hit_reg,
+    input logic                 MBValid,
+    input logic                 MBReady,
+    input axi_resp_t            MBResp,
+    input logic [IDX_W-1:0]     CpuIdx_reg,
+    input logic [WAY_W-1:0]     fill_way,
+    input logic                 flushing
 );
 
     // Any invalid way available in a set?
@@ -91,7 +101,7 @@ module cache_sva #(
     //     qualifier is required - without it this fires on every hit-while-busy.
     property p_idle_hit_matches_tags;
         @(posedge clk) disable iff(!rst)
-            ((CPUReadEn || CPUWriteEn) && (state == AXI_IDLE)) |->
+            ((CPUReadEn || CPUWriteEn) && (state == AXI_IDLE) && !maintenance_active) |->
                 (CacheHit == (|hit_array));
     endproperty
     a_idle_hit_matches_tags: assert property(p_idle_hit_matches_tags)
@@ -164,7 +174,8 @@ module cache_sva #(
                         end
                     end
 
-                    if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && (|hit_array))
+                    if((state == AXI_IDLE) && !maintenance_active &&
+                       (CPUReadEn || CPUWriteEn) && (|hit_array))
                         for(int w = 0; w < WAY; w++)
                             if(hit_array[w]) ref_touch(CpuIdx, w);
 
@@ -178,9 +189,11 @@ module cache_sva #(
     default clocking @(posedge clk); endclocking
     default disable iff ($sampled(rst) !== 1'b1);   // reset as the flops saw it at this edge
 
-    a_miss_starts: assert property ((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE)
+    a_miss_starts: assert property ((state == AXI_IDLE) && !maintenance_active &&
+                                  (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE)
         else uvm_report_error("SVA_CACHE", "miss did not start a refill the next cycle");
-    a_miss_starts_cover: cover property ((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE);
+    a_miss_starts_cover: cover property ((state == AXI_IDLE) && !maintenance_active &&
+                                       (CPUReadEn || CPUWriteEn) && !CacheHit |=> state != AXI_IDLE);
     a_busy_hit_is_rt: assert property ((CPUReadEn || CPUWriteEn) && CacheHit && (state != AXI_IDLE) |-> read_through_hit_reg)
         else uvm_report_error("SVA_CACHE", "hit reported while busy outside the read-through pulse");
     a_busy_hit_is_rt_cover: cover property ((CPUReadEn || CPUWriteEn) && CacheHit && (state != AXI_IDLE) |-> read_through_hit_reg);
@@ -199,5 +212,59 @@ module cache_sva #(
     a_known: assert property (!$isunknown({state, CacheHit}))
         else uvm_report_error("SVA_CACHE", "X on state/CacheHit");
     a_known_cover: cover property (!$isunknown({state, CacheHit}));
+
+    a_maintenance_stalls: assert property (maintenance_active |-> !CacheHit)
+        else uvm_report_error("SVA_CACHE", "cache hit reported during maintenance");
+
+    always @(posedge clk)
+        if(rst)
+            foreach(valid_reg[s, w])
+            begin
+                if(CPUFlushDone)
+                    a_flush_cleans: assert(!(valid_reg[s][w] && dirty_reg[s][w]))
+                        else uvm_report_error("SVA_CACHE", $sformatf("dirty line after flush (set %0d, way %0d)", s, w));
+                if(CPUInvalidateDone)
+                    a_invalidate_clears: assert(!valid_reg[s][w])
+                        else uvm_report_error("SVA_CACHE", $sformatf("valid line after invalidate (set %0d, way %0d)", s, w));
+            end
+
+    // Write-back response. The cache completes a failed write-back as if it
+    // succeeded (CACHE_MAINTENANCE.md §3): the error reaches no instruction, so
+    // it is reported here. Tests that inject it (+AXI_BRESP_ERR_PCT) demote this ID.
+    a_wb_okay: assert property ((state == AXI_WR_RESP) && MBValid && MBReady |->
+                                (MBResp inside {AXI_OKAY, AXI_EXOKAY}))
+        else uvm_report_error("SVA_CACHE_BERR", $sformatf("%s write-back of set %0d way %0d got BRESP %0d",
+                              $sampled(flushing) ? "flush" : "eviction", $sampled(CpuIdx_reg),
+                              $sampled(fill_way), $sampled(MBResp)));
+
+    // No access or maintenance may stall forever (e.g. a write-back retry loop).
+    // ponytail: fixed bound, well above a 95%-stall flush walk; raise if a bench needs longer.
+    int unsigned stall_cycles = 0;
+    always @(posedge clk)
+        if(rst !== 1'b1)
+            stall_cycles <= 0;
+        else
+        begin
+            a_no_hang: assert(stall_cycles < 100000)
+                else uvm_report_error("SVA_CACHE", "CacheHit low for 100000 cycles: cache hung");
+            stall_cycles <= CacheHit ? 0 : (stall_cycles < 100000 ? stall_cycles + 1 : 0);
+        end
+
+    // Any response, OKAY or not, leaves the written-back line clean.
+    bit wb_done = 0;
+    logic [IDX_W-1:0] wb_idx;
+    logic [WAY_W-1:0] wb_way;
+    always @(posedge clk)
+        if(rst)
+        begin
+            if(wb_done)
+                a_wb_cleans: assert(!dirty_reg[wb_idx][wb_way])
+                    else uvm_report_error("SVA_CACHE", $sformatf("line still dirty after write-back (set %0d, way %0d)", wb_idx, wb_way));
+            wb_done <= (state == AXI_WR_RESP) && MBValid && MBReady;
+            wb_idx  <= CpuIdx_reg;
+            wb_way  <= fill_way;
+        end
+        else
+            wb_done <= 0;
 
 endmodule

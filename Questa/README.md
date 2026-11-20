@@ -29,7 +29,7 @@ Questa/
 
 Every script finds the repository from its own location (`[status file]` in the do files, `$0` in `regress.sh`), so they run from any directory; the work library is created in the current directory. `Questa/Scratch/` is the usual place for interactive runs.
 
-The programs for `fetch_top` and `risc_top` are read from the directory given by their `PROGRAM_DIR` parameter (`-gPROGRAM_DIR=<dir>`, see `Verification/Common/tb_base_pkg.sv`). `sim_fetch.do` and `sim_risc.do` pass `<repo>/Python`; create the program there first with `python3 Python/riscv_testcase_generator.py --out-dir Python`.
+The programs for `fetch_top` and `risc_top` are read from the directory given by their `PROGRAM_DIR` parameter (`-gPROGRAM_DIR=<dir>`, see `Verification/Common/tb_base_pkg.sv`). `sim_fetch.do` and `sim_risc.do` pass `<repo>/Python`; create the program there first with `python3 Python/riscv_testcase_generator.py --out-dir Python`. Regenerate images from older checkouts before running the full core. Its 4 KiB RAM now holds both instructions and data, and the generator places random stores above the program.
 
 ### 1. Compile All Files
 ```tcl
@@ -73,11 +73,14 @@ Questa/regress.sh -n 10                    # 10 random seeds
 Questa/regress.sh -x 64 -s 1234 -t mem_top # reproduce one failing row
 Questa/regress.sh -c                       # also run the riscv-tests compliance suite on risc_top
 Questa/regress.sh -t "" -c                 # compliance suite only
+Questa/regress.sh -t "" -f                 # upstream and directed FENCE.I tests only
 ```
 
 **Merged coverage:** after the runs of each XLEN, all UCDBs are merged with `vcover merge` into `$WORK/x<xlen>/merged.ucdb`, and the end of the regression prints one coverage line per covergroup type (also in `$WORK/x<xlen>/coverage.txt`). Open the merged database with `vsim -viewcov $WORK/x32/merged.ucdb` or report it with `vcover report -details`.
 
-**Compliance (`-c`):** `Verification/Compliance/build_tests.py` builds the riscv-tests rv<XLEN>ui/um/ua/uf/mi `-p-` programs (unmodified sources, a link script for the core's 4 KiB memories) and each one runs on `risc_top` with `+UVM_TESTNAME=risc_compliance_test`. A test passes when it writes `tohost = 1` and the ISS lock-step reports no mismatch. Needs `riscv64-unknown-elf-gcc` and the riscv-tests sources in `third_party/riscv-tests` (`git clone --recursive https://github.com/riscv-software-src/riscv-tests third_party/riscv-tests`). Programs that do not fit the memories are listed as SKIP.
+**Compliance (`-c`):** `Verification/Compliance/build_tests.py` builds the riscv-tests rv<XLEN>ui/um/ua/uf/mi `-p-` programs (unmodified sources, a link script for the core's 4 KiB address space) and each one runs on `risc_top` with `+UVM_TESTNAME=risc_compliance_test`. A test passes when it writes `tohost = 1` and the ISS lock-step reports no mismatch. Needs `riscv64-unknown-elf-gcc` and the riscv-tests sources in `third_party/riscv-tests` (`git clone --recursive https://github.com/riscv-software-src/riscv-tests third_party/riscv-tests`). Programs that do not fit the address space are listed as SKIP.
+
+`-c` also runs the local self-modifying-code test `rv<XLEN>ui-p-fence_i_smc`. Use `-f` to select that test and the upstream `rv<XLEN>ui-p-fence_i` for each requested XLEN.
 
 **Spike lock-step (risc_top):** when `Verification/Risc/spike/libspike_dpi.so` exists, `regress.sh` and `sim_risc.do` load it with `+SPIKE`, and the commit checker steps Spike next to the in-house ISS on every commit (`SPIKE_CHK` messages). Build it with `cd Verification/Risc/spike && make` once Spike is installed (steps in that Makefile). The core profile Spike runs with is listed at the top of `spike_dpi.cc`.
 

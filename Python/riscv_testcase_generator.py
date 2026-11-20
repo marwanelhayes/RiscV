@@ -1,6 +1,6 @@
 #   ======================= A RISCV RANDOM TEST CASES GENERATOR ======================    #
 #   Generates a random RISC-V program in the standard encoding (RV32 or RV64: I, M, A,   #
-#   the implemented F subset, Zicsr, M-mode traps). The full-core testbench runs it      #
+#   the implemented F subset, Zicsr, M/U-mode traps). The full-core testbench runs it    #
 #   against the ISA golden model (Verification/Risc/riscv_iss_pkg.sv), so the program    #
 #   needs no expected values of its own.                                                 #
 #                           Authored by Amr Mohamed                                       #
@@ -8,13 +8,18 @@
 # Program layout
 #   0x000    : JAL x0, start
 #   0x004    : trap handler - skips the trapping instruction for exceptions,
-#              returns to the interrupted one for interrupts, then MRET
+#              returns to the interrupted one for interrupts, then MRET; an
+#              ECALL from U (mcause 8) returns to M, every other trap to the
+#              mode it came from
 #   start    : prologue - mtvec <- 0x004, data base pointer, random GPR/FPR
 #              values, frm, optional interrupt enables
 #   body     : random instructions and small templates (forward branches/jumps,
 #              JALR, counted loops, loads/stores around the data base pointer,
 #              atomics (AMO*, LR/SC pairs, lone SCs) through the AMO address register,
-#              ECALL/EBREAK, illegal encodings and misaligned accesses that trap)
+#              ECALL/EBREAK, illegal encodings and misaligned accesses that trap,
+#              mstatus MPP/MPRV/TW writes, WFI after enabling a wake source (MIE 0 or 1),
+#              U-mode windows: MRET to U, user code (counter reads under a
+#              random mcounteren, M-CSR accesses, MRET/SRET/WFI), ECALL back)
 #   end      : JAL x0, 0 (self-loop; the testbench stops when it commits)
 #
 # Outputs (next to this script unless --out-dir is given):
@@ -39,16 +44,19 @@ HANDLER_REGS = (28, 29, 30)
 RESERVED = {0, BASE_REG, LOOP_REG, JALR_REG, AMO_REG, *HANDLER_REGS}
 FREE_GPRS = [r for r in range(1, 32) if r not in RESERVED]
 
-DATA_BASE = 0x400   # data accesses stay inside [0x200, 0x5ff] of the data memory
+MEM_BYTES = 4096
 HANDLER_ADDR = 0x4
 
 # CSR groups (addresses)
 RW_CSRS = [0x340, 0x343, 0x342, 0x341, 0x300, 0x304, 0x001, 0xB00, 0xB02,
-           0x301, 0x344, 0x302, 0x303, 0xB03, 0xB1F, 0x323, 0x33F]
-RW_CSRS_RV32 = [0xB80, 0xB82, 0x310, 0xB83]
-READ_ONLY_CSRS = [0xC00, 0xC02, 0xF11, 0xF12, 0xF13, 0xF14]
-READ_ONLY_CSRS_RV32 = [0xC80, 0xC82]
-UNKNOWN_CSRS = [0x7C0, 0x5C0, 0x180, 0x100, 0x3A0, 0x7B0, 0x306, 0xB20]
+           0x301, 0x344, 0x302, 0x303, 0xB03, 0xB1F, 0x323, 0x33F, 0x306, 0x30A]
+RW_CSRS_RV32 = [0xB80, 0xB82, 0x310, 0xB83, 0x31A]
+READ_ONLY_CSRS = [0xC00, 0xC01, 0xC02, 0xF11, 0xF12, 0xF13, 0xF14]
+READ_ONLY_CSRS_RV32 = [0xC80, 0xC81, 0xC82]
+UNKNOWN_CSRS = [0x7C0, 0x5C0, 0x180, 0x100, 0x3A0, 0x7B0, 0x320, 0xB20]
+M_CSRS = [c for c in RW_CSRS + READ_ONLY_CSRS if (c >> 8) & 3 == 3]     # illegal in U
+M_CSRS_RV32 = [c for c in RW_CSRS_RV32 if (c >> 8) & 3 == 3]
+MSTATUS_MPP = 0x1800
 
 
 def bits(value, width):
@@ -228,7 +236,7 @@ class Generator:
         is_store = random.random() < 0.5
         name = random.choice(list(stores if is_store else loads))
         f3, size = (stores if is_store else loads)[name]
-        offset = random.randrange(-512, 512, size)
+        offset = random.randrange(-self.data_bytes, 0, size)
         if not is_store and self.stored and random.random() < 0.7:
             # Read back (part of) an earlier store so sub-word extraction is visible
             base, ssize = random.choice(self.stored)
@@ -255,7 +263,7 @@ class Generator:
             return 0
         size = 8 if (self.xlen == 64 and random.random() < 0.4) else 4
         f3, sfx = (3, '.D') if size == 8 else (2, '.W')
-        offset = random.randrange(-512, 512, size)
+        offset = random.randrange(-self.data_bytes, 0, size)
         if self.stored and random.random() < 0.5:
             base, _ = random.choice(self.stored)
             offset = base - (base % size)              # hit data written earlier
@@ -362,10 +370,14 @@ class Generator:
             self.p.emit(i_type(0, 0, 0, 0, SYSTEM), 'ECALL')
         elif roll < 0.50:
             self.p.emit(i_type(1, 0, 0, 0, SYSTEM), 'EBREAK')
+        elif roll < 0.58:
+            self.p.emit(i_type(0, 0, 1, 0, MISC_MEM), 'FENCE.I')
         elif roll < 0.65:
             self.p.emit(i_type(0x0FF, 0, 0, 0, MISC_MEM), 'FENCE')
+        elif roll < 0.75 and self.interrupts:
+            self.emit_wfi()
         elif roll < 0.75:
-            self.p.emit(i_type(0x105, 0, 0, 0, SYSTEM), 'WFI')
+            self.p.emit(i_type(0x0FF, 0, 0, 0, MISC_MEM), 'FENCE')
         else:
             rd = self.reg()
             illegal = [
@@ -375,7 +387,7 @@ class Generator:
                 (i_type(0, BASE_REG, 7, rd, LOAD), 'ILLEGAL (load funct3 111)'),
                 (s_type(0, 0, BASE_REG, 4, STORE), 'ILLEGAL (store funct3 100)'),
                 (i_type(0, 0, 1, 0, JALR_OP), 'ILLEGAL (JALR funct3)'),
-                (i_type(0, 0, 1, 0, MISC_MEM), 'ILLEGAL (FENCE.I, Zifencei not claimed)'),
+                (i_type(0, 0, 7, 0, MISC_MEM), 'ILLEGAL (MISC-MEM funct3 111)'),
                 (amo_type(0b00101, self.src(), BASE_REG, 2, rd), 'ILLEGAL (AMO funct5 00101)'),
                 (amo_type(LR_F5, random.randint(1, 31), BASE_REG, 2, rd), 'ILLEGAL (LR.W rs2 != x0)'),
                 (amo_type(AMO_OPS['AMOADD'], self.src(), BASE_REG, 0, rd), 'ILLEGAL (AMO funct3 000)'),
@@ -430,6 +442,92 @@ class Generator:
         self.p.label(target)
         return skip + 2
 
+    def emit_wfi(self):
+        """WFI after enabling a wake source, optionally with MIE = 0 and a producer/consumer around it."""
+        start = len(self.p.words)
+        # WFI sleeps until mip & mie != 0: enable MSIE first (software pulses wake it).
+        # With MIE = 0 the wake takes no trap, so the held consumer commits with the
+        # operand refreshed from its producer (an MIE = 1 wake re-executes it).
+        mie_off = random.random() < 0.5
+        if mie_off:
+            self.p.emit(i_type(0x300, 8, 7, 0, SYSTEM), 'CSRRCI x0, mstatus, 8  (WFI with MIE = 0)')
+        self.p.emit(i_type(0x304, 8, 6, 0, SYSTEM), 'CSRRSI x0, mie, 8')
+        rd = self.reg() if random.random() < 0.8 else 0
+        if rd:
+            imm = random.randint(1, 2047)
+            self.p.emit(i_type(imm, rd, 0, rd, OP_IMM), 'ADDI x{}, x{}, {}  (producer before WFI)'.format(rd, rd, imm))
+        self.p.emit(i_type(0x105, 0, 0, 0, SYSTEM), 'WFI')
+        if rd:
+            other = self.reg()
+            self.p.emit(r_type(0, rd, rd, 0, other, OP), 'ADD x{}, x{}, x{}  (held behind WFI)'.format(other, rd, rd))
+        if mie_off:
+            self.p.emit(i_type(0x300, 8, 6, 0, SYSTEM), 'CSRRSI x0, mstatus, 8')
+        return len(self.p.words) - start
+
+    def emit_mstatus(self):
+        """mstatus write with MPP 00/01/10/11 (WARL: only 11 stays M), random MPRV/TW, read back."""
+        mpp = random.randint(0, 3)
+        value = (mpp << 11) | (random.getrandbits(1) << 17) | (random.getrandbits(1) << 21) | \
+                (random.getrandbits(1) << 7) | (8 if self.interrupts else 0)
+        self.li(28, value)
+        rd = self.reg()
+        self.p.emit(i_type(0x300, 28, 1, rd, SYSTEM), 'CSRRW x{}, mstatus, x28  (MPP={:02b})'.format(rd, mpp))
+        rd = self.reg()
+        self.p.emit(i_type(0x300, 0, 2, rd, SYSTEM), 'CSRRS x{}, mstatus, x0'.format(rd))
+        return 4
+
+    def emit_user(self):
+        """One U-mode instruction: no ECALL (it would leave U early)."""
+        roll = random.random()
+        if roll < 0.25:
+            csr = random.choice([0xC00, 0xC01, 0xC02] + ([0xC80, 0xC81, 0xC82] if self.xlen == 32 else []))
+            rd = self.reg()
+            self.p.emit(i_type(csr, 0, 2, rd, SYSTEM), 'CSRRS x{}, 0x{:x}, x0  (counter read in U)'.format(rd, csr))
+        elif roll < 0.45:
+            csr = random.choice(M_CSRS + (M_CSRS_RV32 if self.xlen == 32 else []))
+            rd = self.reg()
+            self.p.emit(i_type(csr, 0, 2, rd, SYSTEM), 'CSRRS x{}, 0x{:x}, x0  (M CSR in U: illegal)'.format(rd, csr))
+        elif roll < 0.55:
+            self.emit_csr()            # M CSRs and writes to counters trap, fflags/frm/fcsr work
+        elif roll < 0.62:
+            options = [(i_type(0x302, 0, 0, 0, SYSTEM), 'MRET (illegal in U)'),
+                       (i_type(0x102, 0, 0, 0, SYSTEM), 'SRET (illegal, no S-mode)'),
+                       (i_type(1, 0, 0, 0, SYSTEM), 'EBREAK')]
+            if self.interrupts:        # mie.MSIE was set before MRET to U
+                options.append((i_type(0x105, 0, 0, 0, SYSTEM), 'WFI (illegal in U if TW = 1)'))
+            self.p.emit(*random.choice(options))
+        elif roll < 0.75:
+            self.emit_mem()
+        elif roll < 0.88 and self.fp:
+            self.emit_fp()
+        else:
+            self.emit_alu()
+
+    def emit_user_window(self, budget):
+        """MRET to U-mode, user code, ECALL back to M (the handler sets MPP = M on mcause 8)."""
+        if budget < 16:
+            return 0
+        p = self.p
+        start = len(p.words)
+        p.emit(i_type(0x300, 8, 7, 0, SYSTEM), 'CSRRCI x0, mstatus, 8  (no interrupt while mepc/MPP are set)')
+        if self.interrupts:
+            p.emit(i_type(0x304, 8, 6, 0, SYSTEM), 'CSRRSI x0, mie, 8  (wake source for WFI in U)')
+        cen = random.randint(0, 7)
+        p.emit(i_type(0x306, cen, 5, 0, SYSTEM), 'CSRRWI x0, mcounteren, {}'.format(cen))
+        mpie = random.choice([0, 0x80])    # MPIE = 0: MIE = 0 in U (M interrupts are still taken)
+        self.li(28, MSTATUS_MPP | mpie)
+        p.emit(i_type(0x300, 28, 3, 0, SYSTEM), 'CSRRC x0, mstatus, x28  (MPP = U{})'.format(', MPIE = 0' if mpie else ''))
+        p.emit(u_type(0, 28, AUIPC_OP), 'AUIPC x28, 0')
+        p.emit(i_type(16, 28, 0, 28, OP_IMM), 'ADDI x28, x28, 16')
+        p.emit(i_type(0x341, 28, 1, 0, SYSTEM), 'CSRRW x0, mepc, x28')
+        p.emit(i_type(0x302, 0, 0, 0, SYSTEM), 'MRET  (to U)')
+        for _ in range(random.randint(2, min(8, (budget - 12) // 2))):
+            self.emit_user()
+        p.emit(i_type(0, 0, 0, 0, SYSTEM), 'ECALL  (back to M)')
+        if self.interrupts:
+            p.emit(i_type(0x300, 8, 6, 0, SYSTEM), 'CSRRSI x0, mstatus, 8')
+        return len(p.words) - start
+
     def emit_loop(self, budget):
         if self.in_loop or budget < 6:
             return 0
@@ -470,14 +568,18 @@ class Generator:
         # an interrupted one
         p.emit(i_type(0x342, 0, 2, 29, SYSTEM), 'CSRRS x29, mcause, x0')
         p.emit(i_type(0x341, 0, 2, 30, SYSTEM), 'CSRRS x30, mepc, x0')
-        p.emit(b_type(12, 0, 29, BRANCHES['BLT']), 'BLT x29, x0, +12  (interrupt: return to it)')
+        p.emit(b_type(32, 0, 29, BRANCHES['BLT']), 'BLT x29, x0, +32  (interrupt: return to it)')
         p.emit(i_type(4, 30, 0, 30, OP_IMM), 'ADDI x30, x30, 4')
         p.emit(i_type(0x341, 30, 1, 0, SYSTEM), 'CSRRW x0, mepc, x30')
+        p.emit(i_type(-8, 29, 0, 30, OP_IMM), 'ADDI x30, x29, -8')
+        p.emit(b_type(16, 0, 30, BRANCHES['BNE']), 'BNE x30, x0, +16  (not an ECALL from U)')
+        self.li(30, MSTATUS_MPP)
+        p.emit(i_type(0x300, 30, 2, 0, SYSTEM), 'CSRRS x0, mstatus, x30  (ECALL from U: return to M)')
         p.emit(i_type(0x302, 0, 0, 0, SYSTEM), 'MRET')
         # prologue
         p.label('start')
         p.emit(i_type(0x305, HANDLER_ADDR, 5, 0, SYSTEM), 'CSRRWI x0, mtvec, {}'.format(HANDLER_ADDR))
-        self.li(BASE_REG, DATA_BASE)
+        self.li(BASE_REG, MEM_BYTES)    # negative offsets access data at the top of RAM
         for r in FREE_GPRS:
             if random.random() < 0.7:
                 self.li(r, self.interesting())
@@ -491,10 +593,15 @@ class Generator:
             self.li(28, (1 << 11) | (1 << 7) | (1 << 3))
             p.emit(i_type(0x304, 28, 2, 0, SYSTEM), 'CSRRS x0, mie, x28')
             p.emit(i_type(0x300, 8, 6, 0, SYSTEM), 'CSRRSI x0, mstatus, 8')
+        # Reserve as much of the top KiB as fits above this program, including
+        # the last control-flow template and exit. Align for doublewords.
+        self.data_bytes = min(1024, (MEM_BYTES - 4 * (len(p.words) + self.count + 8)) & ~7)
+        if self.data_bytes < 8:
+            raise SystemExit('program leaves no space for data in the shared 4 KiB RAM')
         # body
-        emitted = 0
-        while emitted < self.count:
-            budget = self.count - emitted
+        body_end = len(p.words) + self.count
+        while len(p.words) < body_end:
+            budget = body_end - len(p.words)
             roll = random.random()
             n = 0
             if roll < 0.10:
@@ -507,12 +614,17 @@ class Generator:
                 n = self.emit_loop(budget)
             elif roll < 0.33:
                 n = self.emit_atomic(budget)
+            elif roll < 0.38:
+                n = self.emit_user_window(budget)
+            elif roll < 0.40:
+                n = self.emit_mstatus()
+            elif roll < 0.43 and self.interrupts:
+                n = self.emit_wfi()
             if n == 0:
                 self.emit_simple()
-                n = 1
-            emitted += n
         # end: self-loop
         p.emit(j_type(0, 0), 'JAL x0, 0  (end of program)')
+        assert len(p.words) * 4 <= MEM_BYTES - self.data_bytes
         p.resolve()
         return p.words
 
@@ -550,7 +662,7 @@ def main():
     random.seed(seed)
     words = Generator(args.xlen, args.count, not args.no_interrupts, not args.no_fp).generate()
     if len(words) > 1000:
-        raise SystemExit('program too large for the 4 KiB instruction memory: {} words'.format(len(words)))
+        raise SystemExit('program too large for the shared 4 KiB RAM: {} words'.format(len(words)))
     write_outputs(words, args.out_dir, args.xlen)
     print('xlen={} seed={} words={}'.format(args.xlen, seed, len(words)))
 

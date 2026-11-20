@@ -46,4 +46,34 @@ package mem_test_pkg;
 
     endclass:mem_test
 
+    // =========================================================================
+    // mem_berr_test: mem_test with failing write-backs. Run with
+    // +AXI_BRESP_ERR_PCT=<n> +MEM_FENCEI so evictions and FENCE.I flushes get
+    // SLVERR. The cache must complete them (no hang, loads still match memory);
+    // the expected SVA_CACHE_BERR reports are demoted and must occur.
+    // =========================================================================
+    class mem_berr_test extends mem_test;
+
+        `uvm_component_utils(mem_berr_test)
+
+        function new (string name = "mem_berr_test", uvm_component parent = null);
+            super.new(name,parent);
+        endfunction:new
+
+        virtual function void start_of_simulation_phase (uvm_phase phase);
+            super.start_of_simulation_phase(phase);
+            uvm_root::get().set_report_severity_id_override(UVM_ERROR, "SVA_CACHE_BERR", UVM_INFO);
+        endfunction:start_of_simulation_phase
+
+        virtual function void report_phase (uvm_phase phase);
+            int n = uvm_report_server::get_server().get_id_count("SVA_CACHE_BERR");
+            super.report_phase(phase);
+            if(n == 0)
+                `uvm_error(get_type_name(), "no write-back error seen: run with +AXI_BRESP_ERR_PCT=<n> +MEM_FENCEI")
+            else
+                `uvm_info(get_type_name(), $sformatf("%0d failed write-backs completed", n), UVM_LOW)
+        endfunction:report_phase
+
+    endclass:mem_berr_test
+
 endpackage:mem_test_pkg

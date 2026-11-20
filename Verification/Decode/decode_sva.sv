@@ -20,18 +20,20 @@ module decode_sva (
 
     // ── A extension ─────────────────────────────────────────────────────────────
     input opcode_t opcodeD,
+    input logic [2:0] funct3D,
+    input logic FenceIE, WfiE,
     input logic IllegaleInstructionD, MemReadD, MemWriteD, AmoD, AmoE,
     input amo_op_t AmoOpD, AmoOpE
 );
     default clocking @(posedge clk); endclocking
     default disable iff ($sampled(rst) !== 1'b1);   // reset as the flops saw it at this edge
 
-    a_flush: assert property (FlushE |=> !ValidE && !RegWriteE && !MemWriteE && !FPURegWriteE && !FPUValidE && !AmoE && RdE == zero)
+    a_flush: assert property (FlushE |=> !ValidE && !RegWriteE && !MemWriteE && !FPURegWriteE && !FPUValidE && !AmoE && !FenceIE && !WfiE && RdE == zero)
         else uvm_report_error("SVA_DECODE", "FlushE did not leave a bubble in ID/EX");
-    a_flush_cover: cover property (FlushE |=> !ValidE && !RegWriteE && !MemWriteE && !FPURegWriteE && !FPUValidE && !AmoE && RdE == zero);
-    a_stall: assert property (StallE && !FlushE |=> $stable({ValidE, RdE, RegWriteE, FPUValidE, PCPlus4E, AmoE, AmoOpE}))
+    a_flush_cover: cover property (FlushE |=> !ValidE && !RegWriteE && !MemWriteE && !FPURegWriteE && !FPUValidE && !AmoE && !FenceIE && !WfiE && RdE == zero);
+    a_stall: assert property (StallE && !FlushE |=> $stable({ValidE, RdE, RegWriteE, FPUValidE, PCPlus4E, AmoE, AmoOpE, FenceIE, WfiE}))
         else uvm_report_error("SVA_DECODE", "ID/EX changed while StallE");
-    a_stall_cover: cover property (StallE && !FlushE |=> $stable({ValidE, RdE, RegWriteE, FPUValidE, PCPlus4E, AmoE, AmoOpE}));
+    a_stall_cover: cover property (StallE && !FlushE |=> $stable({ValidE, RdE, RegWriteE, FPUValidE, PCPlus4E, AmoE, AmoOpE, FenceIE, WfiE}));
     a_advance: assert property (!StallE && !FlushE |=> ValidE == $past(ValidD) && RdE == $past(RdD) &&
                                 RegWriteE == $past(RegWriteD) && FPUValidE == $past(FPUValidD) && PCPlus4E == $past(PCPlus4D) &&
                                 AmoE == $past(AmoD) && AmoOpE == $past(AmoOpD))
@@ -39,6 +41,10 @@ module decode_sva (
     a_advance_cover: cover property (!StallE && !FlushE |=> ValidE == $past(ValidD) && RdE == $past(RdD) &&
                                 RegWriteE == $past(RegWriteD) && FPUValidE == $past(FPUValidD) && PCPlus4E == $past(PCPlus4D) &&
                                 AmoE == $past(AmoD) && AmoOpE == $past(AmoOpD));
+    a_fence_i_decode: assert property (!StallE && !FlushE && ValidD |=>
+        FenceIE == $past(opcodeD == MISC_MEM && funct3D == 3'b001))
+        else uvm_report_error("SVA_DECODE", "incorrect FENCE.I decode");
+    c_fence_i_reserved: cover property (ValidE && FenceIE && RdE != zero);
     // GPR file writes on negedge, so a WB write is visible to decode the same cycle
     a_wt_rs1: assert property (RegWriteW && RdW != zero && Rs1D == RdW |-> RD1D == ResultW)
         else uvm_report_error("SVA_DECODE", "rs1 read missed same-cycle WB write");

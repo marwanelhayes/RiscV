@@ -34,6 +34,9 @@ interface hazard_interface
     logic FPUDoneE;
     logic ICacheHit;
     logic DCacheHit; 
+    logic FenceIBusyM;
+    logic FenceIFlush;
+    logic WfiStallE;
     
     logic [2:0] ForwardAE;
     logic [2:0] ForwardBE;
@@ -74,6 +77,9 @@ interface hazard_interface
         output   FPUDoneE;
         output   ICacheHit;
         output   DCacheHit;
+        output   FenceIBusyM;
+        output   FenceIFlush;
+        output   WfiStallE;
 
         input  ForwardAE;
         input  ForwardBE;
@@ -114,6 +120,9 @@ interface hazard_interface
         input   FPUDoneE;
         input   ICacheHit;
         input   DCacheHit;
+        input   FenceIBusyM;
+        input   FenceIFlush;
+        input   WfiStallE;
 
         input  ForwardAE;
         input  ForwardBE;
@@ -153,6 +162,9 @@ interface hazard_interface
         FPUDoneE = 0;
         ICacheHit = 1;
         DCacheHit = 1;
+        FenceIBusyM = 0;
+        FenceIFlush = 0;
+        WfiStallE = 0;
         repeat(5)
         begin
             @(mck);
@@ -183,6 +195,9 @@ interface hazard_interface
         mck.FPUDoneE <= drv.FPUDoneE;
         mck.ICacheHit <= drv.ICacheHit;
         mck.DCacheHit <= drv.DCacheHit;
+        mck.FenceIBusyM <= drv.FenceIBusyM;
+        mck.FenceIFlush <= drv.FenceIFlush;
+        mck.WfiStallE <= drv.WfiStallE;
     endtask:drv2intf
 
     task intf2mon (hazard_item mon);
@@ -215,6 +230,9 @@ interface hazard_interface
         mon.Rs2FE = pck.Rs2FE;
         mon.ICacheHit = pck.ICacheHit;
         mon.DCacheHit = pck.DCacheHit;
+        mon.FenceIBusyM = pck.FenceIBusyM;
+        mon.FenceIFlush = pck.FenceIFlush;
+        mon.WfiStallE = pck.WfiStallE;
         mon.FPURegWriteM = pck.FPURegWriteM;
         mon.FPURegWriteW = pck.FPURegWriteW;
         mon.ForwardFloatingAE = pck.ForwardFloatingAE;

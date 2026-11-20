@@ -1,7 +1,7 @@
 // =============================================================================
 // csr_defs.sv
 // -----------------------------------------------------------------------------
-// CSR bit positions and interrupt-related constants for RISC-V (M-mode).
+// CSR bit positions and interrupt-related constants for RISC-V (M and U mode).
 //
 // Responsibilities:
 //   - Define bit positions inside mstatus, mie/mip and mtvec
@@ -19,6 +19,15 @@
 `define MPPE 12   // Machine Previous Privilege End bit
 `define FSS 13    // Floating-point Status Start bit
 `define FSE 14    // Floating-point Status End bit
+`define MPRV 17   // Modify PRiVilege bit
+`define TW 21     // Timeout Wait bit (WFI illegal in U-mode)
+`define UXLS 32   // U-mode XLEN Start bit (RV64 only)
+`define UXLE 33   // U-mode XLEN End bit (RV64 only)
+
+// mcounteren bit positions
+`define CY 0      // cycle
+`define TM 1      // time
+`define IR 2      // instret
 
 // Interrupt enable / pending bit positions in mie and mip
 `define MT_I 7  // Machine Timer Interrupt bit
@@ -43,3 +52,4 @@
 `define MISA_F 5
 `define MISA_I 8
 `define MISA_M 12
+`define MISA_U 20

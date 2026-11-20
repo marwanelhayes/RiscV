@@ -24,6 +24,8 @@ interface csr_wr
     input logic CsrAccess,
     input logic [FINAL_DATA_WIDTH-1:0] CsrIn,
     input logic Commit,
+    input logic Wfi,
+    input logic [63:0] MTime,
     input logic TimerInterrupt,
     input logic ExternalInterrupt,
     input logic SoftwareInterrupt,
@@ -32,7 +34,9 @@ interface csr_wr
     input logic [FINAL_DATA_WIDTH-1:0] CsrOut,
     input logic TrapIsSet,
     input logic TrapTaken,
-    input round_mode_t RoundingMode
+    input round_mode_t RoundingMode,
+    input priv_mode_t PrivMode,
+    input logic WfiStall
 );
 
     csr_interface csr_intf
@@ -52,6 +56,8 @@ interface csr_wr
         csr_intf.CsrAccess = CsrAccess;
         csr_intf.CsrIn = CsrIn;
         csr_intf.Commit = Commit;
+        csr_intf.Wfi = Wfi;
+        csr_intf.MTime = MTime;
         csr_intf.TimerInterrupt = TimerInterrupt;
         csr_intf.ExternalInterrupt = ExternalInterrupt;
         csr_intf.SoftwareInterrupt = SoftwareInterrupt;
@@ -61,6 +67,8 @@ interface csr_wr
         csr_intf.TrapIsSet = TrapIsSet;
         csr_intf.TrapTaken = TrapTaken;
         csr_intf.RoundingMode = RoundingMode;
+        csr_intf.PrivMode = PrivMode;
+        csr_intf.WfiStall = WfiStall;
     end
 
     initial

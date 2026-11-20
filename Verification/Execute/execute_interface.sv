@@ -6,7 +6,8 @@
 // The execute stage is checked as a block under the pipeline contract of the
 // hazard unit, which execute_top emulates: a random cache freeze
 // (MemStallBit) holds EX/MEM and EX; an FP instruction holds EX until the FPU
-// is done; a trap squashes the EX instruction (FlushM). While StallE is high
+// is done, and the instruction after a WFI until WfiStallE drops; a trap
+// squashes the EX instruction (FlushM). While StallE is high
 // the driver keeps the EX inputs unchanged, exactly like the ID/EX register.
 // =============================================================================
 import shared_pkg::*;
@@ -46,6 +47,7 @@ interface execute_interface
     logic                                    MemWriteE;
     logic                                    MemReadE;
     logic                                    MRetE;
+    logic                                    WfiE;
     logic                                    EcallE;
     logic                                    EbreakE;
     logic                                    IllegaleInstructionE;
@@ -67,6 +69,7 @@ interface execute_interface
     logic                                    ExternalInterrupt;
     logic                                    SoftwareInterrupt;
     logic                                    MemStallBit;
+    logic [63:0]                             MTime;
 
     // ─── Pipeline-contract signals (driven by execute_top) ─────────────────
     logic                                    StallE;
@@ -101,6 +104,7 @@ interface execute_interface
     move_operation_t                         MoveOperationM;
     logic                                    FPUBusyE;
     logic                                    FPUDoneE;
+    logic                                    WfiStallE;
 
     clocking mck @(posedge clk);
         default input #1step output #CLK;
@@ -108,13 +112,13 @@ interface execute_interface
         output ValidE, RD1E, RD2E, SignImmE, PCPlus4E, PCBranchE, ALUControlE, funct3E;
         output BranchE, JumpE, JalrE, AuipcE, WordOpE, ForwardAE, ForwardBE, Rs1E;
         output RdE, RegWriteE, CsrAccessE, CsrOperationE, CsrIndexE, SelectorE, ALUSrcE, MemWriteE;
-        output MemReadE, MRetE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
+        output MemReadE, MRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
         output FPUControlE, RoundModeE, FPURegWriteE, FPUValidE, MoveOperationE, ForwardFloatingAE, ForwardFloatingBE, Rs1FE;
-        output Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit;
+        output Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit, MTime;
         input  StallE, StallM, FlushM, ValidM, ALUOutM, WriteDataM, RdM, PCSrcE;
         input  PCTargetE, RegWriteM, PCPlus4M, SelectorM, funct3M, CsrOutM, MemWriteM, MemReadM;
         input  TrapIsSet, CsrOutPC, RdFM, OverflowM, UnderflowM, NaNM, InfM, ZeroM;
-        input  InvalidDivM, FPUOutM, FPURegWriteM, MoveOperationM, FPUBusyE, FPUDoneE;
+        input  InvalidDivM, FPUOutM, FPURegWriteM, MoveOperationM, FPUBusyE, FPUDoneE, WfiStallE;
     endclocking:mck
 
     clocking pck @(posedge clk);
@@ -123,13 +127,13 @@ interface execute_interface
         input ValidE, RD1E, RD2E, SignImmE, PCPlus4E, PCBranchE, ALUControlE, funct3E;
         input BranchE, JumpE, JalrE, AuipcE, WordOpE, ForwardAE, ForwardBE, Rs1E;
         input RdE, RegWriteE, CsrAccessE, CsrOperationE, CsrIndexE, SelectorE, ALUSrcE, MemWriteE;
-        input MemReadE, MRetE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
+        input MemReadE, MRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
         input FPUControlE, RoundModeE, FPURegWriteE, FPUValidE, MoveOperationE, ForwardFloatingAE, ForwardFloatingBE, Rs1FE;
-        input Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit, StallE;
+        input Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit, MTime, StallE;
         input StallM, FlushM, ValidM, ALUOutM, WriteDataM, RdM, PCSrcE, PCTargetE;
         input RegWriteM, PCPlus4M, SelectorM, funct3M, CsrOutM, MemWriteM, MemReadM, TrapIsSet;
         input CsrOutPC, RdFM, OverflowM, UnderflowM, NaNM, InfM, ZeroM, InvalidDivM;
-        input FPUOutM, FPURegWriteM, MoveOperationM, FPUBusyE, FPUDoneE;
+        input FPUOutM, FPURegWriteM, MoveOperationM, FPUBusyE, FPUDoneE, WfiStallE;
     endclocking:pck
 
     task initialize ();
@@ -160,6 +164,7 @@ interface execute_interface
         MemWriteE <= 1'b0;
         MemReadE <= 1'b0;
         MRetE <= 1'b0;
+        WfiE <= 1'b0;
         EcallE <= 1'b0;
         EbreakE <= 1'b0;
         IllegaleInstructionE <= 1'b0;
@@ -181,12 +186,13 @@ interface execute_interface
         ExternalInterrupt <= 1'b0;
         SoftwareInterrupt <= 1'b0;
         MemStallBit <= 1'b0;
+        MTime <= '0;
         repeat(5) @(posedge clk);
         rst <= 1'b1;
     endtask:initialize
 
     // EX inputs change only when EX advances (StallE low), like ID/EX; the
-    // write-back inputs, interrupt lines and the freeze request change freely.
+    // write-back inputs, interrupt lines, MTime and the freeze request change freely.
     task drv2intf (execute_item drv);
         @(mck);
         mck.rst <= drv.rst;
@@ -196,6 +202,7 @@ interface execute_interface
         mck.ExternalInterrupt <= drv.ExternalInterrupt;
         mck.SoftwareInterrupt <= drv.SoftwareInterrupt;
         mck.MemStallBit <= drv.MemStallBit;
+        mck.MTime <= drv.MTime;
         if(!pck.StallE || !pck.rst)
         begin
             mck.ValidE <= drv.ValidE;
@@ -224,6 +231,7 @@ interface execute_interface
             mck.MemWriteE <= drv.MemWriteE;
             mck.MemReadE <= drv.MemReadE;
             mck.MRetE <= drv.MRetE;
+            mck.WfiE <= drv.WfiE;
             mck.EcallE <= drv.EcallE;
             mck.EbreakE <= drv.EbreakE;
             mck.IllegaleInstructionE <= drv.IllegaleInstructionE;
@@ -271,6 +279,7 @@ interface execute_interface
         mon.MemWriteE = pck.MemWriteE;
         mon.MemReadE = pck.MemReadE;
         mon.MRetE = pck.MRetE;
+        mon.WfiE = pck.WfiE;
         mon.EcallE = pck.EcallE;
         mon.EbreakE = pck.EbreakE;
         mon.IllegaleInstructionE = pck.IllegaleInstructionE;
@@ -292,6 +301,7 @@ interface execute_interface
         mon.ExternalInterrupt = pck.ExternalInterrupt;
         mon.SoftwareInterrupt = pck.SoftwareInterrupt;
         mon.MemStallBit = pck.MemStallBit;
+        mon.MTime = pck.MTime;
         mon.StallE = pck.StallE;
         mon.StallM = pck.StallM;
         mon.FlushM = pck.FlushM;
@@ -322,6 +332,7 @@ interface execute_interface
         mon.MoveOperationM = pck.MoveOperationM;
         mon.FPUBusyE = pck.FPUBusyE;
         mon.FPUDoneE = pck.FPUDoneE;
+        mon.WfiStallE = pck.WfiStallE;
     endtask:intf2mon
 
     modport RISC (clocking pck);

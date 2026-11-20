@@ -39,6 +39,9 @@ package hazard_item_pkg;
         rand logic FPUDoneE;
         rand logic ICacheHit;
         rand logic DCacheHit;
+        rand logic FenceIBusyM;
+        rand logic FenceIFlush;
+        rand logic WfiStallE;
         
 
         logic [2:0] ForwardAE;
@@ -55,20 +58,20 @@ package hazard_item_pkg;
         logic [1:0] ForwardFloatingBE;
 
 
-        // Contract (PLAN_B §2.3/§3.4): EX raises a redirect (taken branch,
-        // jump, trap, MRET) only in a cycle where it advances, so a redirect
-        // never coincides with a cache freeze or an FP instruction waiting in
-        // EX. x0 is left in the register pools so the x0 guards are exercised.
+        // Redirects and FENCE.I flushes occur in a cycle where the affected
+        // stages can advance. Leave x0 in the pools to exercise its guards.
         constraint RedirectOnlyWhenEAdvances
         {
-            (PCSrcE || TrapIsSet) -> (ICacheHit && DCacheHit && !(FPUValidE && !FPUDoneE));
+            (PCSrcE || TrapIsSet || FenceIFlush) ->
+                (ICacheHit && DCacheHit && !FenceIBusyM && !(FPUValidE && !FPUDoneE) && !WfiStallE);
         }
+        constraint WfiStallProb { WfiStallE dist {0:=85, 1:=15}; }
 
         virtual function string convert2str();
-            return $sformatf("Inputs: Rs1E = %s | Rs2E = %s | RdE = %s | Rs1D = %s | Rs2D = %s | RdM = %s | RdW = %s | RegWriteM = %0d | RegWriteW = %0d | SelectorE = %s | PCSrcE = %0d | TrapIsSet = %0d | RdFM = %s | RdFW = %s | Rs1FE = %s | Rs2FE = %s | FPURegWriteM = %0d | FPURegWriteW = %0d | FPUValidE = %0d | FPUDoneE = %0d | ICacheHit = %0b | DCacheHit = %0b
+            return $sformatf("Inputs: Rs1E = %s | Rs2E = %s | RdE = %s | Rs1D = %s | Rs2D = %s | RdM = %s | RdW = %s | RegWriteM = %0d | RegWriteW = %0d | SelectorE = %s | PCSrcE = %0d | TrapIsSet = %0d | RdFM = %s | RdFW = %s | Rs1FE = %s | Rs2FE = %s | FPURegWriteM = %0d | FPURegWriteW = %0d | FPUValidE = %0d | FPUDoneE = %0d | ICacheHit = %0b | DCacheHit = %0b | FenceIBusyM = %0b | FenceIFlush = %0b | WfiStallE = %0b
             Outputs: ForwardAE = %0b | ForwardBE = %0b | StallD = %0d | StallF = %0d | StallE = %0d | StallM = %0d | StallW = %0d | FlushE = %0d | FlushD = %0d | FlushM = %0d | ForwardFloatingAE = %0b | ForwardFloatingBE = %0b",
             Rs1E.name(),Rs2E.name(),RdE.name(),Rs1D.name(),Rs2D.name(),RdM.name(),RdW.name(),RegWriteM,RegWriteW,SelectorE.name(),PCSrcE,TrapIsSet,RdFM.name(),RdFW.name(),Rs1FE.name(),Rs2FE.name(),FPURegWriteM,FPURegWriteW,FPUValidE,FPUDoneE,
-            ICacheHit,DCacheHit,
+            ICacheHit,DCacheHit,FenceIBusyM,FenceIFlush,WfiStallE,
             ForwardAE,ForwardBE,StallD,StallF,StallE,StallM,StallW,FlushE,FlushD,FlushM,ForwardFloatingAE,ForwardFloatingBE);
         endfunction: convert2str
 
@@ -158,6 +161,9 @@ package hazard_item_pkg;
             this.FPUDoneE = other.FPUDoneE;
             this.ICacheHit = other.ICacheHit;
             this.DCacheHit = other.DCacheHit;
+            this.FenceIBusyM = other.FenceIBusyM;
+            this.FenceIFlush = other.FenceIFlush;
+            this.WfiStallE = other.WfiStallE;
 
             this.ForwardAE = other.ForwardAE;
             this.ForwardBE = other.ForwardBE;
@@ -203,6 +209,9 @@ package hazard_item_pkg;
             this.FPUDoneE = other.FPUDoneE;
             this.ICacheHit = other.ICacheHit;
             this.DCacheHit = other.DCacheHit;
+            this.FenceIBusyM = other.FenceIBusyM;
+            this.FenceIFlush = other.FenceIFlush;
+            this.WfiStallE = other.WfiStallE;
         endfunction:copy_inputs
 
 

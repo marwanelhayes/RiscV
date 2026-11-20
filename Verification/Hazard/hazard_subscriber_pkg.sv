@@ -76,6 +76,7 @@ package hazard_subscriber_pkg;
             FPUDoneE_cg: coverpoint sub_item.FPUDoneE         { bins lo = {0}; bins hi = {1}; }
             ICacheHit_cg: coverpoint sub_item.ICacheHit       { bins lo = {0}; bins hi = {1}; }
             DCacheHit_cg: coverpoint sub_item.DCacheHit       { bins lo = {0}; bins hi = {1}; }
+            WfiStallE_cg: coverpoint sub_item.WfiStallE       { bins lo = {0}; bins hi = {1}; }
 
             SelectorE_cg: coverpoint sub_item.SelectorE
             {
@@ -89,6 +90,8 @@ package hazard_subscriber_pkg;
             // FPU wait vs cache freeze: decides between bubbling M and freezing it.
             FPUWait_x_DCacheHit_cx:   cross FPUValidE_cg, FPUDoneE_cg, DCacheHit_cg;
             ForwardA_x_ForwardB_cx:   cross ForwardAE_cg, ForwardBE_cg;
+            // WFI wait vs cache freeze: bubble M or freeze it.
+            WfiStall_x_DCacheHit_cx:  cross WfiStallE_cg, DCacheHit_cg;
             // Load-use bubble vs freeze, and trap squash vs FPU bubble into M.
             StallD_x_StallE_cx:       cross StallD_cg, StallE_cg
             {

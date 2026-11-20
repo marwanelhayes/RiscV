@@ -1,7 +1,7 @@
 // =============================================================================
 // csr_file.sv
 // -----------------------------------------------------------------------------
-// Control and Status Register (CSR) file for RISC-V processor (M-mode only).
+// Control and Status Register (CSR) file for RISC-V processor (M and U mode).
 //
 // Responsibilities:
 //   - Hold the machine-mode CSRs as explicit registers (no CSR array)
@@ -9,11 +9,15 @@
 //   - Take traps (exceptions and interrupts) and MRET in the same cycle the
 //     instruction is in EX, so the trapping instruction never commits
 //   - Process CSR read/write operations (CSRRW, CSRRS, CSRRC, etc.)
+//   - Hold the privilege mode; check CSR privilege, mcounteren, MRET and WFI
 //   - Count cycles and retired instructions (64-bit on RV32 and RV64)
+//   - Read time/timeh from the MTime input
+//   - Hold the instruction after a WFI in EX until an interrupt is pending
 //   - Provide rounding mode for FPU operations
 //
 // Every state update happens only on Commit (a valid EX instruction that
 // advances this cycle), so a stalled pipeline never repeats a side effect.
+// The one exception is WfiWait, which clears when an interrupt is pending.
 // =============================================================================
 import shared_pkg::*;
 `include "csr_defs.sv"
@@ -38,6 +42,8 @@ module csr_file
     input CsrAccess,                      // CSR access enable
     input [DATA_WIDTH-1:0] CsrIn,         // CSR write data (forwarded rs1)
     input Commit,                         // Valid EX instruction that advances this cycle
+    input Wfi,                            // WFI instruction flag
+    input [63:0] MTime,                   // Machine timer (time/timeh)
 
     // ─── Interrupt inputs ─────────────────────────────────────────────────────
     input TimerInterrupt,                 // Timer interrupt
@@ -52,7 +58,9 @@ module csr_file
     output logic [DATA_WIDTH-1:0] CsrOut,     // CSR read data
     output logic TrapIsSet,                   // Redirect now: trap taken or MRET
     output logic TrapTaken,                   // Exception or interrupt taken: squash EX
-    output round_mode_t RoundingMode          // FPU rounding mode
+    output round_mode_t RoundingMode,         // FPU rounding mode
+    output priv_mode_t PrivMode,              // Current privilege mode
+    output logic WfiStall                     // Hold EX: after WFI, no interrupt pending
 );
 
     localparam bit IS_RV64 = (DATA_WIDTH == 64);
@@ -61,12 +69,19 @@ module csr_file
                                                  | (DATA_WIDTH'(1) << `MISA_A)
                                                  | (DATA_WIDTH'(1) << `MISA_I)
                                                  | (DATA_WIDTH'(1) << `MISA_M)
-                                                 | (DATA_WIDTH'(1) << `MISA_F);
+                                                 | (DATA_WIDTH'(1) << `MISA_F)
+                                                 | (DATA_WIDTH'(1) << `MISA_U);
     localparam logic [DATA_WIDTH-1:0] MVENDORID_VALUE = DATA_WIDTH'(32'h48_41_4E_4F);
+    localparam logic [63:0] MSTATUS_UXL64 = 64'd2 << `UXLS;     // UXL = 64-bit (zero at RV32)
 
     // ─── Architectural state ──────────────────────────────────────────────────
     logic                  MStatusMIE;      // mstatus.MIE
     logic                  MStatusMPIE;     // mstatus.MPIE
+    priv_mode_t            MStatusMPP;      // mstatus.MPP (UserMode or MachineMode only)
+    logic                  MStatusMPRV;     // mstatus.MPRV
+    logic                  MStatusTW;       // mstatus.TW
+    logic [2:0]            Mcounteren;      // mcounteren.{IR, TM, CY}
+    logic                  WfiWait;         // WFI retired, waiting for an interrupt
     logic                  MieMEIE;         // mie.MEIE
     logic                  MieMTIE;         // mie.MTIE
     logic                  MieMSIE;         // mie.MSIE
@@ -85,7 +100,10 @@ module csr_file
     logic [DATA_WIDTH-1:0] MieValue;        // mie as read
     logic [DATA_WIDTH-1:0] MipValue;        // mip as read
     logic                  CsrExists;       // CsrIndex names an implemented CSR
-    logic                  CsrIllegal;      // CSR access to an unknown CSR
+    logic                  CounterGated;    // U-mode counter read blocked by mcounteren
+    logic                  PrivIllegal;     // Illegal in the current privilege mode
+    logic                  CsrIllegal;      // Unknown CSR or privilege violation
+    logic                  WfiWake;         // Interrupt pending locally (mip & mie)
     logic                  CsrWrite;        // This CSR instruction writes its CSR
     logic [DATA_WIDTH-1:0] CsrWriteData;    // Value written by the CSR instruction
     logic [DATA_WIDTH-1:0] Uimm;            // Zero-extended immediate operand
@@ -121,8 +139,11 @@ module csr_file
         MStatusValue = '0;
         MStatusValue[`MIE] = MStatusMIE;
         MStatusValue[`MPIE] = MStatusMPIE;
-        MStatusValue[`MPPE:`MPPS] = 2'b11;          // M-only: MPP is always M
+        MStatusValue[`MPPE:`MPPS] = MStatusMPP;
         MStatusValue[`FSE:`FSS] = 2'b11;            // FPU always on: FS = Dirty
+        MStatusValue[`MPRV] = MStatusMPRV;
+        MStatusValue[`TW] = MStatusTW;
+        MStatusValue = MStatusValue | MSTATUS_UXL64[DATA_WIDTH-1:0];
         MStatusValue[DATA_WIDTH-1] = 1'b1;          // SD = (FS == Dirty)
 
         MieValue = '0;
@@ -147,10 +168,13 @@ module csr_file
             fcsr:       CsrOut = DATA_WIDTH'({Frm, Fflags});
             mstatus:    CsrOut = MStatusValue;
             misa:       CsrOut = MISA_VALUE;
-            medeleg:    CsrOut = '0;                // M-only: nothing to delegate
+            medeleg:    CsrOut = '0;                // no S-mode: nothing to delegate
             mideleg:    CsrOut = '0;
             mie:        CsrOut = MieValue;
             mtvec:      CsrOut = Mtvec;
+            mcounteren: CsrOut = DATA_WIDTH'(Mcounteren);
+            menvcfg:    CsrOut = '0;                // nothing to configure yet
+            menvcfgh:   CsrExists = !IS_RV64;       // RV32 only, reads zero
             mscratch:   CsrOut = Mscratch;
             mepc:       CsrOut = Mepc;
             mcause:     CsrOut = Mcause;
@@ -160,6 +184,11 @@ module csr_file
             cycle:      CsrOut = Mcycle[DATA_WIDTH-1:0];
             minstret,
             instret:    CsrOut = Minstret[DATA_WIDTH-1:0];
+            time_csr:   CsrOut = MTime[DATA_WIDTH-1:0];
+            timeh_csr:  begin
+                            CsrOut = DATA_WIDTH'(MTime[63:32]);
+                            CsrExists = !IS_RV64;
+                        end
             mvendorid:  CsrOut = MVENDORID_VALUE;
             marchid,
             mimpid,
@@ -222,14 +251,27 @@ module csr_file
     // ─── Trap decision (combinational, same cycle) ───────────────────────────
     always_comb
     begin
-        CsrIllegal = CsrAccess && !CsrExists;
+        // Privilege-dependent legality (cause 2, mtval 0), folded into CsrIllegal
+        CounterGated = (PrivMode == UserMode) && CsrAccess &&
+                        (
+                        (CsrIndex inside {cycle,cycleh} && !Mcounteren[`CY]) ||
+                        (CsrIndex inside {time_csr, timeh_csr} && !Mcounteren[`TM]) ||
+                        (CsrIndex inside {instret,  instreth}  && !Mcounteren[`IR])
+                        );
+        PrivIllegal  = (CsrAccess && (CsrIndex[9:8] > PrivMode)) || CounterGated ||
+                       (mret && (PrivMode != MachineMode)) ||
+                       (Wfi && (PrivMode == UserMode) && MStatusTW);
+        CsrIllegal   = (CsrAccess && !CsrExists) || PrivIllegal;
         ExceptionValid = (Traps != NoTraps) || CsrIllegal;
         ExceptionCause = CsrIllegal ? DATA_WIDTH'(2) : TrapCause(Traps);
 
-        // Priority MEI > MSI > MTI, gated by mstatus.MIE
-        InterruptPending = MStatusMIE && ((MieMEIE && ExternalInterrupt) ||
-                                          (MieMSIE && SoftwareInterrupt) ||
-                                          (MieMTIE && TimerInterrupt));
+        // Priority MEI > MSI > MTI, gated by mstatus.MIE in M (always enabled below M)
+        InterruptPending = (MStatusMIE || (PrivMode != MachineMode)) &&
+                            (
+                            (MieMEIE && ExternalInterrupt) ||
+                            (MieMSIE && SoftwareInterrupt) ||
+                            (MieMTIE && TimerInterrupt)
+                            );
         if(MieMEIE && ExternalInterrupt)
             InterruptCause = DATA_WIDTH'(`MACHINE_EXTERNAL_INTERRUPT_CAUSE);
         else if(MieMSIE && SoftwareInterrupt)
@@ -242,6 +284,10 @@ module csr_file
         TrapIsSet = TrapTaken || MretTaken;
         Retire    = Commit && !TrapTaken;
         CounterWrite = Commit && !TrapTaken && !mret && CsrAccess && CsrWrite;
+
+        // WFI wakes on any locally pending interrupt, ignoring mstatus.MIE and PrivMode
+        WfiWake  = |(MipValue & MieValue);
+        WfiStall = WfiWait && !WfiWake;
 
         CsrOutPC = Mepc;
         if(TrapTaken)
@@ -259,6 +305,12 @@ module csr_file
         begin:Reset
             MStatusMIE  <= 1'b0;
             MStatusMPIE <= 1'b0;
+            MStatusMPP  <= UserMode;
+            MStatusMPRV <= 1'b0;
+            MStatusTW   <= 1'b0;
+            Mcounteren  <= '0;
+            PrivMode    <= MachineMode;
+            WfiWait     <= 1'b0;
             MieMEIE     <= 1'b0;
             MieMTIE     <= 1'b0;
             MieMSIE     <= 1'b0;
@@ -282,6 +334,11 @@ module csr_file
             if(Retire && !(CounterWrite && ((CsrIndex == minstret) || (CsrIndex == minstreth))))
                 Minstret <= Minstret + 1'b1;
 
+            if(Commit && Wfi && !TrapTaken)
+                WfiWait <= 1'b1;
+            else if(WfiWake)
+                WfiWait <= 1'b0;
+
             if(TrapTaken)
             begin:Trap_Entry
                 Mepc        <= {PC[DATA_WIDTH-1:2], 2'b00};
@@ -290,11 +347,17 @@ module csr_file
                 Mtval       <= (InterruptPending || CsrIllegal) ? '0 : Address;
                 MStatusMPIE <= MStatusMIE;
                 MStatusMIE  <= 1'b0;
+                MStatusMPP  <= PrivMode;
+                PrivMode    <= MachineMode;
             end:Trap_Entry
             else if(MretTaken)
             begin:Return_From_Trap
                 MStatusMIE  <= MStatusMPIE;
                 MStatusMPIE <= 1'b1;
+                PrivMode    <= MStatusMPP;
+                MStatusMPP  <= UserMode;
+                if(MStatusMPP != MachineMode)
+                    MStatusMPRV <= 1'b0;
             end:Return_From_Trap
             else if(Commit && CsrAccess && CsrWrite)
             begin:CSR_Access
@@ -305,6 +368,9 @@ module csr_file
                     mstatus:    begin
                                     MStatusMIE  <= CsrWriteData[`MIE];
                                     MStatusMPIE <= CsrWriteData[`MPIE];
+                                    MStatusMPP  <= (CsrWriteData[`MPPE:`MPPS] == 2'b11) ? MachineMode : UserMode;
+                                    MStatusMPRV <= CsrWriteData[`MPRV];
+                                    MStatusTW   <= CsrWriteData[`TW];
                                 end
                     mie:        begin
                                     MieMEIE <= CsrWriteData[`ME_I];
@@ -312,6 +378,7 @@ module csr_file
                                     MieMSIE <= CsrWriteData[`MS_I];
                                 end
                     mtvec:      Mtvec <= {CsrWriteData[DATA_WIDTH-1:2], 1'b0, CsrWriteData[0]};
+                    mcounteren: Mcounteren <= CsrWriteData[2:0];
                     mscratch:   Mscratch <= CsrWriteData;
                     mepc:       Mepc <= {CsrWriteData[DATA_WIDTH-1:2], 2'b00};
                     mcause:     Mcause <= CsrWriteData;
@@ -321,7 +388,7 @@ module csr_file
                     mcycleh:    if(!IS_RV64) Mcycle[63:32] <= CsrWriteData[31:0];
                     minstreth:  if(!IS_RV64) Minstret[63:32] <= CsrWriteData[31:0];
                     // misa (WARL, fixed), mip (driven by the lines), medeleg,
-                    // mideleg, mstatush and the mhpm* registers ignore writes.
+                    // mideleg, mstatush, menvcfg(h) and the mhpm* registers ignore writes.
                     // Writes to the read-only space trap in decode.
                     default:    ;
                 endcase

@@ -48,6 +48,7 @@ module risc_control_unit
     output logic JalrD,                 // Jump target from rs1 (JALR)
     output logic WordOpD,               // RV64 32-bit operation
     output logic AmoD,                  // A extension instruction
+    output logic FenceID,               // Instruction-fetch fence
     output logic IllegaleInstructionD,  // Illegal instruction flag
 
     // ─── FPU control outputs ──────────────────────────────────────────────────
@@ -102,6 +103,7 @@ module risc_control_unit
         .RegWrite(RegWrite),
         .WordOp(WordOpD),
         .Amo(AmoD),
+        .FenceI(FenceID),
         .CsrAccess(CsrAccessD),
         .MMode(MModeD),
         .FPU(FPUD),

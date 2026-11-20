@@ -20,6 +20,13 @@ module risc_top
     axi_interface #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) iaxi_intf (clk);
     axi_interface #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) daxi_intf (clk);
 
+    // mtime until the CLINT (B7.3): free-running from an offset that keeps
+    // time != mcycle and makes timeh roll over after 256 cycles.
+    logic [63:0] MTime;
+    always_ff @(posedge clk or negedge intf.rst)
+        if(!intf.rst) MTime <= 64'h0000_0000_FFFF_FF00;
+        else          MTime <= MTime + 64'd1;
+
 
     riscv_processor #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH)) 
     DUT 
@@ -29,6 +36,7 @@ module risc_top
         .ExternalInterrupt(intf.ExternalInterrupt),
         .TimerInterrupt(intf.TimerInterrupt),
         .SoftwareInterrupt(intf.SoftwareInterrupt),
+        .MTime(MTime),
         .IMAWAddr(iaxi_intf.MAWAddr),
         .IMAWLen(iaxi_intf.MAWLen),
         .IMAWSize(iaxi_intf.MAWSize),
@@ -81,72 +89,100 @@ module risc_top
         .DMRRValid(daxi_intf.MRRValid)
     );
 
-    // ── Memory slaves on the core's I/D AXI master ports (as in fetch_top /
-    //    mem_top); the core itself holds only the L1 caches.
     // Published to the TB before any initial block runs (variable initializer)
     bit program_dir_set = tb_base_pkg::set_program_dir(PROGRAM_DIR);
 
-    risc_instruction_memory #(.DATA_WIDTH(FINAL_DATA_WIDTH), .ADDR_WIDTH(FINAL_ADDR_WIDTH),
-                              .AXI_SIZE(CACHE_AXI_SIZE), .INIT_FILE({PROGRAM_DIR, "/binary1.txt"})) InstrMem
+    // +AXI_STALL_PCT exercises D-cache write-backs under backpressure.
+    axi_interface #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) ram_bus (clk);
+    axi_random_stall #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) DataStalls
     (
-        .clk(intf.clk),
-        .rst(intf.rst),
-        .MAWAddr(iaxi_intf.MAWAddr),
-        .MAWLen(iaxi_intf.MAWLen),
-        .MAWSize(iaxi_intf.MAWSize),
-        .MAWBurst(iaxi_intf.MAWBurst),
-        .MAWValid(iaxi_intf.MAWValid),
-        .MAWReady(iaxi_intf.MAWReady),
-        .MWData(iaxi_intf.MWData),
-        .MWStrb(iaxi_intf.MWStrb),
-        .MWLast(iaxi_intf.MWLast),
-        .MWValid(iaxi_intf.MWValid),
-        .MWReady(iaxi_intf.MWReady),
-        .MBReady(iaxi_intf.MBReady),
-        .MBResp(iaxi_intf.MBResp),
-        .MBValid(iaxi_intf.MBValid),
-        .MARAddr(iaxi_intf.MARAddr),
-        .MARLen(iaxi_intf.MARLen),
-        .MARSize(iaxi_intf.MARSize),
-        .MARBurst(iaxi_intf.MARBurst),
-        .MARValid(iaxi_intf.MARValid),
-        .MARReady(iaxi_intf.MARReady),
-        .MRReady(iaxi_intf.MRReady),
-        .MRRData(iaxi_intf.MRRData),
-        .MRRResp(iaxi_intf.MRRResp),
-        .MRRLast(iaxi_intf.MRRLast),
-        .MRRValid(iaxi_intf.MRRValid)
+        .clk(clk),
+        .m_MAWAddr(daxi_intf.MAWAddr), .s_MAWAddr(ram_bus.MAWAddr),
+        .m_MAWLen(daxi_intf.MAWLen), .s_MAWLen(ram_bus.MAWLen),
+        .m_MAWSize(daxi_intf.MAWSize), .s_MAWSize(ram_bus.MAWSize),
+        .m_MAWBurst(daxi_intf.MAWBurst), .s_MAWBurst(ram_bus.MAWBurst),
+        .m_MAWValid(daxi_intf.MAWValid), .s_MAWValid(ram_bus.MAWValid),
+        .m_MAWReady(daxi_intf.MAWReady), .s_MAWReady(ram_bus.MAWReady),
+        .m_MWData(daxi_intf.MWData), .s_MWData(ram_bus.MWData),
+        .m_MWStrb(daxi_intf.MWStrb), .s_MWStrb(ram_bus.MWStrb),
+        .m_MWLast(daxi_intf.MWLast), .s_MWLast(ram_bus.MWLast),
+        .m_MWValid(daxi_intf.MWValid), .s_MWValid(ram_bus.MWValid),
+        .m_MWReady(daxi_intf.MWReady), .s_MWReady(ram_bus.MWReady),
+        .m_MBReady(daxi_intf.MBReady), .s_MBReady(ram_bus.MBReady),
+        .m_MBResp(daxi_intf.MBResp), .s_MBResp(ram_bus.MBResp),
+        .m_MBValid(daxi_intf.MBValid), .s_MBValid(ram_bus.MBValid),
+        .m_MARAddr(daxi_intf.MARAddr), .s_MARAddr(ram_bus.MARAddr),
+        .m_MARLen(daxi_intf.MARLen), .s_MARLen(ram_bus.MARLen),
+        .m_MARSize(daxi_intf.MARSize), .s_MARSize(ram_bus.MARSize),
+        .m_MARBurst(daxi_intf.MARBurst), .s_MARBurst(ram_bus.MARBurst),
+        .m_MARValid(daxi_intf.MARValid), .s_MARValid(ram_bus.MARValid),
+        .m_MARReady(daxi_intf.MARReady), .s_MARReady(ram_bus.MARReady),
+        .m_MRReady(daxi_intf.MRReady), .s_MRReady(ram_bus.MRReady),
+        .m_MRRData(daxi_intf.MRRData), .s_MRRData(ram_bus.MRRData),
+        .m_MRRResp(daxi_intf.MRRResp), .s_MRRResp(ram_bus.MRRResp),
+        .m_MRRLast(daxi_intf.MRRLast), .s_MRRLast(ram_bus.MRRLast),
+        .m_MRRValid(daxi_intf.MRRValid), .s_MRRValid(ram_bus.MRRValid)
     );
+
+    // Both caches read the same physical RAM. Data refills win simultaneous
+    // requests. The RAM accepts one burst at a time, so latch its owner at AR.
+    logic select_i, hold_i, i_read, ram_ar_ready, ram_r_valid, ram_r_last;
+    axi_resp_t ram_r_resp;
+    logic [FINAL_DATA_WIDTH-1:0] ram_r_data;
+
+    assign select_i = hold_i || !ram_bus.MARValid;
+    always_ff @(posedge clk or negedge intf.rst)
+        if(!intf.rst) begin
+            hold_i <= 1'b0;
+            i_read <= 1'b0;
+        end
+        else begin
+            // Keep a stalled instruction address stable if a data request arrives.
+            hold_i <= select_i && iaxi_intf.MARValid && !ram_ar_ready;
+            if(ram_ar_ready && (ram_bus.MARValid || iaxi_intf.MARValid))
+                i_read <= select_i;
+        end
+
+    assign iaxi_intf.MARReady = ram_ar_ready && select_i;
+    assign ram_bus.MARReady = ram_ar_ready && !select_i;
+    assign iaxi_intf.MRRValid = ram_r_valid && i_read;
+    assign ram_bus.MRRValid = ram_r_valid && !i_read;
+    assign {iaxi_intf.MRRData, iaxi_intf.MRRResp, iaxi_intf.MRRLast} =
+           {ram_r_data, ram_r_resp, ram_r_last};
+    assign {ram_bus.MRRData, ram_bus.MRRResp, ram_bus.MRRLast} =
+           {ram_r_data, ram_r_resp, ram_r_last};
+    assign {iaxi_intf.MAWReady, iaxi_intf.MWReady, iaxi_intf.MBValid} = '0;
+    assign iaxi_intf.MBResp = AXI_OKAY;
 
     risc_data_memory #(FINAL_DATA_WIDTH,FINAL_ADDR_WIDTH,CACHE_AXI_SIZE) DataMem
     (
         .clk(intf.clk),
         .rst(intf.rst),
-        .MAWAddr(daxi_intf.MAWAddr),
-        .MAWLen(daxi_intf.MAWLen),
-        .MAWSize(daxi_intf.MAWSize),
-        .MAWBurst(daxi_intf.MAWBurst),
-        .MAWValid(daxi_intf.MAWValid),
-        .MAWReady(daxi_intf.MAWReady),
-        .MWData(daxi_intf.MWData),
-        .MWStrb(daxi_intf.MWStrb),
-        .MWLast(daxi_intf.MWLast),
-        .MWValid(daxi_intf.MWValid),
-        .MWReady(daxi_intf.MWReady),
-        .MBReady(daxi_intf.MBReady),
-        .MBResp(daxi_intf.MBResp),
-        .MBValid(daxi_intf.MBValid),
-        .MARAddr(daxi_intf.MARAddr),
-        .MARLen(daxi_intf.MARLen),
-        .MARSize(daxi_intf.MARSize),
-        .MARBurst(daxi_intf.MARBurst),
-        .MARValid(daxi_intf.MARValid),
-        .MARReady(daxi_intf.MARReady),
-        .MRReady(daxi_intf.MRReady),
-        .MRRData(daxi_intf.MRRData),
-        .MRRResp(daxi_intf.MRRResp),
-        .MRRLast(daxi_intf.MRRLast),
-        .MRRValid(daxi_intf.MRRValid)
+        .MAWAddr(ram_bus.MAWAddr),
+        .MAWLen(ram_bus.MAWLen),
+        .MAWSize(ram_bus.MAWSize),
+        .MAWBurst(ram_bus.MAWBurst),
+        .MAWValid(ram_bus.MAWValid),
+        .MAWReady(ram_bus.MAWReady),
+        .MWData(ram_bus.MWData),
+        .MWStrb(ram_bus.MWStrb),
+        .MWLast(ram_bus.MWLast),
+        .MWValid(ram_bus.MWValid),
+        .MWReady(ram_bus.MWReady),
+        .MBReady(ram_bus.MBReady),
+        .MBResp(ram_bus.MBResp),
+        .MBValid(ram_bus.MBValid),
+        .MARAddr(select_i ? iaxi_intf.MARAddr : ram_bus.MARAddr),
+        .MARLen(select_i ? iaxi_intf.MARLen : ram_bus.MARLen),
+        .MARSize(select_i ? iaxi_intf.MARSize : ram_bus.MARSize),
+        .MARBurst(select_i ? iaxi_intf.MARBurst : ram_bus.MARBurst),
+        .MARValid(ram_bus.MARValid || iaxi_intf.MARValid),
+        .MARReady(ram_ar_ready),
+        .MRReady(i_read ? iaxi_intf.MRReady : ram_bus.MRReady),
+        .MRRData(ram_r_data),
+        .MRRResp(ram_r_resp),
+        .MRRLast(ram_r_last),
+        .MRRValid(ram_r_valid)
     );
 
     always_comb
@@ -200,6 +236,7 @@ module risc_top
         .MepcE(Execute.CSR.Mepc),
         .McauseE(Execute.CSR.Mcause),
         .MtvalE(Execute.CSR.Mtval),
+        .PrivModeE(Execute.CSR.PrivMode),
         .AtomicStoreM(Memory.AmoM && Memory.CacheWriteEnM && Memory.CacheHitC),
         .AtomicStoreDataM(Memory.StoreSrcM)
     );
@@ -221,6 +258,23 @@ module risc_top
     bind csr_file csr_sva CsrSva (.*);
     bind cache cache_sva #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .TOTAL_LINES(TOTAL_LINES), .WAY(WAY), .LINE_WORDS(LINE_WORDS)) CacheSva (.*);
 
+    // FENCE.I drains MEM before an instruction can reach EX again.
+    a_fence_issue: assert property (@(posedge clk) disable iff ($sampled(intf.rst) !== 1'b1)
+        DUT.FenceIStartE |=> DUT.FenceIM && !DUT.ValidD && !DUT.ValidE)
+        else uvm_report_error("SVA_FENCE_I", "FENCE.I did not squash younger instructions on issue");
+    a_fence_wait: assert property (@(posedge clk) disable iff ($sampled(intf.rst) !== 1'b1)
+        DUT.FenceIBusyM |-> DUT.StallW && !DUT.ValidE && !DUT.Fetch.ICache.CPUReadEn)
+        else uvm_report_error("SVA_FENCE_I", "Pipeline advanced or fetched during cache maintenance");
+    a_fence_invalidate: assert property (@(posedge clk) disable iff ($sampled(intf.rst) !== 1'b1)
+        DUT.CPUInvalidateAll |-> DUT.Memory.CPUFlushDone && DUT.FenceIBusyM)
+        else uvm_report_error("SVA_FENCE_I", "I-cache invalidated before D-cache write-back completed");
+    a_fence_restart: assert property (@(posedge clk) disable iff ($sampled(intf.rst) !== 1'b1)
+        DUT.FenceIRestartM |-> DUT.FenceIM && DUT.CPUInvalidateDone && !DUT.StallW ##1
+        DUT.PCF == $past(DUT.PCPlus4M) && DUT.ValidW && !DUT.ValidM)
+        else uvm_report_error("SVA_FENCE_I", "FENCE.I did not complete and restart fetch at PC+4");
+    a_fence_restart_cover: cover property (@(posedge clk) disable iff ($sampled(intf.rst) !== 1'b1)
+        DUT.FenceIRestartM ##1 DUT.PCF == $past(DUT.PCPlus4M));
+
     initial 
     begin
         clk = 0;
@@ -230,12 +284,17 @@ module risc_top
         end
     end
 
-    // Compliance programs also have a data image (dmem.hex). It is loaded at
-    // #1, after the data memory clears itself at time 0 and while reset is held.
+    // Load 32-bit instructions into XLEN-wide little-endian RAM after its
+    // time-zero clear. Compliance images include code and initialized data.
     initial
     begin
+        localparam int PER_WORD = FINAL_DATA_WIDTH / INSTR_WIDTH;
+        bit [INSTR_WIDTH-1:0] image [2**(FINAL_ADDR_WIDTH-2)];
         int fd;
         #1;
+        $readmemb(tb_base_pkg::program_file("binary1.txt"), image);
+        foreach (image[i])
+            DataMem.mem[i/PER_WORD][INSTR_WIDTH*(i%PER_WORD) +: INSTR_WIDTH] = image[i];
         fd = $fopen(tb_base_pkg::program_file("dmem.hex"), "r");
         if(fd != 0)
         begin
@@ -250,6 +309,8 @@ module risc_top
         uvm_config_db #(virtual risc_interface)::set(null,"","INTF",intf);
         uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH,
             CACHE_AXI_SIZE))::set(null,"","AXI_INTF",daxi_intf);
+        uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH,
+            CACHE_AXI_SIZE))::set(null,"uvm_test_top.FetchEnvironment.predictor","I_AXI",iaxi_intf);
         run_test("risc_test");
     end
 

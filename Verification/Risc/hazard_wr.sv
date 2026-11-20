@@ -35,6 +35,9 @@ interface hazard_wr
     input   logic FPUDoneE,
     input   logic ICacheHit,
     input   logic DCacheHit,
+    input   logic FenceIBusyM,
+    input   logic FenceIFlush,
+    input   logic WfiStallE,
     
     input  logic [2:0] ForwardAE,
     input  logic [2:0] ForwardBE,
@@ -77,6 +80,9 @@ interface hazard_wr
         hazard_intf.FPUDoneE = FPUDoneE;
         hazard_intf.ICacheHit = ICacheHit;
         hazard_intf.DCacheHit = DCacheHit;
+        hazard_intf.FenceIBusyM = FenceIBusyM;
+        hazard_intf.FenceIFlush = FenceIFlush;
+        hazard_intf.WfiStallE = WfiStallE;
     
         hazard_intf.ForwardAE = ForwardAE;
         hazard_intf.ForwardBE = ForwardBE;

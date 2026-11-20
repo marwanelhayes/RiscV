@@ -41,6 +41,8 @@ interface execute_wr
     input logic MemWriteE,
     input logic MemReadE,
     input logic MRetE,
+    input logic WfiE,
+    input logic [63:0] MTime,
     input logic EcallE,
     input logic EbreakE,
     input logic IllegaleInstructionE,
@@ -90,7 +92,8 @@ interface execute_wr
     input logic FPURegWriteM,
     input move_operation_t MoveOperationM,
     input logic FPUBusyE,
-    input logic FPUDoneE
+    input logic FPUDoneE,
+    input logic WfiStallE
 );
 
     execute_interface execute_intf 
@@ -129,6 +132,8 @@ interface execute_wr
         execute_intf.MemWriteE = MemWriteE;
         execute_intf.MemReadE = MemReadE;
         execute_intf.MRetE = MRetE;
+        execute_intf.WfiE = WfiE;
+        execute_intf.MTime = MTime;
         execute_intf.EcallE = EcallE;
         execute_intf.EbreakE = EbreakE;
         execute_intf.IllegaleInstructionE = IllegaleInstructionE;
@@ -179,6 +184,7 @@ interface execute_wr
         execute_intf.MoveOperationM = MoveOperationM;
         execute_intf.FPUBusyE = FPUBusyE;
         execute_intf.FPUDoneE = FPUDoneE;
+        execute_intf.WfiStallE = WfiStallE;
         execute_intf.MemStallBit = 1'b0;
     end
 

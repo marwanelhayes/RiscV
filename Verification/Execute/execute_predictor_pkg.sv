@@ -13,12 +13,16 @@
 //   - branch conditions, JAL/branch targets and the JALR target (rs1+imm)&~1
 //   - the synchronous exceptions of the EX instruction and their mtval
 //   - the CSR file and trap/MRET behaviour, using the ISA golden model's CSR
-//     state (riscv_iss_pkg), so CSR semantics are defined in one place
+//     state and privilege rules (riscv_iss_pkg: M + U, ECALL 8/11, CSR
+//     privilege, mcounteren, MRET/WFI legality), so CSR semantics are
+//     defined in one place; time/timeh read MTime
+//   - the WFI wait: after a WFI retires, WfiStallE holds the next instruction
+//     until an enabled interrupt line is pending (mip & mie)
 //   - FP results with the exact FP reference (flp_ref_pkg)
 //
 // DUT decoupling (emit-before-update):
-//   - PCSrcE, PCTargetE, TrapIsSet, CsrOutPC are combinational: computed from
-//     the current item.
+//   - PCSrcE, PCTargetE, TrapIsSet, CsrOutPC, WfiStallE are combinational:
+//     computed from the current item.
 //   - The EX/MEM outputs are registered: the shadow emitted now was computed
 //     on the previous call. FlushM loads a bubble, StallM holds the register.
 //   - CSR state changes when EX commits (ValidE && !StallE), after the
@@ -52,6 +56,7 @@ package execute_predictor_pkg;
         logic [31:0] fres_issued;       // FP result of the instruction in EX (issue-cycle operands)
         x_t          dres_issued;       // Divide result of the instruction in EX (issue-cycle operands)
         bit          stall_e_prev;      // EX was held last cycle: same instruction still in EX
+        bit          wfi_wait;          // WFI retired, waiting for an interrupt line
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -64,7 +69,7 @@ package execute_predictor_pkg;
             super.reset_phase(phase);
             bubble(q);
             csr.reset();
-            fres_issued = '0; stall_e_prev = 0;
+            fres_issued = '0; stall_e_prev = 0; wfi_wait = 0;
         endtask:reset_phase
 
         function void bubble(execute_item e);
@@ -138,15 +143,16 @@ package execute_predictor_pkg;
             logic [31:0] fa, fb, fres;
             logic ov, un, nan, inf, zr, inv;
             round_mode_t rm;
-            bit taken, commit, exc, csr_exists, csr_unpred, irq, trap_taken, mret_taken, wr, minstret_written;
+            bit taken, commit, exc, csr_exists, csr_legal, csr_illegal, csr_unpred, irq, wake, trap_taken, mret_taken, wr, minstret_written;
             int code, irq_code;
+            logic [1:0] priv;
             iss_commit_t dummy;
 
             if(!t.rst)
             begin
                 bubble(q);
                 csr.reset();
-                fres_issued = '0; stall_e_prev = 0;
+                fres_issued = '0; stall_e_prev = 0; wfi_wait = 0;
             end
 
             // ── Operands (forwarding contract) ──────────────────────────────
@@ -205,7 +211,7 @@ package execute_predictor_pkg;
             if(t.IllegaleInstructionE)                       code = 2;
             else if(taken && target[1])                      begin code = 0; tval = target; end
             else if(t.EbreakE)                               code = 3;
-            else if(t.EcallE)                                code = 11;
+            else if(t.EcallE)                                code = csr.ecall_code();    // 8 from U, 11 from M
             // A load (or LR) faults as a load; a store, SC or AMO* (reads and writes) as a store/AMO
             else if(t.MemWriteE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0)) begin code = 6; tval = addr; end
             else if(t.MemReadE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0))  begin code = 4; tval = addr; end
@@ -214,18 +220,24 @@ package execute_predictor_pkg;
             // ── CSR read and existence ──────────────────────────────────────
             csr.irq_ext = t.ExternalInterrupt; csr.irq_tmr = t.TimerInterrupt; csr.irq_sw = t.SoftwareInterrupt;
             csr.dut_csr_rdata = '0;
-            csr_exists = csr.csr_read(t.CsrIndexE, csr_rv);
+            csr.mtime = t.MTime;
+            priv = csr.priv;
+            csr_legal = csr.csr_read(t.CsrIndexE, csr_rv);   // exists and accessible in this mode
+            csr.priv = 2'b11;
+            csr_exists = csr.csr_read(t.CsrIndexE, csr_rv);  // read mux value, whatever the mode
+            csr.priv = priv;
             csr_unpred = (t.CsrIndexE inside {mcycle, cycle, mcycleh, cycleh});
-            if(t.CsrAccessE && !csr_exists)
+            csr_illegal = (t.CsrAccessE && !csr_legal) || csr.sys_illegal(t.MRetE, t.WfiE);
+            if(csr_illegal)
             begin
-                exc = 1; code = 2; tval = '0;                // unknown CSR -> illegal
+                exc = 1; code = 2; tval = '0;                // CSR / MRET / WFI illegal here
             end
 
-            // ── Interrupts (MEI > MSI > MTI), traps, MRET ───────────────────
-            irq = csr.mstatus_mie && ((csr.mie_meie && t.ExternalInterrupt) ||
-                                      (csr.mie_msie && t.SoftwareInterrupt) ||
-                                      (csr.mie_mtie && t.TimerInterrupt));
-            irq_code = (csr.mie_meie && t.ExternalInterrupt) ? 11 : (csr.mie_msie && t.SoftwareInterrupt) ? 3 : 7;
+            // ── Interrupts (MEI > MSI > MTI; always on below M), traps, MRET ─
+            irq_code = csr.irq_code(t.ExternalInterrupt, t.TimerInterrupt, t.SoftwareInterrupt);
+            irq  = (irq_code >= 0);
+            wake = (csr.mie_meie && t.ExternalInterrupt) || (csr.mie_msie && t.SoftwareInterrupt) ||
+                   (csr.mie_mtie && t.TimerInterrupt);       // mip & mie, ignores MIE and mode
             commit     = t.ValidE && !t.StallE;
             trap_taken = commit && (irq || exc);
             mret_taken = commit && t.MRetE && !trap_taken;
@@ -237,6 +249,7 @@ package execute_predictor_pkg;
             exp.PCSrcE    = commit && taken && !trap_taken;
             exp.PCTargetE = target;
             exp.TrapIsSet = trap_taken || mret_taken;
+            exp.WfiStallE = wfi_wait && !wake;
             if(trap_taken)
             begin
                 exp.CsrOutPC = {csr.mtvec[XL-1:2], 2'b00};
@@ -267,13 +280,10 @@ package execute_predictor_pkg;
                 if(trap_taken)
                 begin
                     csr.pc = pce;
-                    csr.take_trap(dummy, irq, irq ? irq_code : code, (irq || (t.CsrAccessE && !csr_exists)) ? '0 : tval);
+                    csr.take_trap(dummy, irq, irq ? irq_code : code, (irq || csr_illegal) ? '0 : tval);
                 end
                 else if(mret_taken)
-                begin
-                    csr.mstatus_mie  = csr.mstatus_mpie;
-                    csr.mstatus_mpie = 1;
-                end
+                    csr.do_mret();
                 else if(commit && t.CsrAccessE)
                 begin
                     src = (t.CsrOperationE inside {csrrwi, csrrsi, csrrci}) ? x_t'(t.Rs1E) : srca;
@@ -287,7 +297,10 @@ package execute_predictor_pkg;
                 end
                 if(commit && !trap_taken && !minstret_written)
                     csr.minstret = csr.minstret + 1;
+                if(commit && t.WfiE && !trap_taken) wfi_wait = 1;
+                else if(wake)                         wfi_wait = 0;
             end
+            execute_item::wfi_can_wake = csr.mie_meie || csr.mie_mtie || csr.mie_msie;
 
             stall_e_prev = t.rst && t.StallE;
             if(!$cast(shadow_inputs, t.clone()))

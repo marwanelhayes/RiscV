@@ -29,7 +29,7 @@ package shared_pkg;
         JALR         = 7'b110_0111 , 
         LUI          = 7'b011_0111 ,
         AUIPC        = 7'b001_0111 ,
-        MISC_MEM     = 7'b000_1111 ,   // FENCE (FENCE.I needs Zifencei)
+        MISC_MEM     = 7'b000_1111 ,   // FENCE and FENCE.I
         OP_IMM_32    = 7'b001_1011 ,   // RV64 only: ADDIW, SLLIW, SRLIW, SRAIW
         OP_32        = 7'b011_1011 ,   // RV64 only: ADDW ... REMUW
         AMO          = 7'b010_1111 ,   // A extension: LR, SC, AMO*
@@ -135,6 +135,9 @@ package shared_pkg;
         mideleg     = 12'h303 ,
         mie         = 12'h304 ,
         mtvec       = 12'h305 ,
+        mcounteren  = 12'h306 ,
+        menvcfg     = 12'h30A ,  // reads zero
+        menvcfgh    = 12'h31A ,  // RV32 only, reads zero
         mscratch    = 12'h340 ,
         mepc        = 12'h341 ,
         mcause      = 12'h342 ,
@@ -146,14 +149,23 @@ package shared_pkg;
         mcycleh     = 12'hB80 ,  // RV32 only
         minstreth   = 12'hB82 ,  // RV32 only
         cycle       = 12'hC00 ,  // read-only alias of mcycle
+        time_csr    = 12'hC01 ,  // read-only MTime ("time" is an SV keyword)
         instret     = 12'hC02 ,  // read-only alias of minstret
         cycleh      = 12'hC80 ,  // RV32 only, read-only alias of mcycleh
+        timeh_csr   = 12'hC81 ,  // RV32 only, read-only MTime[63:32]
         instreth    = 12'hC82 ,  // RV32 only, read-only alias of minstreth
         mvendorid   = 12'hF11 ,
         marchid     = 12'hF12 ,
         mimpid      = 12'hF13 ,
         mhartid     = 12'hF14
     } csr_index_t;
+
+    typedef enum logic [1:0]
+    {
+        UserMode        = 2'b00 ,
+        SupervisorMode  = 2'b01 ,   // not implemented before B4.1
+        MachineMode     = 2'b11
+    } priv_mode_t;
 
     typedef enum logic [2:0] 
     { 
@@ -352,7 +364,8 @@ package shared_pkg;
         AXI_RD_DATA = 3'b010,
         AXI_WR_ADDR = 3'b011,
         AXI_WR_DATA = 3'b100,
-        AXI_WR_RESP = 3'b101
+        AXI_WR_RESP = 3'b101,
+        AXI_FLUSH   = 3'b110
     } axi_state_t;
 
     typedef enum logic [1:0] {
@@ -372,6 +385,13 @@ package shared_pkg;
         AXI_OKAYDIRTY   = 3'b110,
         AXI_RESERVED    = 3'b111
     } axi_resp_t;
+    
+    typedef enum logic [1:0] {
+        FENCE_IDLE          = 2'b00, 
+        FENCE_FLUSH         = 2'b01, 
+        FENCE_INVALIDATE    = 2'b10
+    } fence_state_t;
+
 
     // Parameter declaration section for clean code and easy modification
     // You can modify these parameters to change the design specifications

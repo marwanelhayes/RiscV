@@ -48,6 +48,8 @@ package execute_subscriber_pkg;
             ALUSrcE_cg: coverpoint sub_item.ALUSrcE iff(sub_item.rst)        { bins lo = {0}; bins hi = {1}; }
             MemWriteE_cg: coverpoint sub_item.MemWriteE iff(sub_item.rst)    { bins lo = {0}; bins hi = {1}; }
             MRetE_cg: coverpoint sub_item.MRetE iff(sub_item.rst)            { bins lo = {0}; bins hi = {1}; }
+            WfiE_cg: coverpoint sub_item.WfiE iff(sub_item.rst)              { bins lo = {0}; bins hi = {1}; }
+            WfiStallE_cg: coverpoint sub_item.WfiStallE iff(sub_item.rst)    { bins lo = {0}; bins hi = {1}; }
             EcallE_cg: coverpoint sub_item.EcallE iff(sub_item.rst)          { bins lo = {0}; bins hi = {1}; }
             EbreakE_cg: coverpoint sub_item.EbreakE iff(sub_item.rst)        { bins lo = {0}; bins hi = {1}; }
             IllegaleInstructionE_cg: coverpoint sub_item.IllegaleInstructionE iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
@@ -93,7 +95,7 @@ package execute_subscriber_pkg;
             {
                 bins idx[] = {fflags, frm, fcsr, mstatus, misa, medeleg, mideleg, mie,
                               mtvec, mscratch, mepc, mcause, mtval, mip, mcycle, cycle,
-                              mhartid, mvendorid};
+                              mhartid, mvendorid, mcounteren, time_csr};
             }
 
             // Result selector.

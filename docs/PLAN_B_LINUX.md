@@ -541,7 +541,7 @@ green at XLEN = 32 and 64, on 10 random seeds each, with random AXI latency.
 
 #### B2.0 FENCE.I (Zifencei) — moved here from the old Phase 1
 - **Design:** FENCE.I = serialize, then D-cache `CPUFlushAll` (write back dirty lines), then I-cache `CPUInvalidateAll`, then refetch at `PC+4`. The cache gets a flush FSM state in the existing `axi_state_t` style.
-- **Exit:** `rv32ui-p-fence_i`; a self-modifying-code directed test passes under the ISS checker.
+- **Verified:** `rv32ui-p-fence_i`, `rv64ui-p-fence_i` and the directed self-modifying program pass in ISS lockstep. Run `Questa/regress.sh -t "" -f`.
 
 #### B2.1 LR/SC and AMOs
 - **shared_pkg:**
@@ -898,7 +898,7 @@ Tick each one before running OpenSBI (B8.3). Each line is a known silent-hang ca
 - [ ] `mstatus.SUM` honored (the kernel's `copy_from_user` faults without it)
 - [ ] An `sc` after any trap or xRET fails (reservation cleared)
 - [ ] `sfence.vma` flushes both TLBs and the pipeline; a `satp` write is serializing
-- [ ] `fence.i` makes D-cache stores visible to fetch
+- [x] `fence.i` makes D-cache stores visible to fetch (RV32/RV64 full-core self-modifying-code tests)
 - [ ] PMP: at least 8 entries, NAPOT and TOR correct, locked entries apply to M
 - [ ] Kernel loaded 4 MiB-aligned (RV32); OpenSBI region marked reserved in the DT (OpenSBI does this automatically)
 - [ ] Uncached CLINT/PLIC/UART: no cache allocation, single-beat accesses with the correct `MWStrb`

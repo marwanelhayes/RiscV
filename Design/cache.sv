@@ -72,6 +72,11 @@ module cache
     output logic [DATA_WIDTH-1:0] CPUReadData,
     output logic                  CacheHit,     // 0 = pipeline must stall
 
+    input  logic                  CPUFlushAll,      // D-cache write-back request pulse
+    input  logic                  CPUInvalidateAll, // I-cache invalidate request pulse
+    output logic                  CPUFlushDone,
+    output logic                  CPUInvalidateDone,
+
     // ── AXI4 master interface: write address channel ─────────────────────────
     output logic [ADDR_WIDTH-1:0] MAWAddr,
     output logic [7:0]            MAWLen,
@@ -134,6 +139,7 @@ module cache
 
     logic valid_reg [SETS][WAY];  // valid bits
     logic valid [SETS][WAY];
+    logic dirty_reg [SETS][WAY];
     logic [TAG_W-1:0] tags_reg [SETS][WAY];  // tags
     logic [DATA_WIDTH-1:0] data_reg [SETS][WAY][LINE_WORDS];  // Data arrays
     logic                  data_we;     // Data write port
@@ -176,6 +182,11 @@ module cache
     logic refill_error_reg;
     logic refill_error;
 
+    logic flush_pending, flush_requested, invalidate_pending, invalidate_requested;
+    logic maintenance_active;
+    logic flush_start, flush_advance, flush_last, flush_done, flushing;
+    logic invalidate_done;
+
     logic [ADDR_WIDTH-1:0] MAWAddr_next;
     logic [7:0]            MAWLen_next;
     logic [2:0]            MAWSize_next;
@@ -199,6 +210,37 @@ module cache
 
 
     axi_state_t state, next_state;
+
+    assign flush_requested = CPUFlushAll || flush_pending;
+    assign invalidate_requested = CPUInvalidateAll || invalidate_pending;
+    assign maintenance_active = flush_requested || invalidate_requested;
+    assign flush_start = !READ_ONLY && (state == AXI_IDLE) && flush_requested;
+    assign flush_last = (CpuIdx_reg == IDX_W'(SETS - 1)) &&
+                        (victim_way_reg == WAY_W'(WAY - 1));
+    assign flush_done = (READ_ONLY && (state == AXI_IDLE) && flush_requested) ||
+                        (flush_advance && flush_last);
+    assign invalidate_done = (state == AXI_IDLE) && !flush_requested && invalidate_requested;
+
+    always_ff @(posedge clk or negedge rst)
+    begin
+        if(!rst)
+        begin
+            flush_pending <= 1'b0;
+            invalidate_pending <= 1'b0;
+            flushing <= 1'b0;
+            CPUFlushDone <= 1'b0;
+            CPUInvalidateDone <= 1'b0;
+        end
+        else
+        begin
+            // A request waits for any outstanding transaction to finish.
+            flush_pending <= flush_requested && !flush_done;
+            invalidate_pending <= invalidate_requested && !invalidate_done;
+            flushing <= (flushing || flush_start) && !flush_done;
+            CPUFlushDone <= flush_done;
+            CPUInvalidateDone <= invalidate_done;
+        end
+    end
 
     // Byte-wise merge of a store into a cached word
     function automatic logic [DATA_WIDTH-1:0] MergeBytes(
@@ -266,7 +308,11 @@ module cache
         begin : gen_direct_mapped
             always_comb
             begin
-                if(CPUReadEn || CPUWriteEn)
+                if(maintenance_active)
+                begin
+                    CacheHit = 1'b0;
+                end
+                else if(CPUReadEn || CPUWriteEn)
                 begin
                     if((|hit_array) && (state == AXI_IDLE))
                     begin
@@ -307,7 +353,11 @@ module cache
         begin:gen_set_associative
             always_comb
             begin
-                if(CPUReadEn || CPUWriteEn)
+                if(maintenance_active)
+                begin
+                    CacheHit = 1'b0;
+                end
+                else if(CPUReadEn || CPUWriteEn)
                 begin
                     if(|hit_array && (state == AXI_IDLE))
                     begin
@@ -370,7 +420,8 @@ module cache
                     lru_touch_idx = CpuIdx_reg;
                     lru_touch_way = victim_way_reg;
                 end
-                else if((CPUReadEn || CPUWriteEn) && (|hit_array) && (state == AXI_IDLE))
+                else if((CPUReadEn || CPUWriteEn) && (|hit_array) &&
+                        (state == AXI_IDLE) && !maintenance_active)
                 begin
                     lru_touch = 1'b1;
                 end
@@ -423,7 +474,25 @@ module cache
         end
         else
         begin
-            if((state == AXI_IDLE) && (CPUReadEn || CPUWriteEn) && !CacheHit)
+            if(flush_start)
+            begin
+                CpuIdx_reg <= '0;
+                victim_way_reg <= '0;
+            end
+            else if(flush_advance && !flush_last)
+            begin
+                if(victim_way_reg == WAY_W'(WAY - 1))
+                begin
+                    CpuIdx_reg <= CpuIdx_reg + 1'b1;
+                    victim_way_reg <= '0;
+                end
+                else
+                begin
+                    victim_way_reg <= victim_way_reg + 1'b1;
+                end
+            end
+            else if((state == AXI_IDLE) && !maintenance_active &&
+                    (CPUReadEn || CPUWriteEn) && !CacheHit)
             begin
                 CpuOffset_reg <= CpuOffset;
                 pending_write <= CPUWriteEn;
@@ -456,8 +525,9 @@ module cache
         else
         begin
             state <= next_state;
-            foreach (valid_reg[i, j]) valid_reg[i][j] <= valid[i][j];
-            foreach (lru_way_empty_reg[i]) lru_way_empty_reg[i] <= lru_way_empty[i];
+            foreach (valid_reg[i, j]) valid_reg[i][j] <= !invalidate_done && valid[i][j];
+            foreach (lru_way_empty_reg[i])
+                lru_way_empty_reg[i] <= invalidate_done ? '0 : lru_way_empty[i];
         end
     end
 
@@ -543,6 +613,13 @@ module cache
     generate
         if(READ_ONLY)
         begin:gen_read_only_cache
+            for(genvar s = 0; s < SETS; s++) begin : gen_clean_set
+                for(genvar w = 0; w < WAY; w++) begin : gen_clean_way
+                    assign dirty_reg[s][w] = 1'b0;
+                end
+            end
+            assign flush_advance = 1'b0;
+
             always_comb
             begin
                 next_state = state;
@@ -577,7 +654,7 @@ module cache
                 case(state)
                     AXI_IDLE:
                     begin
-                        if(CPUReadEn && !CacheHit)
+                        if(CPUReadEn && !CacheHit && !maintenance_active)
                         begin
                             next_state = AXI_RD_ADDR;
                             MARValid_next = 1'b1;
@@ -727,7 +804,6 @@ module cache
         else
         begin:gen_read_write_cache
 
-            logic dirty_reg [SETS][WAY];
             logic dirty [SETS][WAY];
 
             always_ff @(posedge clk or negedge rst)
@@ -773,12 +849,21 @@ module cache
                 read_through_hit = 1'b0;          // one-cycle pulse: set only when the missed word arrives
                 refill_error = refill_error_reg;
                 dirty = dirty_reg;
+                flush_advance = 1'b0;
 
                 case(state)
                     AXI_IDLE:
                     begin
                         read_through_hit = 1'b0;
-                        if(CPUReadEn && !CacheHit)
+                        if(flush_start)
+                        begin
+                            next_state = AXI_FLUSH;
+                        end
+                        else if(invalidate_done)
+                        begin
+                            foreach(dirty[i, j]) dirty[i][j] = 1'b0;
+                        end
+                        else if(CPUReadEn && !CacheHit)
                         begin
                             if(WAY == 1)
                             begin:direct_mapped_read
@@ -938,6 +1023,26 @@ module cache
                         end
                     end
 
+                    AXI_FLUSH:
+                    begin
+                        if(valid_reg[CpuIdx_reg][fill_way] && dirty_reg[CpuIdx_reg][fill_way])
+                        begin
+                            next_state = AXI_WR_ADDR;
+                            MAWValid_next = 1'b1;
+                            MAWAddr_next =
+                                (ADDR_WIDTH'(tags_reg[CpuIdx_reg][fill_way]) << (IDX_W_RAW + OFF_W)) |
+                                (ADDR_WIDTH'(CpuIdx_reg) << OFF_W);
+                            MAWLen_next = 8'(LINE_WORDS - 1);
+                            MAWSize_next = 3'(TRANSFER_SIZE);
+                            MAWBurst_next = INCR;
+                            counter = '0;
+                        end
+                        else
+                        begin
+                            flush_advance = 1'b1;
+                        end
+                    end
+
                     AXI_WR_ADDR:
                     begin
                         if(MAWValid && MAWReady)
@@ -984,9 +1089,18 @@ module cache
                         MBReady_next = 1'b1;
                         if(MBValid && MBReady)
                         begin
+                            // Any BRESP completes the write-back: an error is not
+                            // attributable to an instruction, so nothing is raised
+                            // and the line is treated as written (cache_sva reports it).
                             MBReady_next = 1'b0;
                             MAWValid_next = 1'b0;
-                            if(MBResp == AXI_OKAY)
+                            if(flushing)
+                            begin
+                                next_state = AXI_FLUSH;
+                                dirty[CpuIdx_reg][fill_way] = 1'b0;
+                                flush_advance = 1'b1;
+                            end
+                            else
                             begin
                                 next_state = AXI_RD_ADDR;
                                 MARValid_next = 1'b1;
@@ -1006,11 +1120,6 @@ module cache
                                     dirty[CpuIdx_reg][victim_way_reg] = 1'b0;
                                 end
 
-                            end
-                            else
-                            begin
-                                next_state = AXI_IDLE;
-                                MARValid_next = 1'b0;
                             end
                         end
                     end
@@ -1136,6 +1245,8 @@ module cache
                         end:set_associative_read_loop
                     end
                 endcase
+                if(flush_advance && flush_last)
+                    next_state = AXI_IDLE;
             end
         end:gen_read_write_cache
     endgenerate

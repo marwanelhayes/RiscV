@@ -8,21 +8,26 @@
 // model:
 //   - Unprivileged: RV32I / RV64I (incl. the RV64-only W/LD/SD/LWU forms),
 //     M, A (Zalrsc + Zaamo, .W and RV64 .D), Zicsr, the F subset the FPU
-//     implements, FENCE (NOP)
-//   - Privileged: M-mode only - mstatus/mie/mip/mtvec/mepc/mcause/mtval,
-//     MRET, WFI (NOP), synchronous exceptions and M-mode interrupts
+//     implements, FENCE and Zifencei
+//   - Privileged: M and U modes (B3) - mstatus/mie/mip/mtvec/mepc/mcause/
+//     mtval, mcounteren, menvcfg(h), MRET, WFI (NOP), ECALL from U/M,
+//     CSR privilege and U-mode counter checks, synchronous exceptions and
+//     M-mode interrupts (always enabled below M)
 //
 // Implementation choices the specs leave open are modelled the way the core
-// documents them (Harvard memories truncated to ADDR_WIDTH, misaligned
+// documents them (shared memory truncated to ADDR_WIDTH, misaligned
 // load/store traps, mtval = 0 except for address faults, WARL legalisation of
-// mtvec/mepc, mstatus.MPP = M, mstatus.FS = Dirty, the CSR set of B1.6).
+// mtvec/mepc, mstatus.MPP holds U or M (01/10 -> U) and resets to U,
+// mstatus.FS = Dirty, no mcountinhibit, menvcfg(h) read zero, the CSR set
+// of B1.6 and B3.1).
 // A extension choices: the reservation set is the exact LR address, every SC
 // clears it, traps and MRET do not (Spike's policy); a misaligned LR raises
 // a load-address-misaligned, a misaligned SC/AMO a store/AMO-address-
 // misaligned exception (both allowed by Zalrsc/Zaamo; Spike does the same).
 //
 // Non-deterministic state (mcycle and its aliases) is not predicted: the
-// checker hands the DUT's read value to step(), which uses it.
+// checker hands the DUT's read value to step(), which uses it. time/timeh
+// read the TB's mtime, also an input of step().
 //
 // Known core gaps tracked in the plan (B9.1) are modelled as gaps so they do
 // not hide other errors: FP operations do not accrue fflags.
@@ -36,6 +41,7 @@ package riscv_iss_pkg;
     localparam bit  IS_RV64 = (XLEN == 64);
     localparam int  PADDR_W = FINAL_ADDR_WIDTH;
     localparam logic [31:0] MVENDORID_VALUE = 32'h48_41_4E_4F;
+    localparam logic [63:0] MSTATUS_UXL64   = 64'h2_0000_0000;  // UXL = 2 (RV64 only)
 
     typedef logic [XLEN-1:0] xlen_t;
 
@@ -66,7 +72,11 @@ package riscv_iss_pkg;
         xlen_t       pc;
         xlen_t       x [32];
         logic [31:0] f [32];
+        logic [1:0]  priv;          // current privilege mode (0 = U, 3 = M)
         bit          mstatus_mie, mstatus_mpie;
+        logic [1:0]  mstatus_mpp;   // U (00) or M (11) only
+        bit          mstatus_mprv, mstatus_tw;
+        logic [2:0]  mcounteren;    // IR, TM, CY
         bit          mie_meie, mie_mtie, mie_msie;
         xlen_t       mtvec, mscratch, mepc, mcause, mtval;
         logic [63:0] minstret;
@@ -75,14 +85,14 @@ package riscv_iss_pkg;
         bit          res_valid;     // LR/SC reservation
         xlen_t       res_addr;
 
-        // ── Memories (Harvard, as in the core) ──────────────────────────────
-        logic [31:0] imem [int];    // word index -> instruction
+        // Unified instruction and data memory.
         logic [7:0]  dmem [int];    // byte address -> byte (absent = 0)
         logic [7:0]  dmem_init [int]; // data image restored on every reset (load_data)
 
         // ── Inputs of the current step ──────────────────────────────────────
         bit          irq_ext, irq_tmr, irq_sw;
         xlen_t       dut_csr_rdata;  // DUT read value for unpredictable CSRs
+        logic [63:0] mtime;          // TB mtime (time/timeh)
 
         function new();
             reset();
@@ -92,7 +102,9 @@ package riscv_iss_pkg;
             pc = '0;
             foreach (x[i]) x[i] = '0;
             foreach (f[i]) f[i] = '0;
+            priv = 2'b11;
             mstatus_mie = 0; mstatus_mpie = 0;
+            mstatus_mpp = 2'b00; mstatus_mprv = 0; mstatus_tw = 0; mcounteren = '0;
             mie_meie = 0; mie_mtie = 0; mie_msie = 0;
             mtvec = '0; mscratch = '0; mepc = '0; mcause = '0; mtval = '0;
             minstret = '0; fflags = '0; frm = '0;
@@ -104,7 +116,7 @@ package riscv_iss_pkg;
         function void load_image(string path);
             int fd, n;
             string line;
-            imem.delete();
+            dmem_init.delete();
             fd = $fopen(path, "r");
             if(fd == 0)
             begin
@@ -117,13 +129,14 @@ package riscv_iss_pkg;
                 logic [31:0] w;
                 if($fscanf(fd, "%b\n", w) == 1)
                 begin
-                    imem[n] = w;
+                    for(int i = 0; i < 4; i++) dmem_init[4*n+i] = w[8*i +: 8];
                     n++;
                 end
                 else
                     void'($fgets(line, fd));
             end
             $fclose(fd);
+            dmem = dmem_init;
         endfunction
 
         // Initial data memory: one XLEN-bit little-endian word per line, hex
@@ -131,7 +144,6 @@ package riscv_iss_pkg;
         function void load_data(string path);
             int fd, n;
             xlen_t w;
-            dmem_init.delete();
             fd = $fopen(path, "r");
             if(fd == 0)
             begin
@@ -142,7 +154,7 @@ package riscv_iss_pkg;
             while($fscanf(fd, "%h", w) == 1)
             begin
                 for(int i = 0; i < XLEN/8; i++)
-                    if(w[8*i +: 8] != 0) dmem_init[n*(XLEN/8) + i] = w[8*i +: 8];
+                    dmem_init[n*(XLEN/8) + i] = w[8*i +: 8];
                 n++;
             end
             $fclose(fd);
@@ -154,11 +166,6 @@ package riscv_iss_pkg;
             return int'(a[PADDR_W-1:0]);
         endfunction
 
-        function automatic logic [31:0] fetch(xlen_t a);
-            int w = paddr(a) >> 2;
-            return imem.exists(w) ? imem[w] : 32'h0;
-        endfunction
-
         function automatic xlen_t load(xlen_t a, int size);
             xlen_t v = '0;
             for(int i = 0; i < size; i++)
@@ -167,6 +174,10 @@ package riscv_iss_pkg;
                 v[8*i +: 8] = dmem.exists(b) ? dmem[b] : 8'h0;
             end
             return v;
+        endfunction
+
+        function automatic logic [31:0] fetch(xlen_t a);
+            return 32'(load(a, 4));
         endfunction
 
         function automatic void store(xlen_t a, int size, xlen_t v);
@@ -185,20 +196,29 @@ package riscv_iss_pkg;
             return (v ^ m) - m;
         endfunction
 
-        // ── CSRs (M-mode, the set documented in B1.6) ───────────────────────
+        // ── CSRs (the set documented in B1.6 and B3.1) ──────────────────────
         function automatic xlen_t mstatus_value();
             xlen_t v = '0;
             v[3]  = mstatus_mie;
             v[7]  = mstatus_mpie;
-            v[12:11] = 2'b11;          // MPP = M (M-only hart)
+            v[12:11] = mstatus_mpp;
             v[14:13] = 2'b11;          // FS = Dirty (FPU always on)
+            v[17] = mstatus_mprv;
+            v[21] = mstatus_tw;
             v[XLEN-1] = 1'b1;          // SD
+            if(IS_RV64) v = v | MSTATUS_UXL64[XLEN-1:0];
             return v;
         endfunction
 
-        // Returns 0 if the CSR does not exist
+        // Returns 0 if the CSR does not exist or is not accessible in the
+        // current mode (privilege field csr[9:8], mcounteren gate in U)
         function automatic bit csr_read(logic [11:0] a, output xlen_t v);
             v = '0;
+            if(a[9:8] > priv) return 0;
+            if((priv == 2'b00) && (((a inside {12'hC00, 12'hC80}) && !mcounteren[0]) ||
+                                   ((a inside {12'hC01, 12'hC81}) && !mcounteren[1]) ||
+                                   ((a inside {12'hC02, 12'hC82}) && !mcounteren[2])))
+                return 0;
             case(a)
                 12'h001: v = xlen_t'(fflags);
                 12'h002: v = xlen_t'(frm);
@@ -206,10 +226,13 @@ package riscv_iss_pkg;
                 12'h300: v = mstatus_value();
                 12'h301: v = {(IS_RV64 ? 2'd2 : 2'd1), {(XLEN-2){1'b0}}} |
                              (xlen_t'(1) << 8) | (xlen_t'(1) << 12) | (xlen_t'(1) << 5) |  // I, M, F
-                             xlen_t'(1);                                                   // A
+                             (xlen_t'(1) << 20) | xlen_t'(1);                              // U, A
                 12'h302, 12'h303: v = '0;                                                   // medeleg/mideleg RO 0
                 12'h304: begin v[11] = mie_meie; v[7] = mie_mtie; v[3] = mie_msie; end
                 12'h305: v = mtvec;
+                12'h306: v = xlen_t'(mcounteren);
+                12'h30A: v = '0;                                                            // menvcfg
+                12'h31A: begin if(IS_RV64) return 0; v = '0; end                          // menvcfgh
                 12'h340: v = mscratch;
                 12'h341: v = mepc;
                 12'h342: v = mcause;
@@ -218,6 +241,8 @@ package riscv_iss_pkg;
                 12'h310: begin if(IS_RV64) return 0; v = '0; end                          // mstatush
                 12'hB00, 12'hC00: v = dut_csr_rdata;                                        // mcycle / cycle
                 12'hB80, 12'hC80: begin if(IS_RV64) return 0; v = dut_csr_rdata; end        // mcycleh / cycleh
+                12'hC01: v = mtime[XLEN-1:0];                                               // time
+                12'hC81: begin if(IS_RV64) return 0; v = xlen_t'(mtime[63:32]); end         // timeh
                 12'hB02, 12'hC02: v = minstret[XLEN-1:0];                                   // minstret / instret
                 12'hB82, 12'hC82: begin if(IS_RV64) return 0; v = xlen_t'(minstret[63:32]); end
                 12'hF11: v = xlen_t'(MVENDORID_VALUE);
@@ -239,9 +264,14 @@ package riscv_iss_pkg;
                 12'h001: fflags = v[4:0];
                 12'h002: frm = v[2:0];
                 12'h003: {frm, fflags} = v[7:0];
-                12'h300: begin mstatus_mie = v[3]; mstatus_mpie = v[7]; end
+                12'h300: begin
+                    mstatus_mie = v[3]; mstatus_mpie = v[7];
+                    mstatus_mpp = (v[12:11] == 2'b11) ? 2'b11 : 2'b00;   // WARL: S/H -> U
+                    mstatus_mprv = v[17]; mstatus_tw = v[21];
+                end
                 12'h304: begin mie_meie = v[11]; mie_mtie = v[7]; mie_msie = v[3]; end
                 12'h305: mtvec = {v[XLEN-1:2], 1'b0, v[0]};      // WARL: modes 0/1 only
+                12'h306: mcounteren = v[2:0];
                 12'h340: mscratch = v;
                 12'h341: mepc = {v[XLEN-1:2], 2'b00};            // IALIGN = 32
                 12'h342: mcause = v;
@@ -266,11 +296,42 @@ package riscv_iss_pkg;
             mtval = r.tval;
             mstatus_mpie = mstatus_mie;
             mstatus_mie = 0;
+            mstatus_mpp = priv;
+            priv = 2'b11;
             if(intr && (mtvec[1:0] == 2'b01))
                 r.next_pc = {mtvec[XLEN-1:2], 2'b00} + xlen_t'(4 * code);
             else
                 r.next_pc = {mtvec[XLEN-1:2], 2'b00};
             pc = r.next_pc;
+        endfunction
+
+        // ── Privilege rules (also used by the CSR and execute predictors) ────
+        // Interrupt taken before the next instruction: 11/3/7, or -1 for none.
+        // M interrupts are always enabled below M.
+        function automatic int irq_code(bit ext, bit tmr, bit sw);
+            if(!(mstatus_mie || (priv != 2'b11))) return -1;
+            if(mie_meie && ext) return 11;
+            if(mie_msie && sw)  return 3;
+            if(mie_mtie && tmr) return 7;
+            return -1;
+        endfunction
+
+        function automatic int ecall_code();
+            return (priv == 2'b00) ? 8 : 11;
+        endfunction
+
+        // MRET outside M, or WFI in U with mstatus.TW = 1
+        function automatic bit sys_illegal(bit mret, bit wfi);
+            return (mret && (priv != 2'b11)) || (wfi && (priv == 2'b00) && mstatus_tw);
+        endfunction
+
+        // MRET state change (the caller jumps to mepc)
+        function automatic void do_mret();
+            mstatus_mie = mstatus_mpie;
+            mstatus_mpie = 1;
+            priv = mstatus_mpp;
+            if(mstatus_mpp != 2'b11) mstatus_mprv = 0;
+            mstatus_mpp = 2'b00;
         endfunction
 
         // ── FP helper ───────────────────────────────────────────────────────
@@ -283,7 +344,7 @@ package riscv_iss_pkg;
         endfunction
 
         // ── Execute one instruction (or take a pending interrupt) ────────────
-        function automatic iss_commit_t step(bit ext, bit tmr, bit sw, xlen_t csr_rdata);
+        function automatic iss_commit_t step(bit ext, bit tmr, bit sw, xlen_t csr_rdata, logic [63:0] mtime);
             iss_commit_t r;
             logic [31:0] in;
             logic [6:0]  op, f7;
@@ -291,11 +352,12 @@ package riscv_iss_pkg;
             int          rd, rs1, rs2;
             xlen_t       a, b, immI, immS, immB, immU, immJ, res, addr, t, old;
             bit          illegal, minstret_written, write_csr, csr_ok;
-            int          shamt, size;
+            int          shamt, size, irq;
             logic [11:0] csr;
 
             irq_ext = ext; irq_tmr = tmr; irq_sw = sw;
             dut_csr_rdata = csr_rdata;
+            this.mtime = mtime;
 
             r = '{default:0};
             r.pc = pc;
@@ -305,11 +367,10 @@ package riscv_iss_pkg;
             minstret_written = 0;
 
             // ── Interrupts are taken before the instruction executes ─────────
-            if(mstatus_mie && ((mie_meie && ext) || (mie_msie && sw) || (mie_mtie && tmr)))
+            irq = irq_code(ext, tmr, sw);
+            if(irq >= 0)
             begin
-                if(mie_meie && ext)       take_trap(r, 1, 11, '0);
-                else if(mie_msie && sw)   take_trap(r, 1, 3, '0);
-                else                      take_trap(r, 1, 7, '0);
+                take_trap(r, 1, irq, '0);
                 return r;
             end
 
@@ -491,23 +552,23 @@ package riscv_iss_pkg;
                     else if(r.trap)
                         return r;
                 end
-                7'b0001111: begin                                                   // FENCE (FENCE.I not claimed)
-                    if(f3 != 3'b000) illegal = 1;
+                7'b0001111: begin                                                   // FENCE / FENCE.I (coherent ISS memory)
+                    if(!(f3 inside {3'b000, 3'b001})) illegal = 1;
                 end
                 7'b1110011: begin                                                   // SYSTEM
                     csr = in[31:20];
                     if(f3 == 3'b000)
                     begin
                         if(in[19:7] != 0) illegal = 1;
-                        else if(in[31:20] == 12'h000) begin take_trap(r, 0, 11, '0); return r; end
+                        else if(in[31:20] == 12'h000) begin take_trap(r, 0, ecall_code(), '0); return r; end
                         else if(in[31:20] == 12'h001) begin take_trap(r, 0, 3, '0); return r; end
                         else if(in[31:20] == 12'h302)
                         begin                                                       // MRET
-                            mstatus_mie = mstatus_mpie;
-                            mstatus_mpie = 1;
-                            r.next_pc = mepc;
+                            if(sys_illegal(1, 0)) illegal = 1;
+                            else begin do_mret(); r.next_pc = mepc; end
                         end
-                        else if(in[31:20] == 12'h105) ;                             // WFI = NOP
+                        else if(in[31:20] == 12'h105)                               // WFI = NOP
+                            illegal = sys_illegal(0, 1);
                         else illegal = 1;
                     end
                     else if(f3 == 3'b100) illegal = 1;

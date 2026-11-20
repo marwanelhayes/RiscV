@@ -3,26 +3,29 @@
 // -----------------------------------------------------------------------------
 // Spike (riscv-isa-sim) as a second, independent ISA reference for the
 // full-core checker. commit_checker steps it once per commit next to the
-// in-house ISS, with the same interrupt lines and the same DUT read value for
-// mcycle, and compares the two commit records field by field.
+// in-house ISS, with the same interrupt lines, the same DUT read value for
+// mcycle and the same TB mtime, and compares the two commit records field by
+// field.
 //
 // The hart is a bare processor_t on a simif_t that provides the core's
-// Harvard memories: instruction fetches read the program image, loads and
-// stores use a separate data RAM, both truncated to ADDR_BITS like the core.
+// shared RAM, with byte addresses truncated to ADDR_BITS like the core.
 //
 // Core profile: the implementation choices the specs leave open, set the way
 // the core documents them (riscv_iss_pkg.sv header). Everything else is
 // Spike's own reading of the specs.
-//   - ISA rv<XLEN>imaf_zicsr_zicntr, M-mode only, no PMP CSRs, WFI is a NOP,
-//     no Zifencei (FENCE.I is an illegal instruction)
+//   - ISA rv<XLEN>imaf_zicsr_zicntr_zifencei, M and U modes (priv "MU", no S),
+//     no PMP CSRs, no mcountinhibit, WFI is a NOP (wfi_as_nop)
 //   - f0-f31 reset to +0 like x0-x31 (Spike's raw reset value is not a boxed
 //     single and would read as NaN)
-//   - medeleg/mideleg exist and read zero (M-only hart keeps them)
+//   - medeleg/mideleg exist and read zero (kept although there is no S-mode)
 //   - misa is read-only; mvendorid = the core's value, marchid = 0
 //   - mtval = 0 for illegal-instruction and breakpoint traps
 //   - mstatus.FS is hardwired to Dirty
 //   - FP operations do not accrue fflags (known core gap B9.1)
 //   - mcycle/cycle(h) reads return the DUT's value (not predictable)
+//   - time/timeh read the TB's mtime: spike_step syncs it into Spike's time
+//     CSR before every step, so Spike's own read path (mcounteren gate,
+//     timeh) is used
 //   - data RAM is reservable (LR/SC work on it; Spike's default treats
 //     MMIO-only memory as non-reservable and would raise access faults)
 // =============================================================================
@@ -47,14 +50,14 @@ constexpr size_t   MEM_SIZE  = size_t(1) << ADDR_BITS;
 
 class core_sim_t : public simif_t {
 public:
-    uint8_t imem[MEM_SIZE] = {};
+    uint8_t image[MEM_SIZE] = {};
     uint8_t dmem[MEM_SIZE] = {};
     cfg_t   cfg;
     std::map<size_t, processor_t*> harts;
 
-    char* addr_to_mem(reg_t) override { return nullptr; }   // everything is "MMIO": Harvard
+    char* addr_to_mem(reg_t) override { return nullptr; }   // use the wrapped physical address below
     bool reservable(reg_t) override { return true; }        // LR/SC on the data RAM
-    bool mmio_fetch(reg_t a, size_t len, uint8_t* b) override { return copy(imem, a, len, b); }
+    bool mmio_fetch(reg_t a, size_t len, uint8_t* b) override { return copy(dmem, a, len, b); }
     bool mmio_load(reg_t a, size_t len, uint8_t* b) override { return copy(dmem, a, len, b); }
     bool mmio_store(reg_t a, size_t len, const uint8_t* b) override {
         for (size_t i = 0; i < len; i++) dmem[(a + i) & (MEM_SIZE - 1)] = b[i];
@@ -97,12 +100,13 @@ void apply_profile() {
     m[CSR_MISA]      = std::make_shared<const_csr_t>(proc, CSR_MISA, s->misa->read());
     m[CSR_MVENDORID] = std::make_shared<const_csr_t>(proc, CSR_MVENDORID, mvendorid);
     m[CSR_MARCHID]   = std::make_shared<const_csr_t>(proc, CSR_MARCHID, 0);
+    m.erase(CSR_MCOUNTINHIBIT);
     force_fs_dirty();
 }
 
 uint32_t fetch32(uint64_t pc) {
     uint32_t w = 0;
-    for (int i = 0; i < 4; i++) w |= uint32_t(sim->imem[(pc + i) & (MEM_SIZE - 1)]) << (8 * i);
+    for (int i = 0; i < 4; i++) w |= uint32_t(sim->dmem[(pc + i) & (MEM_SIZE - 1)]) << (8 * i);
     return w;
 }
 
@@ -112,7 +116,7 @@ extern "C" {
 
 // Load the program image ($readmemb format: one 32-bit word per line) and
 // build the hart. Returns 0 on success.
-int spike_init(int xlen_in, const char* image, unsigned int mvendorid_in) {
+int spike_init(int xlen_in, const char* image, unsigned int mvendorid_in, const char* data_image) {
     xlen = unsigned(xlen_in);
     mvendorid = mvendorid_in;
     sim = new core_sim_t();
@@ -124,23 +128,24 @@ int spike_init(int xlen_in, const char* image, unsigned int mvendorid_in) {
     while (std::getline(f, line) && addr + 4 <= MEM_SIZE) {
         if (line.size() < 32 || line.find_first_not_of("01\r") != std::string::npos) continue;
         uint32_t w = uint32_t(std::stoul(line.substr(0, 32), nullptr, 2));
-        for (int i = 0; i < 4; i++) sim->imem[addr++] = uint8_t(w >> (8 * i));
+        for (int i = 0; i < 4; i++) sim->image[addr++] = uint8_t(w >> (8 * i));
     }
 
-    isa = "rv" + std::to_string(xlen) + "imaf_zicsr_zicntr";
+    // The optional XLEN-word data image overlays the same bytes as in the bench.
+    std::ifstream data(data_image);
+    uint64_t word;
+    addr = 0;
+    while (addr + xlen / 8 <= MEM_SIZE && (data >> std::hex >> word))
+        for (unsigned i = 0; i < xlen / 8; i++) sim->image[addr++] = uint8_t(word >> (8 * i));
+
+    isa = "rv" + std::to_string(xlen) + "imaf_zicsr_zicntr_zifencei";
     sim->cfg.isa = isa.c_str();
-    sim->cfg.priv = "M";
+    sim->cfg.priv = "MU";
     sim->cfg.pmpregions = 0;
     sim->cfg.wfi_as_nop = true;
     devnull = std::fopen("/dev/null", "w");
     proc = new processor_t(sim->cfg.isa, sim->cfg.priv, &sim->cfg, sim, 0, false, devnull, nullout);
     sim->harts[0] = proc;
-    // profile: Zifencei is not implemented (Spike always includes it), so
-    // FENCE.I decodes to Spike's own illegal-instruction handler
-    insn_desc_t fence_i = insn_desc_t::illegal_instruction;
-    fence_i.match = MATCH_FENCE_I;
-    fence_i.mask  = MASK_FENCE_I;
-    proc->register_custom_insn(fence_i);
     proc->enable_log_commits();   // rebuilds the opcode map; fills log_reg_write / log_mem_write
     return 0;
 }
@@ -150,13 +155,13 @@ void spike_reset() {
     proc->get_state()->pc = 0;
     for (int i = 0; i < 32; i++)                          // profile: f0-f31 reset to +0 (NaN-boxed)
         proc->get_state()->FPR.write(i, freg_t{{0xFFFFFFFF00000000ull, ~0ull}});
-    std::memset(sim->dmem, 0, MEM_SIZE);
+    std::memcpy(sim->dmem, sim->image, MEM_SIZE);
     apply_profile();
 }
 
 // One step: an interrupt taken before the instruction, an exception, or one
 // retired instruction. Outputs mirror riscv_iss_pkg::iss_commit_t.
-void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata,
+void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mtime,
                 uint64_t* pc, unsigned int* insn, svBit* trap, svBit* interrupt,
                 uint64_t* cause, uint64_t* tval,
                 svBit* rd_we, int* rd, uint64_t* rd_val,
@@ -166,6 +171,7 @@ void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata,
     state_t* s = proc->get_state();
     s->mip->backdoor_write_with_mask(MIP_MEIP | MIP_MTIP | MIP_MSIP,
                                      (ext ? MIP_MEIP : 0) | (tmr ? MIP_MTIP : 0) | (sw ? MIP_MSIP : 0));
+    s->time->sync(mtime);
     s->log_reg_write.clear();
     s->log_mem_read.clear();
     s->log_mem_write.clear();

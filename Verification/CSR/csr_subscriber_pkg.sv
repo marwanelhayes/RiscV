@@ -58,7 +58,8 @@ package csr_subscriber_pkg;
                 bins fp_idx[]      = {fflags, frm, fcsr};
                 bins status_idx[]  = {mstatus, mstatush, misa, mie, mip, medeleg, mideleg};
                 bins trap_idx[]    = {mtvec, mscratch, mepc, mcause, mtval};
-                bins counter_idx[] = {mcycle, minstret, mcycleh, minstreth, cycle, instret, cycleh, instreth};
+                bins counter_idx[] = {mcycle, minstret, mcycleh, minstreth, cycle, instret, cycleh, instreth, time_csr, timeh_csr};
+                bins umode_idx[]   = {mcounteren, menvcfg, menvcfgh};
                 bins id_idx[]      = {mvendorid, marchid, mimpid, mhartid};
                 bins hpm_idx       = {[12'hB03:12'hB1F], [12'h323:12'h33F]};
                 bins unknown_idx   = default;
@@ -91,6 +92,11 @@ package csr_subscriber_pkg;
                 bins no_mret = {0};
                 bins mret    = {1};
             }
+
+            // WFI, privilege mode and the WFI hold (B3; mode crosses are in the predictor)
+            Wfi_cg:      coverpoint sub_item.Wfi iff(sub_item.rst)      { bins no = {0}; bins yes = {1}; }
+            PrivMode_cg: coverpoint sub_item.PrivMode iff(sub_item.rst) { bins u = {UserMode}; bins m = {MachineMode}; }
+            WfiStall_cg: coverpoint sub_item.WfiStall iff(sub_item.rst) { bins no = {0}; bins yes = {1}; }
 
             // Interrupt request lines.
             TimerInterrupt_cg: coverpoint sub_item.TimerInterrupt iff(sub_item.rst)

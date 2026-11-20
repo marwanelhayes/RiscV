@@ -96,7 +96,7 @@ Linux; **missing** = nothing in RTL.
 | M | present (single-cycle, combinational) | `Design/alu_decoder.sv` funct7 `0000001`; `Design/risc_alu.sv:70-81` | [ISA_M](ISA_M.md) |
 | A (LR/SC, AMO*) | **missing** | opcode `0101111` not in `opcode_t` (`Design/shared_pkg.sv:21-37`) → illegal | [ISA_A](ISA_A.md) |
 | Zicsr | present (M-mode CSR set) | `Design/csr_file.sv:186-219` | [ISA_ZICSR](ISA_ZICSR.md) |
-| Zifencei (FENCE.I) | **missing** (decoded illegal) | `Design/opcode_decoder.sv:179` | [ISA_ZIFENCEI](ISA_ZIFENCEI.md) |
+| Zifencei (FENCE.I) | Implemented on RV32 and RV64 | `Design/memory_stage.sv`, `Design/cache.sv` | [ISA_ZIFENCEI](ISA_ZIFENCEI.md) |
 | Zicntr `cycle`/`instret` (+`h`) | present | `Design/csr_file.sv:158-176,276-282` | [ISA_ZICNTR_TIME](ISA_ZICNTR_TIME.md) |
 | Zicntr `time`/`timeh` | **missing** (CSR `0xC01` traps; OpenSBI can emulate only if an MMIO timer exists) | `Design/csr_file.sv:177-182` | [ISA_ZICNTR_TIME](ISA_ZICNTR_TIME.md) |
 | F | partial (no FLW/FSW, no FMADD family, no `fflags` accrual, FS hardwired Dirty) | `Design/fpu_decoder.sv:13-19`; `Design/csr_file.sv:124,301-303` | [ISA_F_D](ISA_F_D.md) |

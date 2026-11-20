@@ -22,6 +22,8 @@ interface csr_interface
     logic                         CsrAccess;
     logic [FINAL_DATA_WIDTH-1:0]  CsrIn;
     logic                         Commit;
+    logic                         Wfi;
+    logic [63:0]                  MTime;
     logic                         TimerInterrupt;
     logic                         ExternalInterrupt;
     logic                         SoftwareInterrupt;
@@ -31,16 +33,18 @@ interface csr_interface
     logic                         TrapIsSet;
     logic                         TrapTaken;
     round_mode_t                  RoundingMode;
+    priv_mode_t                   PrivMode;
+    logic                         WfiStall;
 
     clocking mck @(posedge clk);
         default input #1step output #CLK;
-        output rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn, Commit, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex;
-        input  CsrOutPC, CsrOut, TrapIsSet, TrapTaken, RoundingMode;
+        output rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn, Commit, Wfi, MTime, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex;
+        input  CsrOutPC, CsrOut, TrapIsSet, TrapTaken, RoundingMode, PrivMode, WfiStall;
     endclocking:mck
 
     clocking pck @(posedge clk);
         default input #1step;
-        input rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn, Commit, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex, CsrOutPC, CsrOut, TrapIsSet, TrapTaken, RoundingMode;
+        input rst, CsrOperation, Rs, Traps, mret, PC, Address, CsrAccess, CsrIn, Commit, Wfi, MTime, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, CsrIndex, CsrOutPC, CsrOut, TrapIsSet, TrapTaken, RoundingMode, PrivMode, WfiStall;
     endclocking:pck
 
     task initialize ();
@@ -54,6 +58,8 @@ interface csr_interface
         CsrAccess <= 1'b0;
         CsrIn <= '0;
         Commit <= 1'b0;
+        Wfi <= 1'b0;
+        MTime <= '0;
         TimerInterrupt <= 1'b0;
         ExternalInterrupt <= 1'b0;
         SoftwareInterrupt <= 1'b0;
@@ -74,6 +80,8 @@ interface csr_interface
         mck.CsrAccess <= drv.CsrAccess;
         mck.CsrIn <= drv.CsrIn;
         mck.Commit <= drv.Commit;
+        mck.Wfi <= drv.Wfi;
+        mck.MTime <= drv.MTime;
         mck.TimerInterrupt <= drv.TimerInterrupt;
         mck.ExternalInterrupt <= drv.ExternalInterrupt;
         mck.SoftwareInterrupt <= drv.SoftwareInterrupt;
@@ -92,6 +100,8 @@ interface csr_interface
         mon.CsrAccess = pck.CsrAccess;
         mon.CsrIn = pck.CsrIn;
         mon.Commit = pck.Commit;
+        mon.Wfi = pck.Wfi;
+        mon.MTime = pck.MTime;
         mon.TimerInterrupt = pck.TimerInterrupt;
         mon.ExternalInterrupt = pck.ExternalInterrupt;
         mon.SoftwareInterrupt = pck.SoftwareInterrupt;
@@ -101,6 +111,8 @@ interface csr_interface
         mon.TrapIsSet = pck.TrapIsSet;
         mon.TrapTaken = pck.TrapTaken;
         mon.RoundingMode = pck.RoundingMode;
+        mon.PrivMode = pck.PrivMode;
+        mon.WfiStall = pck.WfiStall;
     endtask:intf2mon
 
     modport TEST (clocking mck, clocking pck, output rst);

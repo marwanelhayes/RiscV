@@ -168,7 +168,7 @@ package risc_test_pkg;
         // their backdoor paths into the full core.
         virtual function void connect_phase (uvm_phase phase);
             super.connect_phase(phase);
-            FetchEnvironment.reg_block.set_hdl_path_root("risc_top.InstrMem");
+            FetchEnvironment.reg_block.set_hdl_path_root("risc_top.DataMem");
             DecodeEnvironment.reg_block.set_hdl_path_root("risc_top.DUT.Decode");
             MemoryEnvironment.reg_block.set_hdl_path_root("risc_top.DataMem");
         endfunction:connect_phase

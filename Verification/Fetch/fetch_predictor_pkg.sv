@@ -55,6 +55,24 @@ package fetch_predictor_pkg;
             q_ValidD       = 1'b0;
         endfunction:build_phase
 
+        // On the full core the program can change. Capture the instruction
+        // AXI refill beats so a cached copy stays usable until its next refill.
+        virtual task run_phase(uvm_phase phase);
+            virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH, CACHE_AXI_SIZE) bus;
+            logic [FINAL_ADDR_WIDTH-1:0] addr;
+            if(!uvm_config_db #(virtual axi_interface #(FINAL_DATA_WIDTH, FINAL_ADDR_WIDTH,
+                    CACHE_AXI_SIZE))::get(this, "", "I_AXI", bus)) return;
+            forever begin
+                @(posedge bus.clk);
+                if(bus.MARValid && bus.MARReady) addr = bus.MARAddr;
+                if(bus.MRRValid && bus.MRReady) begin
+                    for(int i = 0; i < FINAL_DATA_WIDTH/INSTR_WIDTH; i++)
+                        memory[(addr >> 2) + i] = bus.MRRData[i*INSTR_WIDTH +: INSTR_WIDTH];
+                    addr += FINAL_DATA_WIDTH/8;
+                end
+            end
+        endtask
+
         // Reset the shadow on a fresh reset assertion so post-reset cycles
         // do not inherit stale state.
         virtual task reset_phase (uvm_phase phase);

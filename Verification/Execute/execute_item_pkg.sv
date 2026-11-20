@@ -17,7 +17,7 @@ package execute_item_pkg;
     import shared_pkg::*;
 
     typedef enum {K_BUBBLE, K_ALU, K_ALUI, K_W, K_WI, K_LOAD, K_STORE, K_BRANCH, K_JAL, K_JALR,
-                  K_LUI, K_AUIPC, K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_NOP, K_FP} ex_kind_t;
+                  K_LUI, K_AUIPC, K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_NOP, K_FP, K_WFI} ex_kind_t;
 
     class execute_item extends uvm_sequence_item;
 
@@ -55,6 +55,7 @@ package execute_item_pkg;
         rand logic                                MemWriteE;
         rand logic                                MemReadE;
         rand logic                                MRetE;
+        rand logic                                WfiE;
         rand logic                                EcallE;
         rand logic                                EbreakE;
         rand logic                                IllegaleInstructionE;
@@ -76,6 +77,7 @@ package execute_item_pkg;
         rand logic                                ExternalInterrupt;
         rand logic                                SoftwareInterrupt;
         rand logic                                MemStallBit;
+        rand logic [63:0]                         MTime;
         logic                                     StallE;
         logic                                     StallM;
         logic                                     FlushM;
@@ -106,11 +108,19 @@ package execute_item_pkg;
         move_operation_t                          MoveOperationM;
         logic                                     FPUBusyE;
         logic                                     FPUDoneE;
+        logic                                     WfiStallE;
 
         // ── Compare masks (set by the predictor on the expected item) ───────
         bit chk_csrout = 1;   // CsrOutM is predictable (not a cycle-counter read)
 
         localparam bit IS_RV64 = (FINAL_DATA_WIDTH == 64);
+
+        // A WFI with no enabled interrupt (mie = 0) holds EX forever, so the
+        // predictor publishes whether a wake source is enabled; WFI is only
+        // drawn then (the generator rule: enable a wake source before WFI).
+        // ponytail: one-cycle-old model state; a CSR write to mie between draw
+        // and retire can still park EX until the next random reset.
+        static bit wfi_can_wake = 0;
 
         constraint LowResetProb { rst dist {0:=2, 1:=1000}; }
         constraint FreezeProb   { MemStallBit dist {0:=85, 1:=15}; }
@@ -124,8 +134,9 @@ package execute_item_pkg;
         {
             kind dist {K_BUBBLE := 5, K_ALU := 14, K_ALUI := 10, K_W := 5, K_WI := 4, K_LOAD := 9,
                        K_STORE := 9, K_BRANCH := 10, K_JAL := 4, K_JALR := 5, K_LUI := 3, K_AUIPC := 3,
-                       K_CSR := 9, K_ECALL := 1, K_EBREAK := 1, K_MRET := 2, K_ILLEGAL := 1, K_NOP := 1, K_FP := 8};
+                       K_CSR := 9, K_ECALL := 2, K_EBREAK := 1, K_MRET := 3, K_ILLEGAL := 1, K_NOP := 1, K_FP := 8, K_WFI := 2};
             !IS_RV64 -> !(kind inside {K_W, K_WI});
+            !wfi_can_wake -> (kind != K_WFI);
         }
         constraint Forwarding
         {
@@ -148,11 +159,24 @@ package execute_item_pkg;
             CsrIndexE inside {fflags, frm, fcsr, mstatus, misa, medeleg, mideleg, mie, mtvec, mscratch,
                               mepc, mcause, mtval, mip, mstatush, mcycle, minstret, mcycleh, minstreth,
                               cycle, instret, cycleh, instreth, mvendorid, marchid, mimpid, mhartid,
-                              csr_index_t'(12'hB03), csr_index_t'(12'h323), csr_index_t'(12'h7C0), csr_index_t'(12'h180)};
+                              mcounteren, menvcfg, menvcfgh, time_csr, timeh_csr};
             CsrOperationE inside {csrrw, csrrs, csrrc, csrrwi, csrrsi, csrrci};
             // frm keeps a valid rounding mode (an invalid dynamic frm is a known B9.1 gap)
             (CsrAccessE && (CsrIndexE inside {frm, fcsr})) -> (CsrOperationE inside {csrrs, csrrc}) && (Rs1E == zero);
         }
+        // A rand enum only takes its named values, so CSR numbers csr_index_t
+        // does not name (mhpm*, mcountinhibit, unknown, S/H-level) are drawn
+        // as raw numbers and cast in post_randomize.
+        rand bit          raw_csr;
+        rand logic [11:0] raw_index;
+        constraint RawCsr
+        {
+            raw_csr dist {0:=88, 1:=12};
+            raw_index inside {12'hB03, 12'hB1F, 12'h323, 12'h320, 12'h7C0, 12'h180, 12'h100, 12'h200};
+        }
+        function void post_randomize();
+            if(raw_csr) CsrIndexE = csr_index_t'(raw_index);
+        endfunction
         // EX controls per kind, as the decoder produces them
         constraint Controls
         {
@@ -168,6 +192,7 @@ package execute_item_pkg;
             EcallE   == (kind == K_ECALL);
             EbreakE  == (kind == K_EBREAK);
             MRetE    == (kind == K_MRET);
+            WfiE     == (kind == K_WFI);
             IllegaleInstructionE == (kind == K_ILLEGAL);
             FPUValidE == (kind == K_FP);
             RegWriteE == ((kind inside {K_ALU, K_ALUI, K_W, K_WI, K_LOAD, K_JAL, K_JALR, K_LUI, K_AUIPC, K_CSR}) ||
@@ -177,7 +202,7 @@ package execute_item_pkg;
             SelectorE == ((kind == K_LOAD) ? MemToReg : (kind inside {K_JAL, K_JALR}) ? PCToReg :
                           (kind == K_CSR) ? CSRToReg : ALUToReg);
             (kind inside {K_LOAD, K_STORE, K_JAL, K_JALR, K_LUI, K_AUIPC, K_BUBBLE, K_NOP,
-                          K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_FP}) -> ALUControlE == ADD;
+                          K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_FP, K_WFI}) -> ALUControlE == ADD;
             (kind == K_BRANCH) -> (ALUControlE == ((funct3E[2:1] == 2'b11) ? SLTU : SUB));
             (kind == K_BRANCH) -> !(funct3E inside {3'b010, 3'b011});
             (kind == K_LOAD)   -> (funct3E inside {3'b000, 3'b001, 3'b010, 3'b100, 3'b101}) ||
@@ -199,11 +224,11 @@ package execute_item_pkg;
 
         virtual function string convert2str();
             return $sformatf("Inputs: rst=%0d kind=%s ValidE=%0d StallE=%0d StallM=%0d FlushM=%0d ALU=%s W=%0d A=%0h B=%0h Imm=%0h FwdA=%0d FwdB=%0d f3=%0d PC+4=%0h PCBr=%0h Br=%0d J=%0d Jalr=%0d Csr=%0d %s %s Rs1=%s FP=%s Mv=%s
-            Outputs: ValidM=%0d ALUOutM=%0h WriteDataM=%0h RdM=%s RegWriteM=%0d MemR/W=%0d/%0d PCSrcE=%0d PCTargetE=%0h TrapIsSet=%0d CsrOutPC=%0h CsrOutM=%0h FPUOutM=%0h FPURegWriteM=%0d RdFM=%s Done=%0d",
+            Outputs: WfiStallE=%0d ValidM=%0d ALUOutM=%0h WriteDataM=%0h RdM=%s RegWriteM=%0d MemR/W=%0d/%0d PCSrcE=%0d PCTargetE=%0h TrapIsSet=%0d CsrOutPC=%0h CsrOutM=%0h FPUOutM=%0h FPURegWriteM=%0d RdFM=%s Done=%0d",
             rst, kind.name(), ValidE, StallE, StallM, FlushM, ALUControlE.name(), WordOpE, RD1E, RD2E, SignImmE, ForwardAE, ForwardBE,
             funct3E, PCPlus4E, PCBranchE, BranchE, JumpE, JalrE, CsrAccessE, CsrOperationE.name(), CsrIndexE.name(), Rs1E.name(),
             FPUControlE.name(), MoveOperationE.name(),
-            ValidM, ALUOutM, WriteDataM, RdM.name(), RegWriteM, MemReadM, MemWriteM, PCSrcE, PCTargetE, TrapIsSet, CsrOutPC,
+            WfiStallE, ValidM, ALUOutM, WriteDataM, RdM.name(), RegWriteM, MemReadM, MemWriteM, PCSrcE, PCTargetE, TrapIsSet, CsrOutPC,
             CsrOutM, FPUOutM, FPURegWriteM, RdFM.name(), FPUDoneE);
         endfunction:convert2str
 
@@ -228,6 +253,7 @@ package execute_item_pkg;
             ok = super.do_compare(rhs, comparer);
             // Combinational EX outputs
             ok &= chk("PCSrcE", PCSrcE, e.PCSrcE) & chk("TrapIsSet", TrapIsSet, e.TrapIsSet);
+            ok &= chk("WfiStallE", WfiStallE, e.WfiStallE);
             if(e.PCSrcE)    ok &= chk("PCTargetE", PCTargetE, e.PCTargetE);
             if(e.TrapIsSet) ok &= chk("CsrOutPC", CsrOutPC, e.CsrOutPC);
             // EX/MEM register
@@ -290,6 +316,7 @@ package execute_item_pkg;
             this.MoveOperationM = o.MoveOperationM;
             this.FPUBusyE = o.FPUBusyE;
             this.FPUDoneE = o.FPUDoneE;
+            this.WfiStallE = o.WfiStallE;
             this.chk_csrout = o.chk_csrout;
         endfunction:do_copy
 
@@ -328,6 +355,7 @@ package execute_item_pkg;
             this.MemWriteE = o.MemWriteE;
             this.MemReadE = o.MemReadE;
             this.MRetE = o.MRetE;
+            this.WfiE = o.WfiE;
             this.EcallE = o.EcallE;
             this.EbreakE = o.EbreakE;
             this.IllegaleInstructionE = o.IllegaleInstructionE;
@@ -349,6 +377,7 @@ package execute_item_pkg;
             this.ExternalInterrupt = o.ExternalInterrupt;
             this.SoftwareInterrupt = o.SoftwareInterrupt;
             this.MemStallBit = o.MemStallBit;
+            this.MTime = o.MTime;
         endfunction:copy_inputs
 
     endclass:execute_item

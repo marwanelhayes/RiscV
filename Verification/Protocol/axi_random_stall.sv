@@ -12,6 +12,9 @@
 //
 // Stall probability per channel per cycle: +AXI_STALL_PCT=<0..95> (default
 // 0 = transparent).
+//
+// Error injection: +AXI_BRESP_ERR_PCT=<0..100> turns that share of write
+// responses into SLVERR (default 0 = off). The slave still performs the write.
 // =============================================================================
 import shared_pkg::*;
 
@@ -80,22 +83,27 @@ module axi_random_stall
 );
 
     int unsigned stall_pct = 0;
+    int unsigned bresp_err_pct = 0;
     logic        open_aw = 1, open_w = 1, open_b = 1, open_ar = 1, open_r = 1;
+    logic        b_err = 0;
 
     initial
     begin
         void'($value$plusargs("AXI_STALL_PCT=%d", stall_pct));
         if(stall_pct > 95) stall_pct = 95;
+        void'($value$plusargs("AXI_BRESP_ERR_PCT=%d", bresp_err_pct));
     end
 
-    // New gate values just after each rising edge, stable for the whole cycle
+    // Once VALID is visible, keep the gate open until READY accepts the beat.
     always @(posedge clk)
     begin
-        open_aw <= ($urandom_range(0, 99) >= stall_pct);
-        open_w  <= ($urandom_range(0, 99) >= stall_pct);
-        open_b  <= ($urandom_range(0, 99) >= stall_pct);
-        open_ar <= ($urandom_range(0, 99) >= stall_pct);
-        open_r  <= ($urandom_range(0, 99) >= stall_pct);
+        open_aw <= (s_MAWValid && !s_MAWReady) || ($urandom_range(0, 99) >= stall_pct);
+        open_w  <= (s_MWValid && !s_MWReady) || ($urandom_range(0, 99) >= stall_pct);
+        open_b  <= (m_MBValid && !m_MBReady) || ($urandom_range(0, 99) >= stall_pct);
+        open_ar <= (s_MARValid && !s_MARReady) || ($urandom_range(0, 99) >= stall_pct);
+        open_r  <= (m_MRRValid && !m_MRReady) || ($urandom_range(0, 99) >= stall_pct);
+        if(bresp_err_pct != 0 && !(m_MBValid && !m_MBReady))   // BRESP stable while waiting
+            b_err <= ($urandom_range(0, 99) < bresp_err_pct);
     end
 
     always_comb
@@ -114,7 +122,7 @@ module axi_random_stall
         s_MWValid  = m_MWValid & open_w;
         m_MWReady  = s_MWReady & open_w;
         // Write response
-        m_MBResp   = s_MBResp;
+        m_MBResp   = b_err ? AXI_SLVERR : s_MBResp;
         m_MBValid  = s_MBValid & open_b;
         s_MBReady  = m_MBReady & open_b;
         // Read address

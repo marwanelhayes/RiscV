@@ -8,7 +8,7 @@
 //   - Generate control signals for execution stage
 //   - Read from integer and floating-point register files
 //   - Compute PC-relative targets (branches, JAL, AUIPC) at XLEN width
-//   - Handle special instructions: CSR, ECALL, EBREAK, MRET, WFI (NOP)
+//   - Handle special instructions: CSR, ECALL, EBREAK, MRET, WFI
 //   - Flag illegal encodings (opcode, funct3/funct7, SYSTEM, read-only CSR writes)
 //
 // Instantiates:
@@ -83,6 +83,8 @@ module decode_stage
     output logic EcallE,                    // ECALL instruction flag
     output logic EbreakE,                   // EBREAK instruction flag
     output logic MRetE,                     // MRET instruction flag
+    output logic FenceIE,                   // Instruction-fetch fence
+    output logic WfiE,                      // WFI instruction flag
     output logic IllegaleInstructionE,      // Illegal instruction flag
 
     // ── Function field passthrough ───────────────────────────────────────────
@@ -148,6 +150,8 @@ module decode_stage
     logic EcallD;
     logic EbreakD;
     logic MRetD;
+    logic WfiD;
+    logic FenceID;
     logic SystemIllegalD;                  // Unknown SYSTEM (funct3 = 000) encoding
     logic IllegaleInstructionD;
     logic CsrReadOnlyWriteD;               // CSR write to the read-only address space
@@ -179,6 +183,7 @@ module decode_stage
         .JalrD(JalrD),
         .WordOpD(WordOpD),
         .AmoD(AmoD),
+        .FenceID(FenceID),
         .IllegaleInstructionD(IllegaleInstructionD),
         .FPUControlD(FPUControlD),
         .MoveOperationD(MoveOperationD),
@@ -241,6 +246,8 @@ module decode_stage
             CsrIndexE <= mstatus; // Default CSR index
             PCPlus4E <= 'b0; // Default PCPlus4 value
             MRetE <= 0;
+            FenceIE <= 0;
+            WfiE <= 0;
             EcallE <= 0;
             EbreakE <= 0;
             IllegaleInstructionE <= 0;
@@ -284,6 +291,8 @@ module decode_stage
             CsrAccessE <= 0; // Reset CSR access
             PCPlus4E <= 'b0;
             MRetE <= 0;
+            FenceIE <= 0;
+            WfiE <= 0;
             EcallE <= 0;
             EbreakE <= 0;
             IllegaleInstructionE <= 0;
@@ -327,6 +336,8 @@ module decode_stage
             CsrIndexE <= CsrIndexD; // Pass CSR index to the next stage
             PCPlus4E <= PCPlus4D;
             MRetE <= MRetD;
+            FenceIE <= FenceID;
+            WfiE <= WfiD;
             EcallE <= EcallD;
             EbreakE <= EbreakD;
             IllegaleInstructionE <= IllegaleInstructionD || SystemIllegalD || CsrReadOnlyWriteD;
@@ -341,6 +352,15 @@ module decode_stage
             Rs2FE <= Rs2FD;
             FPUValidE <= FPUValidD;
         end
+        else
+        begin
+            // Held in EX: follow write-back, so the operands stay right after the
+            // producer leaves WB and forwarding ends (an instruction held behind WFI)
+            if(RegWriteW && (RdW != zero) && (RdW == Rs1E))
+                RD1E <= ResultW;
+            if(RegWriteW && (RdW != zero) && (RdW == Rs2E))
+                RD2E <= ResultW;
+        end
     end
     
     
@@ -352,7 +372,7 @@ module decode_stage
         Rs1D = gpr_t'(InstructionD[19:15]);
         Rs2D = gpr_t'(InstructionD[24:20]);
         RdD  = gpr_t'(InstructionD[11:7]);
-        if((opcodeD == LUI) || (opcodeD == AUIPC) || (opcodeD == JAL))
+        if((opcodeD == LUI) || (opcodeD == AUIPC) || (opcodeD == JAL) || (opcodeD == MISC_MEM))
             Rs1D = zero;
         if(!((opcodeD == R_TYPE) || (opcodeD == OP_32) || (opcodeD == S_TYPE) || (opcodeD == B_TYPE) || (opcodeD == AMO)))
             Rs2D = zero;
@@ -410,11 +430,12 @@ module decode_stage
         RoundModeD = round_mode_t'(InstructionD[14:12]);
     end
 
-    // SYSTEM with funct3 = 000: ECALL, EBREAK, MRET and WFI (a legal NOP);
+    // SYSTEM with funct3 = 000: ECALL, EBREAK, MRET and WFI;
     // rs1 and rd must be zero, any other encoding is illegal.
     always_comb
     begin
         MRetD = 0;
+        WfiD = 0;
         EcallD = 0;
         EbreakD = 0;
         SystemIllegalD = 0;
@@ -428,7 +449,9 @@ module decode_stage
                 EcallD = 1;
             else if(InstructionD[31:20] == 12'b0000_0000_0001)
                 EbreakD = 1;
-            else if(InstructionD[31:20] != 12'b0001_0000_0101)    // WFI
+            else if(InstructionD[31:20] == 12'b0001_0000_0101)
+                WfiD = 1;
+            else
                 SystemIllegalD = 1;
         end
     end

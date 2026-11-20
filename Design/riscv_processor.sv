@@ -42,6 +42,7 @@ module riscv_processor
     input ExternalInterrupt,    // External hardware interrupt
     input TimerInterrupt,       // Timer interrupt
     input SoftwareInterrupt,    // Software interrupt
+    input [63:0] MTime,         // Machine timer (time/timeh CSRs)
 
     // ─── AXI4 master interface: ICache write address channel ─────────────────────────
     output logic [ADDR_WIDTH-1:0] IMAWAddr,
@@ -166,6 +167,10 @@ module riscv_processor
     csr_index_t CsrIndexE;                 // CSR register index
     wire IllegaleInstructionE;              // Illegal instruction flag
     wire MRetE;                            // MRET instruction flag
+    wire FenceIE;                          // Instruction-fetch fence
+    wire FenceIStartE;                     // Accepted fence flushes younger instructions
+    wire WfiE;                             // WFI instruction flag
+    wire WfiStallE;                        // Hold EX after WFI until an interrupt is pending
     wire EcallE;                            // ECALL instruction flag
     wire EbreakE;                           // EBREAK instruction flag
     fpr_t RdFE;                             // FPR destination index
@@ -186,6 +191,11 @@ module riscv_processor
 
     // ─── MEM stage interconnects ──────────────────────────────────────────────
     wire ValidM;                              // EX/MEM holds a real instruction
+    wire FenceIM;                             // Instruction-fetch fence in MEM
+    wire FenceIBusyM;                         // FENCE.I maintenance in progress
+    wire FenceIRestartM;                      // Refetch from PCPlus4M
+    wire CPUInvalidateAll;                   // Invalidate I-cache after D-cache write-back
+    wire CPUInvalidateDone;                  // I-cache invalidation complete
     wire StallM;                              // Hold EX/MEM
     wire FlushM;                              // Bubble into EX/MEM
     wire signed [DATA_WIDTH-1:0] ALUOutM;    // ALU result
@@ -255,6 +265,9 @@ module riscv_processor
         .PCF(PCF),
         .FlushD(FlushD),
         .StallD(StallD),
+        .FenceIM(FenceIM),
+        .CPUInvalidateAll(CPUInvalidateAll),
+        .CPUInvalidateDone(CPUInvalidateDone),
         .PCPlus4D(PCPlus4D),
         .InstructionD(InstructionD),
         .ValidD(ValidD),
@@ -330,6 +343,8 @@ module riscv_processor
         .AmoE(AmoE),
         .AmoOpE(AmoOpE),
         .MRetE(MRetE),
+        .FenceIE(FenceIE),
+        .WfiE(WfiE),
         .EcallE(EcallE),
         .EbreakE(EbreakE),
         .IllegaleInstructionE(IllegaleInstructionE),
@@ -379,11 +394,17 @@ module riscv_processor
         .ALUSrcE(ALUSrcE),
         .CsrAccessE(CsrAccessE),
         .MRetE(MRetE),
+        .FenceIE(FenceIE),
+        .FenceIStartE(FenceIStartE),
+        .FenceIM(FenceIM),
         .EcallE(EcallE),
         .EbreakE(EbreakE),
         .ExternalInterrupt(ExternalInterrupt),
         .TimerInterrupt(TimerInterrupt),
         .SoftwareInterrupt(SoftwareInterrupt),
+        .MTime(MTime),
+        .WfiE(WfiE),
+        .WfiStallE(WfiStallE),
         .CsrOutPC(CsrOutPC),
         .TrapIsSet(TrapIsSet),
         .IllegaleInstructionE(IllegaleInstructionE),
@@ -453,6 +474,11 @@ module riscv_processor
         .rst(rst),
         .ValidM(ValidM),
         .ALUOutM(ALUOutM),
+        .FenceIM(FenceIM),
+        .FenceIBusyM(FenceIBusyM),
+        .FenceIRestartM(FenceIRestartM),
+        .CPUInvalidateAll(CPUInvalidateAll),
+        .CPUInvalidateDone(CPUInvalidateDone),
         .funct3M(funct3M),
         .WriteDataM(WriteDataM),
         .RdM(RdM),
@@ -526,12 +552,12 @@ module riscv_processor
     (
         .clk(clk),
         .rst(rst),
-        .PCSrcE(PCSrcE),
+        .PCSrcE(PCSrcE || FenceIRestartM),
         .StallF(StallF),
         .PCPlus4W(PCPlus4W),
         .PCPlus4F(PCPlus4F),
         .CsrOutW(CsrOutW),
-        .PCBranchE(PCTargetE),
+        .PCBranchE(FenceIRestartM ? PCPlus4M : PCTargetE),
         .ALUOutW(ALUOutW),
         .ReadDataW(ReadDataW),
         .CsrOutPC(CsrOutPC),
@@ -552,6 +578,8 @@ module riscv_processor
         .RdW(RdW),
         .ICacheHit(CacheHitF),
         .DCacheHit(CacheHitM),
+        .FenceIBusyM(FenceIBusyM),
+        .FenceIFlush(FenceIStartE || FenceIRestartM),
         .RegWriteM(RegWriteM),
         .RegWriteW(RegWriteW),
         .PCSrcE(PCSrcE),
@@ -576,7 +604,8 @@ module riscv_processor
         .FPURegWriteM(FPURegWriteM),
         .FPURegWriteW(FPURegWriteW),
         .FPUValidE(FPUValidE || DivWaitE),  // A waiting divide holds EX like an FP op
-        .FPUDoneE(FPUDoneE)
+        .FPUDoneE(FPUDoneE),
+        .WfiStallE(WfiStallE)
     );
 
 endmodule

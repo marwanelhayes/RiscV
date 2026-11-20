@@ -33,6 +33,9 @@ module fetch_top
         .PCF(intf.PCF),
         .StallD(intf.StallD), // Stall on cache miss
         .FlushD(intf.FlushD), // Flush on control hazard
+        .FenceIM(1'b0),
+        .CPUInvalidateAll(1'b0),
+        .CPUInvalidateDone(),
         .PCPlus4D(intf.PCPlus4D),
         .InstructionD(intf.InstructionD),
         .ValidD(intf.ValidD),

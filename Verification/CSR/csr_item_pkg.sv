@@ -4,8 +4,10 @@
 // CSR sequence item package for UVM verification.
 //
 // Stimulus covers every implemented CSR, a few unknown addresses (illegal),
-// all six CSR operations, synchronous exceptions, MRET and the interrupt
-// lines, with Commit (the EX instruction advances) mostly high.
+// all six CSR operations, synchronous exceptions, MRET, WFI and the interrupt
+// lines, with Commit (the EX instruction advances) mostly high. MTime is a
+// new random 64-bit value every cycle. MRET with the reset MPP (U) enters
+// U-mode; any trap returns to M, so both modes are exercised.
 // =============================================================================
 package csr_item_pkg;
 
@@ -31,6 +33,8 @@ package csr_item_pkg;
         rand logic                         CsrAccess;
         rand logic [FINAL_DATA_WIDTH-1:0]  CsrIn;
         rand logic                         Commit;
+        rand logic                         Wfi;
+        rand logic [63:0]                  MTime;
         rand logic                         TimerInterrupt;
         rand logic                         ExternalInterrupt;
         rand logic                         SoftwareInterrupt;
@@ -40,6 +44,8 @@ package csr_item_pkg;
         logic                              TrapIsSet;
         logic                              TrapTaken;
         round_mode_t                       RoundingMode;
+        priv_mode_t                        PrivMode;
+        logic                              WfiStall;
 
         bit chk_csrout = 1;     // CsrOut is predictable (not a cycle-counter read)
 
@@ -50,7 +56,7 @@ package csr_item_pkg;
             if(CsrAccess)
                 CsrOperation inside {csrrw,csrrs,csrrc,csrrwi,csrrsi,csrrci};
         }
-        // One instruction is either a CSR access, an MRET or a trapping one
+        // One instruction is either a CSR access, an MRET, a WFI or a trapping one
         constraint DirectedTraffic
         {
             Traps dist {NoTraps := 80, [InstructionAddressMisalignedOrUserSoftwareInterrupt:EcallMOrMachineExternalInterrupt] :/ 20};
@@ -59,10 +65,17 @@ package csr_item_pkg;
             {
                 CsrAccess == 1'b0;
                 mret == 1'b0;
+                Wfi == 1'b0;
             }
             if(mret)
                 CsrAccess == 1'b0;
+            if(Wfi)
+            {
+                CsrAccess == 1'b0;
+                mret == 1'b0;
+            }
             mret dist {0:=92, 1:=8};
+            Wfi dist {0:=95, 1:=5};
             CsrAccess dist {0:=40, 1:=60};
         }
         constraint CsrSelection
@@ -70,12 +83,24 @@ package csr_item_pkg;
             CsrIndex dist {
                 [fflags:fcsr] :/ 6, mstatus := 8, misa := 2, medeleg := 1, mideleg := 1, mie := 6, mtvec := 6,
                 mscratch := 6, mepc := 6, mcause := 6, mtval := 6, mip := 3, mstatush := 1, mcycle := 2,
-                minstret := 4, mcycleh := 1, minstreth := 3, cycle := 1, instret := 2, cycleh := 1, instreth := 1,
-                mvendorid := 1, marchid := 1, mimpid := 1, mhartid := 1,
-                csr_index_t'(12'hB03) := 1, csr_index_t'(12'hB1F) := 1, csr_index_t'(12'h323) := 1,
-                csr_index_t'(12'h7C0) := 2, csr_index_t'(12'h180) := 2, csr_index_t'(12'h100) := 1
+                minstret := 4, mcycleh := 1, minstreth := 3, cycle := 2, instret := 3, cycleh := 1, instreth := 1,
+                mcounteren := 6, menvcfg := 1, menvcfgh := 1, time_csr := 3, timeh_csr := 2,
+                mvendorid := 1, marchid := 1, mimpid := 1, mhartid := 1
             };
         }
+        // A rand enum only takes its named values, so CSR numbers csr_index_t
+        // does not name (mhpm*, mcountinhibit, unknown, S/H-level) are drawn
+        // as raw numbers and cast in post_randomize.
+        rand bit          raw_csr;
+        rand logic [11:0] raw_index;
+        constraint RawCsr
+        {
+            raw_csr dist {0:=88, 1:=12};
+            raw_index inside {12'hB03, 12'hB1F, 12'h323, 12'h320, 12'h7C0, 12'h180, 12'h100, 12'h200};
+        }
+        function void post_randomize();
+            if(raw_csr) CsrIndex = csr_index_t'(raw_index);
+        endfunction
         constraint InterruptDistribution
         {
             TimerInterrupt dist {0:=8,1:=1};
@@ -85,10 +110,10 @@ package csr_item_pkg;
         constraint Alignment { PC[1:0] == 2'b00; }
 
         virtual function string convert2str();
-            return $sformatf("\tInputs: rst = %0d | Commit = %0d | CsrOp = %s | Rs = %s | Traps = %s | mret = %0d | PC = %0h | Addr = %0h | CsrAccess = %0d | CsrIn = %0h | TI = %0d | EI = %0d | SI = %0d | CsrIdx = %s
-            Outputs: CsrOutPC = %0h | CsrOut = %0h | TrapIsSet = %0d | TrapTaken = %0d | RoundingMode = %s",
-            rst,Commit,CsrOperation.name(),Rs.name(),Traps.name(),mret,PC,Address,CsrAccess,CsrIn,TimerInterrupt,ExternalInterrupt,SoftwareInterrupt,CsrIndex.name(),
-            CsrOutPC,CsrOut,TrapIsSet,TrapTaken,RoundingMode.name());
+            return $sformatf("\tInputs: rst = %0d | Commit = %0d | CsrOp = %s | Rs = %s | Traps = %s | mret = %0d | PC = %0h | Addr = %0h | CsrAccess = %0d | CsrIn = %0h | Wfi = %0d | MTime = %0h | TI = %0d | EI = %0d | SI = %0d | CsrIdx = %s
+            Outputs: CsrOutPC = %0h | CsrOut = %0h | TrapIsSet = %0d | TrapTaken = %0d | RoundingMode = %s | PrivMode = %s | WfiStall = %0d",
+            rst,Commit,CsrOperation.name(),Rs.name(),Traps.name(),mret,PC,Address,CsrAccess,CsrIn,Wfi,MTime,TimerInterrupt,ExternalInterrupt,SoftwareInterrupt,CsrIndex.name(),
+            CsrOutPC,CsrOut,TrapIsSet,TrapTaken,RoundingMode.name(),PrivMode.name(),WfiStall);
         endfunction: convert2str
 
         function bit chk(string name, logic [63:0] act, logic [63:0] exp);
@@ -112,6 +137,7 @@ package csr_item_pkg;
             ok = super.do_compare(rhs, comparer);
             ok &= chk("TrapIsSet", TrapIsSet, e.TrapIsSet) & chk("TrapTaken", TrapTaken, e.TrapTaken);
             ok &= chk("RoundingMode", RoundingMode, e.RoundingMode);
+            ok &= chk("PrivMode", PrivMode, e.PrivMode) & chk("WfiStall", WfiStall, e.WfiStall);
             if(e.TrapIsSet) ok &= chk("CsrOutPC", CsrOutPC, e.CsrOutPC);
             if(e.chk_csrout) ok &= chk("CsrOut", CsrOut, e.CsrOut);
             return ok;
@@ -131,6 +157,8 @@ package csr_item_pkg;
             this.TrapIsSet = o.TrapIsSet;
             this.TrapTaken = o.TrapTaken;
             this.RoundingMode = o.RoundingMode;
+            this.PrivMode = o.PrivMode;
+            this.WfiStall = o.WfiStall;
             this.chk_csrout = o.chk_csrout;
         endfunction:do_copy
 
@@ -151,6 +179,8 @@ package csr_item_pkg;
             this.CsrAccess = o.CsrAccess;
             this.CsrIn = o.CsrIn;
             this.Commit = o.Commit;
+            this.Wfi = o.Wfi;
+            this.MTime = o.MTime;
             this.TimerInterrupt = o.TimerInterrupt;
             this.ExternalInterrupt = o.ExternalInterrupt;
             this.SoftwareInterrupt = o.SoftwareInterrupt;

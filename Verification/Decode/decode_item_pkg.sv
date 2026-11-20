@@ -68,6 +68,7 @@ package decode_item_pkg;
         logic EcallE;
         logic EbreakE;
         logic MRetE;
+        logic WfiE;
         logic IllegaleInstructionE;
         fpr_t RdFE;
         logic [FINAL_FLP_WIDTH-1:0] RD1FE;
@@ -148,13 +149,13 @@ package decode_item_pkg;
             Outputs: ValidE = %0d | Rs1E = %s | Rs2E = %s | Rs1D = %s | Rs2D = %s | RdE = %s | JumpE = %0h | JalrE = %0h | ALUControlE = %s | 
             CsrOperationE = %s | RD1E = %0h | RD2E = %0h | SignImmE = %0h | PCBranchE = %0h | CsrIndexE = %s | 
             funct3E = %0h | PCPlus4E = %0h | RegWriteE = %0h | SelectorE = %s | MemWriteE = %0h | MemReadE = %0h | BranchE = %0h | 
-            CsrAccessE = %0h | ALUSrcE = %0h | AuipcE = %0h | WordOpE = %0h | EcallE = %0h | EbreakE = %0h | MRetE =  %0h | IllegaleInstructionE = %0h |
+            CsrAccessE = %0h | ALUSrcE = %0h | AuipcE = %0h | WordOpE = %0h | EcallE = %0h | EbreakE = %0h | MRetE =  %0h | WfiE = %0h | IllegaleInstructionE = %0h |
             RdFE = %s | RD1FE = %0h | RD2FE = %0h | FPUControlE = %s | RoundModeE %s | FPURegWriteE = %0h | 
             MoveOperationE = %s | Rs1FE = %s | Rs2FE = %s | FPUValidE = %0h",
             rst,PCPlus4D,opcode.name(),InstructionD,ValidD,RdW.name(),FlushE,StallE,RegWriteW,ResultW,RdFW.name(),FPUOutW,FPURegWriteW,
             ValidE, Rs1E.name(), Rs2E.name(), Rs1D.name(), Rs2D.name(), RdE.name(), JumpE, JalrE, ALUControlE.name(), CsrOperationE.name(),
             RD1E, RD2E, SignImmE, PCBranchE, CsrIndexE.name(), funct3E, PCPlus4E, RegWriteE, SelectorE.name(), MemWriteE, MemReadE,
-            BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, EcallE, EbreakE, MRetE, IllegaleInstructionE, RdFE.name(), RD1FE, RD2FE,
+            BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, EcallE, EbreakE, MRetE, WfiE, IllegaleInstructionE, RdFE.name(), RD1FE, RD2FE,
             FPUControlE.name(), RoundModeE.name(), FPURegWriteE, MoveOperationE.name(), Rs1FE.name(), Rs2FE.name(), FPUValidE);
         endfunction: convert2str
 
@@ -187,6 +188,7 @@ package decode_item_pkg;
             ok &= chk("ValidE", ValidE, e.ValidE);
             ok &= chk("PCPlus4E", PCPlus4E, e.PCPlus4E);
             ok &= chk("IllegaleInstructionE", IllegaleInstructionE, e.IllegaleInstructionE);
+            ok &= chk("WfiE", WfiE, e.WfiE);           // 0x10500073 only, never on a bubble or illegal form
             if(e.chk_all)
             begin
                 // Side-effect controls must be exact for a legal instruction
@@ -258,6 +260,7 @@ package decode_item_pkg;
             this.EcallE               = other.EcallE;
             this.EbreakE              = other.EbreakE;
             this.MRetE                = other.MRetE;
+            this.WfiE                 = other.WfiE;
             this.IllegaleInstructionE = other.IllegaleInstructionE;
             this.RdFE                 = other.RdFE;
             this.RD1FE                = other.RD1FE;

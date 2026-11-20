@@ -37,6 +37,9 @@ module fetch_stage
     // ── Pipeline control from hazard unit ────────────────────────────────────
     input StallD,      // Stall the pipeline (hold current state)
     input FlushD,      // Flush the pipeline (inject NOP)
+    input FenceIM,     // Pause fetch while an instruction-fetch fence is in MEM
+    input CPUInvalidateAll,
+    output logic CPUInvalidateDone,
 
     // ── Outputs to decode stage ──────────────────────────────────────────────
     output logic [DATA_WIDTH-1:0] PCPlus4D,      // PC+4 for current instruction
@@ -133,7 +136,11 @@ module fetch_stage
         .CPUWriteData('0),
         .CPUByteEn('0),
         .CPUWriteEn(1'b0),
-        .CPUReadEn(1'b1),
+        .CPUReadEn(!FenceIM),
+        .CPUFlushAll(1'b0),
+        .CPUFlushDone(),
+        .CPUInvalidateAll(CPUInvalidateAll),
+        .CPUInvalidateDone(CPUInvalidateDone),
         .CPUReadData(CacheWordF),
         .CacheHit(CacheHitF),    
         .MAWAddr(MAWAddr),

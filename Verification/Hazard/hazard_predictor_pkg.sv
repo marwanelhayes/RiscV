@@ -37,7 +37,7 @@ package hazard_predictor_pkg;
 
         hazard_item exp_clone , exp;
 
-        logic LWStall, FPUStall, CacheStall, Redirect;
+        logic LWStall, ExWait, MemoryStall, FlushYounger;
 
         virtual function void build_phase (uvm_phase phase);
             super.build_phase(phase);
@@ -48,30 +48,32 @@ package hazard_predictor_pkg;
         //   - x0 is never a real dependency (reads 0, writes are dropped).
         //   - f0 is a real register and is forwarded like any other FPR.
         //   - Forwarding takes the youngest producer: MEM before WB.
-        //   - Any cache miss freezes every stage (F..W).
+        //   - A cache miss or FENCE.I maintenance freezes every stage (F..W).
         //   - An FP instruction holds F/D/E until the FPU is done; M gets a bubble.
         //   - A load-use hazard holds F/D; E gets a bubble (only if E advances).
         //   - A redirect from EX flushes D and E; a trap also squashes the EX
         //     instruction so it never reaches M.
+        //   - FENCE.I issue and restart flush D and E.
+        //   - WFI wait (WfiStallE) holds F/D/E like an FP wait; M gets a bubble.
         virtual function void compute(hazard_item t);
             LWStall    = (t.SelectorE == MemToReg) && (t.RdE != zero) && ((t.RdE == t.Rs1D) || (t.RdE == t.Rs2D));
-            FPUStall   = t.FPUValidE && !t.FPUDoneE;
-            CacheStall = !t.ICacheHit || !t.DCacheHit;
-            Redirect   = t.PCSrcE || t.TrapIsSet;
+            ExWait     = (t.FPUValidE && !t.FPUDoneE) || t.WfiStallE;   // EX held, M bubbled
+            MemoryStall  = !t.ICacheHit || !t.DCacheHit || t.FenceIBusyM;
+            FlushYounger = t.PCSrcE || t.TrapIsSet || t.FenceIFlush;
 
             exp.ForwardAE = gpr_forward(t, t.Rs1E);
             exp.ForwardBE = gpr_forward(t, t.Rs2E);
             exp.ForwardFloatingAE = fpr_forward(t, t.Rs1FE);
             exp.ForwardFloatingBE = fpr_forward(t, t.Rs2FE);
 
-            exp.StallF = CacheStall || FPUStall || LWStall;
-            exp.StallD = CacheStall || FPUStall || LWStall;
-            exp.StallE = CacheStall || FPUStall;
-            exp.StallM = CacheStall;
-            exp.StallW = CacheStall;
-            exp.FlushD = Redirect;
-            exp.FlushE = Redirect || (LWStall && !exp.StallE);
-            exp.FlushM = t.TrapIsSet || (FPUStall && !CacheStall);
+            exp.StallF = MemoryStall || ExWait || LWStall;
+            exp.StallD = MemoryStall || ExWait || LWStall;
+            exp.StallE = MemoryStall || ExWait;
+            exp.StallM = MemoryStall;
+            exp.StallW = MemoryStall;
+            exp.FlushD = FlushYounger;
+            exp.FlushE = FlushYounger || (LWStall && !exp.StallE);
+            exp.FlushM = t.TrapIsSet || (ExWait && !MemoryStall);
         endfunction:compute
 
         // 000 = register file, 010 = MEM result, 001 = WB result.

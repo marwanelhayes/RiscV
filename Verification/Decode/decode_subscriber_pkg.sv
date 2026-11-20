@@ -119,6 +119,7 @@ package decode_subscriber_pkg;
             EcallE_cg: coverpoint sub_item.EcallE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }
             EbreakE_cg: coverpoint sub_item.EbreakE iff(sub_item.rst)           { bins lo = {0}; bins hi = {1}; }
             MRetE_cg: coverpoint sub_item.MRetE iff(sub_item.rst)               { bins lo = {0}; bins hi = {1}; }
+            WfiE_cg: coverpoint sub_item.WfiE iff(sub_item.rst)                 { bins lo = {0}; bins hi = {1}; }
             // Reserved encodings must be seen and flagged illegal
             IllegaleInstructionE_cg: coverpoint sub_item.IllegaleInstructionE iff(sub_item.rst) { bins lo = {0}; bins hi = {1}; }
             StallE_cg: coverpoint sub_item.StallE iff(sub_item.rst)             { bins lo = {0}; bins hi = {1}; }

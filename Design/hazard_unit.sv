@@ -7,14 +7,15 @@
 //   - Detect load-use hazards (stall F/D, bubble into EX)
 //   - Hold an FP instruction (or a divide, folded into FPUValidE at the
 //     top) in EX until its unit is done (stall F/D/EX, bubble into MEM)
-//   - Freeze every stage while either cache misses
+//   - Hold the instruction after a WFI in EX until an interrupt is pending
+//     (stall F/D/EX, bubble into MEM)
+//   - Freeze every stage during cache misses or FENCE.I maintenance
 //   - Generate forwarding selects for GPR operands (MEM before WB)
 //   - Generate forwarding selects for FPR operands (f0 included)
 //   - Generate pipeline flush signals for redirects and traps
 //
-// Only this unit computes stalls and flushes. A redirect (taken branch, jump,
-// trap, MRET) is only raised by EX when it advances, so a flush never races a
-// stall of the same stage.
+// EX redirects and fence issue are qualified by EX advance. FENCE.I restarts
+// fetch after cache maintenance in MEM.
 // =============================================================================
 import shared_pkg::*;
 
@@ -41,6 +42,7 @@ module hazard_unit
     input   selector_t SelectorE,     // Write-back select (execute)
     input   logic PCSrcE,            // Taken branch/jump redirect
     input   logic TrapIsSet,         // Trap/MRET redirect
+    input   logic FenceIFlush,       // Bubble younger instructions on fence issue and restart
 
     // ─── FPR indices ───────────────────────────────────────────────────────────
     input   fpr_t RdFM,              // FPR destination (memory)
@@ -55,10 +57,12 @@ module hazard_unit
     // ─── FPU status ───────────────────────────────────────────────────────────
     input   logic FPUValidE,         // FP instruction (or waiting divide) in EX
     input   logic FPUDoneE,          // FPU result valid this cycle
+    input   logic WfiStallE,         // After WFI, no interrupt pending: hold EX
 
     // ─── Cache status ───────────────────────────────────────────────────────────
     input   logic ICacheHit,         // Instruction cache hit
     input   logic DCacheHit,         // Data cache hit
+    input   logic FenceIBusyM,       // FENCE.I maintenance in progress
 
     // ─── Forwarding outputs ───────────────────────────────────────────────────
     output  logic [2:0] ForwardAE,    // GPR operand A forward select
@@ -78,7 +82,7 @@ module hazard_unit
 );
 
     // ─── Internal registers – hazard detection flags ─────────────────────────
-    logic LWStall,FPUStall,MemStall,Redirect;
+    logic LWStall,FPUStall,MemStall;
 
     // ─── Load-Use hazard detection ───────────────────────────────────────────
     always_comb 
@@ -94,8 +98,7 @@ module hazard_unit
     always_comb
     begin
         FPUStall = FPUValidE && !FPUDoneE;    // FP op or divide waits in EX for its result
-        MemStall = !ICacheHit || !DCacheHit;  // Any miss freezes the whole pipeline
-        Redirect = PCSrcE || TrapIsSet;
+        MemStall = !ICacheHit || !DCacheHit || FenceIBusyM;
     end
 
     // ─── GPR operand A forwarding (youngest producer first) ─────────────────
@@ -157,13 +160,14 @@ module hazard_unit
     // ─── Pipeline stall and flush generation ────────────────────────────────
     always_comb
     begin
-        StallF = MemStall || FPUStall || LWStall;
-        StallD = MemStall || FPUStall || LWStall;
-        StallE = MemStall || FPUStall;
+        StallF = MemStall || FPUStall || WfiStallE || LWStall;
+        StallD = MemStall || FPUStall || WfiStallE || LWStall;
+        StallE = MemStall || FPUStall || WfiStallE;
         StallM = MemStall;
         StallW = MemStall;
-        FlushD = Redirect;
-        FlushE = Redirect || (LWStall && !StallE);
-        FlushM = TrapIsSet || (FPUStall && !MemStall);
+        FlushM = TrapIsSet || ((FPUStall || WfiStallE) && !MemStall);
     end
+
+    assign FlushD = PCSrcE || TrapIsSet || FenceIFlush;
+    assign FlushE = FlushD || (LWStall && !StallE);
 endmodule

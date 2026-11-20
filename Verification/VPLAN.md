@@ -94,6 +94,7 @@ WB write-back, HZ hazards, CORE full core, ISA compliance.
 | HZ-2 | Load-use and FPU-busy stalls | both | scoreboard; `hazard_sva` | `StallD_x_StallE_cx`, `FPUWait_x_DCacheHit_cx` |
 | HZ-3 | Cache-miss stalls of every stage | both | scoreboard | `StallF/E/M/W_cg`, `ICacheHit_cg`, `DCacheHit_cg` |
 | HZ-4 | Flush on redirect and trap | both | scoreboard | `FlushD/E/M_cg`, `FlushM_x_StallM_cx` |
+| HZ-5 | FENCE.I freezes during maintenance and flushes younger stages | both, plus `rv<XLEN>ui-p-fence_i_smc` | scoreboard; `hazard_sva` | `a_fence_freeze_cover`, `a_fence_flush_cover` |
 
 ### Full core (`Risc/`)
 
@@ -113,13 +114,12 @@ WB write-back, HZ hazards, CORE full core, ISA compliance.
 | ISA-3 | A extension | `rv<XLEN>ua-p-*` | same | pass count |
 | ISA-4 | F extension (implemented subset) | `rv<XLEN>uf-p-*` | same | pass count |
 | ISA-5 | Machine mode CSRs and traps | `rv<XLEN>mi-p-*` | same | pass count |
+| ISA-6 | Zifencei and instruction refetch at PC+4 | `rv<XLEN>ui-p-fence_i` and `rv<XLEN>ui-p-fence_i_smc` (`Questa/regress.sh -t "" -f`) | `tohost == 1` + ISS lock-step | Two modified cached lines, pre-fence fetch accepts either instruction, reserved fields ignored |
 
 ## Known limits
 
-- Programs that do not fit the 4 KiB memories are skipped by `build_tests.py`
+- Programs that do not fit the 4 KiB address space are skipped by `build_tests.py`
   (`ld_st`, `lrsc`, and at XLEN 64 also `ma_data` and `st_ld`).
-- Compliance runs do not use Spike: its data memory starts empty, while these
-  programs preload theirs.
 - There is no covergroup at the full-core level yet (instruction mix x hazard x
   trap crosses). CORE features are closed by checker results only.
 - The scoreboards do not yet check, at the end of the test, that their FIFOs
@@ -127,10 +127,18 @@ WB write-back, HZ hazards, CORE full core, ISA compliance.
 
 ## Status
 
+### Zifencei
+
+`Questa/regress.sh -t hazard_top -s 1234 -f` passed the upstream and directed
+FENCE.I tests and the hazard bench for XLEN 32 and 64. Coverage recorded both
+the maintenance stall and the younger-stage flush.
+
+### Baseline before Zifencei
+
 Measured 2026-11-17 with `Questa/regress.sh -s 1234` (all nine tops) and
 `Questa/regress.sh -t "" -c` (compliance).
 
-### Random regression, seed 1234: 18/18 pass
+#### Random regression, seed 1234: 18/18 pass
 
 Merged covergroup coverage over all nine tops (`$WORK/x<xlen>/coverage.txt`):
 
@@ -148,7 +156,7 @@ Merged covergroup coverage over all nine tops (`$WORK/x<xlen>/coverage.txt`):
 Open coverage holes: `flp_subscriber` (FP-1..FP-3) and `execute_subscriber`
 (EX-1..EX-3) are not closed.
 
-### Compliance: 171 pass, 24 fail, 6 skipped
+#### Compliance: 171 pass, 24 fail, 6 skipped
 
 | Suite | XLEN 32 | XLEN 64 |
 |---|---|---|

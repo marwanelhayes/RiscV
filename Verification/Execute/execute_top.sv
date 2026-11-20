@@ -48,6 +48,8 @@ module execute_top;
         .MemWriteE(intf.MemWriteE),
         .MemReadE(intf.MemReadE),
         .MRetE(intf.MRetE),
+        .FenceIE(1'b0),
+        .WfiE(intf.WfiE),
         .EcallE(intf.EcallE),
         .EbreakE(intf.EbreakE),
         .IllegaleInstructionE(intf.IllegaleInstructionE),
@@ -68,10 +70,13 @@ module execute_top;
         .TimerInterrupt(intf.TimerInterrupt),
         .ExternalInterrupt(intf.ExternalInterrupt),
         .SoftwareInterrupt(intf.SoftwareInterrupt),
+        .MTime(intf.MTime),
         .StallE(intf.StallE),
         .StallM(intf.StallM),
         .FlushM(intf.FlushM),
         .ValidM(intf.ValidM),
+        .FenceIM(),
+        .FenceIStartE(),
         .ALUOutM(intf.ALUOutM),
         .WriteDataM(intf.WriteDataM),
         .RdM(intf.RdM),
@@ -98,17 +103,19 @@ module execute_top;
         .MoveOperationM(intf.MoveOperationM),
         .FPUBusyE(intf.FPUBusyE),
         .FPUDoneE(intf.FPUDoneE),
-        .DivWaitE(DivWaitE)
+        .DivWaitE(DivWaitE),
+        .WfiStallE(intf.WfiStallE)
     );
 
     // ── Hazard-unit contract for a stand-alone EX stage ──────────────────────
     // A cache freeze (MemStallBit) holds EX and EX/MEM; an FP instruction or a
-    // divide holds EX until its unit is done and leaves a bubble in EX/MEM; a
-    // trap squashes the EX instruction.
+    // divide holds EX until its unit is done, and WfiStallE holds the
+    // instruction after a WFI; each leaves a bubble in EX/MEM. A trap squashes
+    // the EX instruction.
     logic ExWait;
     always_comb
     begin
-        ExWait      = (intf.FPUValidE && intf.ValidE && !intf.FPUDoneE) || DivWaitE;
+        ExWait      = (intf.FPUValidE && intf.ValidE && !intf.FPUDoneE) || DivWaitE || intf.WfiStallE;
         intf.StallE = intf.MemStallBit || ExWait;
         intf.StallM = intf.MemStallBit;
         intf.FlushM = !intf.MemStallBit && (intf.TrapIsSet || ExWait);
