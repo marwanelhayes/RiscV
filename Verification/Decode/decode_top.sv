@@ -60,6 +60,7 @@ module decode_top;
         .EcallE(intf.EcallE),
         .EbreakE(intf.EbreakE),
         .MRetE(intf.MRetE),
+        .SRetE(intf.SRetE),
         .WfiE(intf.WfiE),
         .FenceIE(),
         .IllegaleInstructionE(intf.IllegaleInstructionE),

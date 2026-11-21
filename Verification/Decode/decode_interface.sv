@@ -41,7 +41,7 @@ interface decode_interface
     logic                                  MemWriteE, MemReadE, BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE;
     logic                                  AmoE;
     amo_op_t                               AmoOpE;
-    logic                                  EcallE, EbreakE, MRetE, WfiE, IllegaleInstructionE;
+    logic                                  EcallE, EbreakE, MRetE, SRetE, WfiE, IllegaleInstructionE;
     fpr_t                                  RdFE;
     logic [FINAL_FLP_WIDTH-1:0]            RD1FE, RD2FE;
     fpu_operation_t                        FPUControlE;
@@ -58,7 +58,7 @@ interface decode_interface
         input  Rs1E, Rs2E, Rs1D, Rs2D, RdE, ValidE, JumpE, JalrE, ALUControlE, CsrOperationE;
         input  RD1E, RD2E, SignImmE, PCBranchE, CsrIndexE, funct3E, PCPlus4E;
         input  RegWriteE, SelectorE, MemWriteE, MemReadE, BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, AmoE, AmoOpE;
-        input  EcallE, EbreakE, MRetE, WfiE, IllegaleInstructionE;
+        input  EcallE, EbreakE, MRetE, SRetE, WfiE, IllegaleInstructionE;
         input  RdFE, RD1FE, RD2FE, FPUControlE, RoundModeE, FPURegWriteE;
         input  MoveOperationE, Rs1FE, Rs2FE, FPUValidE;
     endclocking:mck
@@ -70,7 +70,7 @@ interface decode_interface
         input Rs1E, Rs2E, Rs1D, Rs2D, RdE, ValidE, JumpE, JalrE, ALUControlE, CsrOperationE;
         input RD1E, RD2E, SignImmE, PCBranchE, CsrIndexE, funct3E, PCPlus4E;
         input RegWriteE, SelectorE, MemWriteE, MemReadE, BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, AmoE, AmoOpE;
-        input EcallE, EbreakE, MRetE, WfiE, IllegaleInstructionE;
+        input EcallE, EbreakE, MRetE, SRetE, WfiE, IllegaleInstructionE;
         input RdFE, RD1FE, RD2FE, FPUControlE, RoundModeE, FPURegWriteE;
         input MoveOperationE, Rs1FE, Rs2FE, FPUValidE;
     endclocking:pck
@@ -153,6 +153,7 @@ interface decode_interface
         mon.EcallE               = pck.EcallE;
         mon.EbreakE              = pck.EbreakE;
         mon.MRetE                = pck.MRetE;
+        mon.SRetE                = pck.SRetE;
         mon.WfiE                 = pck.WfiE;
         mon.IllegaleInstructionE = pck.IllegaleInstructionE;
         mon.RdFE                 = pck.RdFE;

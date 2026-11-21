@@ -15,6 +15,7 @@ interface risc_interface
     logic ExternalInterrupt;
     logic TimerInterrupt;
     logic SoftwareInterrupt; 
+    logic SExternalInterrupt;
 
     //For clocking block the input output signal direction is with respect to the testbench not the design
     clocking cb @(posedge clk);
@@ -24,6 +25,7 @@ interface risc_interface
         output ExternalInterrupt;
         output TimerInterrupt;
         output SoftwareInterrupt;
+        output SExternalInterrupt;
     endclocking:cb
 
 
@@ -32,6 +34,7 @@ interface risc_interface
         ExternalInterrupt = 0;
         TimerInterrupt = 0;
         SoftwareInterrupt = 0;
+        SExternalInterrupt = 0;
         repeat(5)
         begin
             @(cb);
@@ -41,7 +44,7 @@ interface risc_interface
 
     modport DUT 
     (
-        input clk, rst , ExternalInterrupt , TimerInterrupt , SoftwareInterrupt
+        input clk, rst , ExternalInterrupt , TimerInterrupt , SoftwareInterrupt , SExternalInterrupt
     );
 
     modport TEST (clocking cb); 

@@ -17,7 +17,7 @@ package execute_item_pkg;
     import shared_pkg::*;
 
     typedef enum {K_BUBBLE, K_ALU, K_ALUI, K_W, K_WI, K_LOAD, K_STORE, K_BRANCH, K_JAL, K_JALR,
-                  K_LUI, K_AUIPC, K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_NOP, K_FP, K_WFI} ex_kind_t;
+                  K_LUI, K_AUIPC, K_CSR, K_ECALL, K_EBREAK, K_MRET, K_SRET, K_ILLEGAL, K_NOP, K_FP, K_WFI} ex_kind_t;
 
     class execute_item extends uvm_sequence_item;
 
@@ -55,6 +55,7 @@ package execute_item_pkg;
         rand logic                                MemWriteE;
         rand logic                                MemReadE;
         rand logic                                MRetE;
+        rand logic                                SRetE;
         rand logic                                WfiE;
         rand logic                                EcallE;
         rand logic                                EbreakE;
@@ -76,6 +77,7 @@ package execute_item_pkg;
         rand logic                                TimerInterrupt;
         rand logic                                ExternalInterrupt;
         rand logic                                SoftwareInterrupt;
+        rand logic                                SExternalInterrupt;
         rand logic                                MemStallBit;
         rand logic [63:0]                         MTime;
         logic                                     StallE;
@@ -129,12 +131,13 @@ package execute_item_pkg;
             TimerInterrupt    dist {0:=95, 1:=5};
             ExternalInterrupt dist {0:=97, 1:=3};
             SoftwareInterrupt dist {0:=97, 1:=3};
+            SExternalInterrupt dist {0:=97, 1:=3};
         }
         constraint KindProb
         {
             kind dist {K_BUBBLE := 5, K_ALU := 14, K_ALUI := 10, K_W := 5, K_WI := 4, K_LOAD := 9,
                        K_STORE := 9, K_BRANCH := 10, K_JAL := 4, K_JALR := 5, K_LUI := 3, K_AUIPC := 3,
-                       K_CSR := 9, K_ECALL := 2, K_EBREAK := 1, K_MRET := 3, K_ILLEGAL := 1, K_NOP := 1, K_FP := 8, K_WFI := 2};
+                       K_CSR := 9, K_ECALL := 2, K_EBREAK := 1, K_MRET := 3, K_SRET := 2, K_ILLEGAL := 1, K_NOP := 1, K_FP := 8, K_WFI := 2};
             !IS_RV64 -> !(kind inside {K_W, K_WI});
             !wfi_can_wake -> (kind != K_WFI);
         }
@@ -192,6 +195,7 @@ package execute_item_pkg;
             EcallE   == (kind == K_ECALL);
             EbreakE  == (kind == K_EBREAK);
             MRetE    == (kind == K_MRET);
+            SRetE    == (kind == K_SRET);
             WfiE     == (kind == K_WFI);
             IllegaleInstructionE == (kind == K_ILLEGAL);
             FPUValidE == (kind == K_FP);
@@ -202,7 +206,7 @@ package execute_item_pkg;
             SelectorE == ((kind == K_LOAD) ? MemToReg : (kind inside {K_JAL, K_JALR}) ? PCToReg :
                           (kind == K_CSR) ? CSRToReg : ALUToReg);
             (kind inside {K_LOAD, K_STORE, K_JAL, K_JALR, K_LUI, K_AUIPC, K_BUBBLE, K_NOP,
-                          K_CSR, K_ECALL, K_EBREAK, K_MRET, K_ILLEGAL, K_FP, K_WFI}) -> ALUControlE == ADD;
+                          K_CSR, K_ECALL, K_EBREAK, K_MRET, K_SRET, K_ILLEGAL, K_FP, K_WFI}) -> ALUControlE == ADD;
             (kind == K_BRANCH) -> (ALUControlE == ((funct3E[2:1] == 2'b11) ? SLTU : SUB));
             (kind == K_BRANCH) -> !(funct3E inside {3'b010, 3'b011});
             (kind == K_LOAD)   -> (funct3E inside {3'b000, 3'b001, 3'b010, 3'b100, 3'b101}) ||
@@ -355,6 +359,7 @@ package execute_item_pkg;
             this.MemWriteE = o.MemWriteE;
             this.MemReadE = o.MemReadE;
             this.MRetE = o.MRetE;
+            this.SRetE = o.SRetE;
             this.WfiE = o.WfiE;
             this.EcallE = o.EcallE;
             this.EbreakE = o.EbreakE;
@@ -376,6 +381,7 @@ package execute_item_pkg;
             this.TimerInterrupt = o.TimerInterrupt;
             this.ExternalInterrupt = o.ExternalInterrupt;
             this.SoftwareInterrupt = o.SoftwareInterrupt;
+            this.SExternalInterrupt = o.SExternalInterrupt;
             this.MemStallBit = o.MemStallBit;
             this.MTime = o.MTime;
         endfunction:copy_inputs

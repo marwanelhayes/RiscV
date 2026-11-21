@@ -8,10 +8,11 @@ The goal of this README is fast orientation: if you return later to modify, debu
 
 - `Design/`: RTL for the processor, memories, CSR block, hazard logic, ALU, FPU, and pipeline stages.
 - `Verification/`: UVM environments for the full processor and for individual blocks/stages.
-- `Python/`: random RISC-V program generator that emits assembly, binary, hex, and program metadata.
-- `Documentation/`: reference PDFs for RISC-V ISA and related material.
-- `Questa/`: Questa `do` scripts (`Questa/do/`) and the scratch simulation area (`Questa/Scratch/`).
-- `Syn/`: Vivado synthesis project/output.
+- `Program/`: random RISC-V program generator, riscv-tests builder and FPU golden model; generator outputs go to `Program/Dump/`.
+- `Scripts/`: Questa `do` scripts, `regress.sh`, `synth.sh`, `untrack.sh`.
+- `Documentation/`: `Spec/` (reference PDFs and Linux-boot specs) and `Notes/` (plans, style guides, verification notes).
+- `ThirdParty/`: external sources (git-ignored).
+- `Scratch/`: all run outputs (git-ignored, wiped at the start of each `regress.sh` run).
 
 ## Design Summary
 
@@ -150,7 +151,7 @@ Execute, WriteBack, Hazard and FPU hold no addressable storage, so they have no 
 
 The random program generator is:
 
-- [`Python/riscv_testcase_generator.py`](/home/marwan-ahmed/Work/RiscV/Python/riscv_testcase_generator.py)
+- [`Program/riscv_testcase_generator.py`](/home/marwan-ahmed/Work/RiscV/Program/riscv_testcase_generator.py)
 
 It generates:
 
@@ -161,18 +162,18 @@ It generates:
 
 Related files:
 
-- [`Python/README.md`](/home/marwan-ahmed/Work/RiscV/Python/README.md)
-- [`Python/program_info.txt`](/home/marwan-ahmed/Work/RiscV/Python/program_info.txt)
-- [`Python/assembly1.s`](/home/marwan-ahmed/Work/RiscV/Python/assembly1.s)
-- [`Python/binary1.txt`](/home/marwan-ahmed/Work/RiscV/Python/binary1.txt)
-- [`Python/hex1.v`](/home/marwan-ahmed/Work/RiscV/Python/hex1.v)
+- [`Program/README.md`](/home/marwan-ahmed/Work/RiscV/Program/README.md)
+- [`Program/Dump/program_info.txt`](/home/marwan-ahmed/Work/RiscV/Program/Dump/program_info.txt)
+- [`Program/Dump/assembly1.s`](/home/marwan-ahmed/Work/RiscV/Program/Dump/assembly1.s)
+- [`Program/Dump/binary1.txt`](/home/marwan-ahmed/Work/RiscV/Program/Dump/binary1.txt)
+- [`Program/Dump/hex1.v`](/home/marwan-ahmed/Work/RiscV/Program/Dump/hex1.v)
 
 ## Important Repo-Specific Notes
 
-- `Questa/Scratch/`, `Syn/Risc/` and the generator outputs in `Python/` are generated, local-only files (see `untrack_generated.sh`). Do not treat them as source of truth.
+- `Scratch/`, `ThirdParty/` and the generator outputs in `Program/Dump/` are generated, local-only files (see `Scripts/untrack.sh`). Do not treat them as source of truth.
 - The main source of truth for architectural intent is the RTL under `Design/` plus the scoreboards under `Verification/`.
 - The testbench reads its program (`binary1.txt`, `program_info.txt`) from the directory given by the `PROGRAM_DIR` parameter of `fetch_top` / `risc_top` (`-gPROGRAM_DIR=<dir>`); the do files and `regress.sh` resolve every other path from their own location. The Python generator still has hard-coded Windows default output paths (use `--out-dir`):
-  - [`Python/riscv_testcase_generator.py`](/home/marwan-ahmed/Work/RiscV/Python/riscv_testcase_generator.py)
+  - [`Program/riscv_testcase_generator.py`](/home/marwan-ahmed/Work/RiscV/Program/riscv_testcase_generator.py)
 - `FINAL_ADDR_WIDTH = 10` sizes the instruction/data memories (and their RAL `uvm_mem` models) at 256 words.
 
 ## Practical Workflow
@@ -183,7 +184,7 @@ When working on this repo later, the quickest path is usually:
 2. Read the relevant stage RTL in `Design/`.
 3. Read the matching scoreboard in `Verification/<Block>/`.
 4. If debugging full-core behavior, start from [`Verification/Risc/risc_top.sv`](/home/marwan-ahmed/Work/RiscV/Verification/Risc/risc_top.sv) and [`Verification/Risc/risc_test_pkg.sv`](/home/marwan-ahmed/Work/RiscV/Verification/Risc/risc_test_pkg.sv).
-5. If the failure depends on program contents, inspect the files in `Python/`.
+5. If the failure depends on program contents, inspect the files in `Program/Dump/`.
 
 ## Suggested Next Improvements
 

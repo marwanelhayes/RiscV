@@ -36,6 +36,7 @@ module risc_top
         .ExternalInterrupt(intf.ExternalInterrupt),
         .TimerInterrupt(intf.TimerInterrupt),
         .SoftwareInterrupt(intf.SoftwareInterrupt),
+        .SExternalInterrupt(intf.SExternalInterrupt),
         .MTime(MTime),
         .IMAWAddr(iaxi_intf.MAWAddr),
         .IMAWLen(iaxi_intf.MAWLen),
@@ -236,6 +237,9 @@ module risc_top
         .MepcE(Execute.CSR.Mepc),
         .McauseE(Execute.CSR.Mcause),
         .MtvalE(Execute.CSR.Mtval),
+        .SepcE(Execute.CSR.Sepc),
+        .ScauseE(Execute.CSR.Scause),
+        .StvalE(Execute.CSR.Stval),
         .PrivModeE(Execute.CSR.PrivMode),
         .AtomicStoreM(Memory.AmoM && Memory.CacheWriteEnM && Memory.CacheHitC),
         .AtomicStoreDataM(Memory.StoreSrcM)

@@ -69,6 +69,7 @@ module execute_stage
     input TimerInterrupt,                     // Timer interrupt pending
     input ExternalInterrupt,                   // External interrupt pending
     input SoftwareInterrupt,                  // Software interrupt pending
+    input SExternalInterrupt,                 // Supervisor external interrupt pending
     input [63:0] MTime,                       // Machine timer (time/timeh)
 
     // ── Control signals ───────────────────────────────────────────────────────
@@ -84,6 +85,7 @@ module execute_stage
 
     // ── Special instructions ─────────────────────────────────────────────────
     input MRetE,                               // MRET instruction flag
+    input SRetE,                               // SRET instruction flag
     input FenceIE,                             // Instruction-fetch fence in EX
     input EcallE,                              // ECALL instruction flag
     input EbreakE,                             // EBREAK instruction flag
@@ -299,7 +301,10 @@ module execute_stage
         .Rs(Rs1E),
         .Traps(TrapsE),
         .mret(MRetE),
+        .sret(SRetE),
         .Wfi(WfiE),
+        .FpOp(FPUValidE),
+        .FpRegWrite(FPUValidE && FPURegWriteE),
         .MTime(MTime),
         .PC(PCE),
         .Address(TvalE),
@@ -308,6 +313,7 @@ module execute_stage
         .ExternalInterrupt(ExternalInterrupt),
         .TimerInterrupt(TimerInterrupt),
         .SoftwareInterrupt(SoftwareInterrupt),
+        .SExternalInterrupt(SExternalInterrupt),
         .CsrIn($unsigned(SrcAE)),
         .CsrIndex(CsrIndexE),
         .CsrOutPC(CsrOutPC),
@@ -489,7 +495,11 @@ module execute_stage
         end
         else if(EcallE)
         begin
-            TrapsE = (PrivModeE == UserMode) ? EcallUOrUserExternalInterrupt : EcallMOrMachineExternalInterrupt;
+            case(PrivModeE)
+                UserMode:       TrapsE = EcallUOrUserExternalInterrupt;
+                SupervisorMode: TrapsE = EcallSOrSupervisorExternalInterrupt;
+                default:        TrapsE = EcallMOrMachineExternalInterrupt;
+            endcase
         end
         else if(MemReadE && !MemWriteE)                   // AMO* (read + write) traps as a store
         begin

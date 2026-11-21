@@ -1,11 +1,13 @@
-# Directed B3 test: misa/mstatus reset values, mstatus WARL fields,
-# mcounteren/menvcfg, MRET to U (clears MPRV) and to M (keeps it), and the
+# Directed B3 test (updated for B4: S present, misa.S, MPP = S legal, WFI in U
+# always traps, mstatus.FS resets Off): misa/mstatus reset values, mstatus WARL fields,
+# mcounteren/scounteren/menvcfg, MRET to U (clears MPRV) and to M (keeps it), and the
 # U-mode checks (privilege, per-bit counter gate, read-only CSRs, menvcfg,
 # MRET/SRET/WFI, ECALL causes). Ends with a store to
 # tohost: 1 = pass, (n << 1) | 1 = check n failed.
 # The handler records mcause in s1 and mstatus at entry in s2, skips the
 # trapping instruction and returns to the trapping mode; ECALL from U returns
-# to M. The checks never execute WFI with TW = 0 (no interrupt would wake it).
+# to M. The checks never execute WFI with TW = 0 in M (no interrupt would wake
+# it); in U it traps.
 
 #define MPP   0x1800
 #define MPRV  0x20000
@@ -26,18 +28,20 @@ _start:
 
     # Reset values
 #if __riscv_xlen == 64
-    li t1, 0x8000000000101121
-    li t2, 0x8000000200006000
+    li t1, 0x8000000000141121
+    li t2, 0x0000000A00000000
 #else
-    li t1, 0x40101121
-    li t2, 0x80006000
+    li t1, 0x40141121
+    li t2, 0
 #endif
     csrr t0, misa
     EQ(2, t0, t1)
     csrr t0, mstatus
     EQ(3, t0, t2)
+    li t0, 0x2000           # FS = Initial so fflags works in U (check 32)
+    csrs mstatus, t0
 
-    # MPP: 00/01/10/11 read back 00/00/00/11
+    # MPP: 00/01/10/11 read back 00/01/00/11
     li t4, MPP
     .irp v, 0, 1, 2, 3
     csrc mstatus, t4
@@ -45,7 +49,7 @@ _start:
     csrs mstatus, t1
     csrr t0, mstatus
     and t0, t0, t4
-    li t1, (\v / 3) * MPP
+    li t1, (((\v & 1) | (\v & (\v >> 1) & 1) * 2) << 11)
     EQ(4 + \v, t0, t1)
     .endr
 
@@ -106,6 +110,7 @@ _start:
     # U-mode with mcounteren = 7: counters work, M CSRs, writes to counters,
     # MRET, SRET and WFI with TW = 1 trap, fflags works
     csrwi mcounteren, 7
+    csrwi scounteren, 7
     li t0, TW
     csrs mstatus, t0
     TO_U
@@ -139,6 +144,7 @@ _start:
 
     # mcounteren = TM: only time works in U; menvcfg traps in U
     csrwi mcounteren, 2
+    csrwi scounteren, 2
     TO_U
     TRAPS(41, 2, rdcycle a0)
     TRAPS(42, 0, rdtime a0)
@@ -153,6 +159,7 @@ _start:
 
     # mcounteren = CY | IR: time traps in U, cycle and instret work
     csrwi mcounteren, 5
+    csrwi scounteren, 5
     TO_U
     TRAPS(49, 0, rdcycle a0)
     TRAPS(50, 2, rdtime a0)
@@ -182,6 +189,11 @@ _start:
     and t0, t0, t4
     EQ(58, t0, t4)
     csrc mstatus, t4
+
+    # WFI in U traps even with TW = 0 (S exists)
+    TO_U
+    TRAPS(59, 2, wfi)
+    TRAPS(60, 8, ecall)
 
     li t3, 1
 fail:

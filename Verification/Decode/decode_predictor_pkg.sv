@@ -72,7 +72,7 @@ package decode_predictor_pkg;
             e.MemWriteE = 0; e.MemReadE = 0; e.BranchE = 0; e.JumpE = 0; e.JalrE = 0;
             e.ALUSrcE = 0; e.AuipcE = 0; e.WordOpE = 0; e.CsrAccessE = 0; e.AmoE = 0; e.AmoOpE = AMO_ADD;
             e.CsrOperationE = csrrw; e.CsrIndexE = mstatus;
-            e.EcallE = 0; e.EbreakE = 0; e.MRetE = 0; e.WfiE = 0; e.IllegaleInstructionE = 0;
+            e.EcallE = 0; e.EbreakE = 0; e.MRetE = 0; e.SRetE = 0; e.WfiE = 0; e.IllegaleInstructionE = 0;
             e.RdFE = f0; e.Rs1FE = f0; e.Rs2FE = f0; e.RD1FE = '0; e.RD2FE = '0;
             e.FPUControlE = NOOPERATION; e.RoundModeE = RNE; e.FPURegWriteE = 0;
             e.MoveOperationE = FPUToFPU; e.FPUValidE = 0;
@@ -253,6 +253,7 @@ package decode_predictor_pkg;
                                 12'h000: begin legal = 1; e.EcallE = 1; end
                                 12'h001: begin legal = 1; e.EbreakE = 1; end
                                 12'h302: begin legal = 1; e.MRetE = 1; end
+                                12'h102: begin legal = 1; e.SRetE = 1; end
                                 12'h105: begin legal = 1; e.WfiE = 1; end   // WFI: retires, then EX waits
                             endcase
                     end

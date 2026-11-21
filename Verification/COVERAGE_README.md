@@ -10,7 +10,7 @@ with a rationale, never left dangling).
 
 ## How to run
 
-From `Questa/Scratch`:
+From `Scratch`:
 
 ```
 vsim -c    -do "do ../do/sim_<env>.do; quit -f"     # csr decode execute fetch hazard mem writeback

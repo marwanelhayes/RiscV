@@ -8,8 +8,8 @@
 // update mepc and the mstatus stack one cycle later; mcycle ticks every cycle
 // and minstret on every retire unless a CSR write replaces the increment.
 // B3: trap entry stacks the mode into MPP and enters M, MRET restores it and
-// leaves MPP = U, the mode changes only on a trap or MRET, MPP holds only U
-// or M; WfiWait sets when a WFI retires and clears on a pending enabled line
+// leaves MPP = U, the mode changes only on a trap, MRET or SRET, MPP holds
+// U, S or M; WfiWait sets when a WFI retires and clears on a pending enabled line
 // (mip & mie, never gated by mstatus.MIE or the mode).
 // =============================================================================
 import uvm_pkg::*;
@@ -17,11 +17,16 @@ import shared_pkg::*;
 
 module csr_sva (
     input logic clk, rst,
-    input logic Commit, TrapTaken, MretTaken, TrapIsSet, Retire, CounterWrite, CsrAccess, CsrWrite, mret,
+    input logic Commit, TrapTaken, MretTaken, SretTaken, ToS, TrapIsSet, Retire, CounterWrite, CsrAccess, CsrWrite, mret,
     input csr_index_t CsrIndex,
-    input logic [FINAL_DATA_WIDTH-1:0] PC, CsrWriteData, CsrOutPC, Mtvec, Mscratch, Mepc, Mcause, Mtval,
+    input logic [FINAL_DATA_WIDTH-1:0] PC, Address, CsrWriteData, CsrOutPC, Mtvec, Mscratch, Mepc, Mcause, Mtval, Sepc, Scause, Stval, Stvec,
+    input logic [FINAL_DATA_WIDTH-1:0] ExceptionCause, InterruptCause,
+    input logic InterruptPending, IrqToS, CsrIllegal,
+    input logic [2:0] Mideleg,
+    input logic [1:0] MStatusFS,
+    input logic FpOp, FpRegWrite,
     input logic [FINAL_DATA_WIDTH-1:0] MipValue, MieValue,
-    input logic MStatusMIE, MStatusMPIE, MieMEIE, MieMTIE, MieMSIE,
+    input logic MStatusSIE, MStatusSPIE, MStatusSPP, MStatusMIE, MStatusMPIE, MieMEIE, MieMTIE, MieMSIE,
     input priv_mode_t PrivMode, MStatusMPP,
     input logic MStatusMPRV, MStatusTW, Wfi, WfiWait, WfiStall,
     input logic [2:0] Mcounteren,
@@ -35,9 +40,9 @@ module csr_sva (
     a_redirect_commit: assert property (TrapIsSet |-> Commit)
         else uvm_report_error("SVA_CSR", "TrapIsSet without Commit");
     a_redirect_commit_cover: cover property (TrapIsSet |-> Commit);
-    a_exclusive: assert property (!(TrapTaken && MretTaken))
-        else uvm_report_error("SVA_CSR", "trap and MRET taken in the same cycle");
-    a_exclusive_cover: cover property (!(TrapTaken && MretTaken));
+    a_exclusive: assert property ($onehot0({TrapTaken, MretTaken, SretTaken}))
+        else uvm_report_error("SVA_CSR", "trap, MRET and SRET taken in the same cycle");
+    a_exclusive_cover: cover property ($onehot0({TrapTaken, MretTaken, SretTaken}));
     a_no_commit_hold: assert property (!Commit |=> $stable({MStatusMIE, MStatusMPIE, MieMEIE, MieMTIE, MieMSIE,
                                                             Mtvec, Mscratch, Mepc, Mcause, Mtval, Fflags, Frm, Minstret,
                                                             PrivMode, MStatusMPP, MStatusMPRV, MStatusTW, Mcounteren}))
@@ -45,10 +50,10 @@ module csr_sva (
     a_no_commit_hold_cover: cover property (!Commit |=> $stable({MStatusMIE, MStatusMPIE, MieMEIE, MieMTIE, MieMSIE,
                                                             Mtvec, Mscratch, Mepc, Mcause, Mtval, Fflags, Frm, Minstret,
                                                             PrivMode, MStatusMPP, MStatusMPRV, MStatusTW, Mcounteren}));
-    a_trap_entry: assert property (TrapTaken |=> Mepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00} &&
+    a_trap_entry: assert property (TrapTaken && !ToS |=> Mepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00} &&
                                    !MStatusMIE && MStatusMPIE == $past(MStatusMIE))
         else uvm_report_error("SVA_CSR", "trap entry did not update mepc/mstatus the next cycle");
-    a_trap_entry_cover: cover property (TrapTaken |=> Mepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00} &&
+    a_trap_entry_cover: cover property (TrapTaken && !ToS |=> Mepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00} &&
                                    !MStatusMIE && MStatusMPIE == $past(MStatusMIE));
     a_mret: assert property (MretTaken |=> MStatusMIE == $past(MStatusMPIE) && MStatusMPIE)
         else uvm_report_error("SVA_CSR", "MRET did not restore mstatus the next cycle");
@@ -72,17 +77,79 @@ module csr_sva (
     a_known_cover: cover property (!$isunknown({TrapIsSet, TrapTaken, PrivMode, WfiStall}));
 
     // ── Privilege mode (B3.2) ───────────────────────────────────────────────
-    a_trap_mode: assert property (TrapTaken |=> PrivMode == MachineMode && MStatusMPP == $past(PrivMode))
+    a_trap_mode: assert property (TrapTaken && !ToS |=> PrivMode == MachineMode && MStatusMPP == $past(PrivMode))
         else uvm_report_error("SVA_CSR", "trap entry did not enter M with MPP = previous mode");
+    a_trap_mode_s: assert property (TrapTaken && ToS |=> PrivMode == SupervisorMode && !MStatusSIE &&
+                                    MStatusSPIE == $past(MStatusSIE) && MStatusSPP == ($past(PrivMode) == SupervisorMode) &&
+                                    Sepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00})
+        else uvm_report_error("SVA_CSR", "delegated trap entry did not enter S with the SPP/SPIE/sepc update");
+    a_trap_mode_s_cover: cover property (TrapTaken && ToS ##1 PrivMode == SupervisorMode);
+    a_sret: assert property (SretTaken |=> PrivMode == ($past(MStatusSPP) ? SupervisorMode : UserMode) && !MStatusSPP &&
+                             MStatusSIE == $past(MStatusSPIE) && MStatusSPIE && !MStatusMPRV)
+        else uvm_report_error("SVA_CSR", "SRET did not restore the mode / mstatus");
+    a_sret_cover: cover property (SretTaken ##1 PrivMode == UserMode);
     a_trap_mode_cover: cover property (TrapTaken && PrivMode == UserMode ##1 PrivMode == MachineMode);
     a_mret_mode: assert property (MretTaken |=> PrivMode == $past(MStatusMPP) && MStatusMPP == UserMode &&
                                   ($past(MStatusMPP) == MachineMode || !MStatusMPRV))
         else uvm_report_error("SVA_CSR", "MRET did not restore the mode / clear MPP (and MPRV below M)");
     a_mret_mode_cover: cover property (MretTaken && MStatusMPP == UserMode ##1 PrivMode == UserMode);
-    a_mode_change: assert property (PrivMode != $past(PrivMode) |-> $past(TrapTaken || MretTaken))
-        else uvm_report_error("SVA_CSR", "privilege mode changed without a trap or MRET");
-    a_mpp_legal: assert property (MStatusMPP inside {UserMode, MachineMode} && PrivMode inside {UserMode, MachineMode})
+    a_mode_change: assert property (PrivMode != $past(PrivMode) |-> $past(TrapTaken || MretTaken || SretTaken))
+        else uvm_report_error("SVA_CSR", "privilege mode changed without a trap, MRET or SRET");
+    a_mpp_legal: assert property (MStatusMPP inside {UserMode, SupervisorMode, MachineMode} && PrivMode inside {UserMode, SupervisorMode, MachineMode})
         else uvm_report_error("SVA_CSR", "MPP or the mode holds an unimplemented privilege");
+
+    // ── Interrupt arbitration (B4.2) and delegated trap entry ───────────────
+    // Written from the spec, not from the RTL's group masks: an interrupt is taken iff some
+    // line is pending, enabled in mie and on at the current mode (M-routed: MIE in M, always
+    // below; delegated: SIE in S, always in U, never in M). The M-routed group wins, then the
+    // order MEI MSI MTI SEI SSI STI.
+    function automatic logic [FINAL_DATA_WIDTH-1:0] deleg_bits(logic [2:0] md);   // argument: a continuous assign is only sensitive to its operands
+        logic [FINAL_DATA_WIDTH-1:0] d = '0;
+        d[9] = md[2]; d[5] = md[1]; d[1] = md[0];
+        return d;
+    endfunction
+    function automatic int irq_prio(logic [FINAL_DATA_WIDTH-1:0] v);
+        if(v[11]) return 11;
+        if(v[3])  return 3;
+        if(v[7])  return 7;
+        if(v[9])  return 9;
+        if(v[1])  return 1;
+        return 5;
+    endfunction
+    wire [FINAL_DATA_WIDTH-1:0] pend_m = MipValue & MieValue & ~deleg_bits(Mideleg) &
+                                         {FINAL_DATA_WIDTH{PrivMode != MachineMode || MStatusMIE}};
+    wire [FINAL_DATA_WIDTH-1:0] pend_s = MipValue & MieValue & deleg_bits(Mideleg) &
+                                         {FINAL_DATA_WIDTH{PrivMode == UserMode || (PrivMode == SupervisorMode && MStatusSIE)}};
+    a_irq: assert property (InterruptPending == (|pend_m || |pend_s))
+        else uvm_report_error("SVA_CSR", "an interrupt is taken that is not pending and enabled, or one is missed");
+    a_irq_pick: assert property (InterruptPending |-> (|pend_m ? (!IrqToS && int'(InterruptCause) == irq_prio(pend_m))
+                                                              : (IrqToS && int'(InterruptCause) == irq_prio(pend_s))))
+        else uvm_report_error("SVA_CSR", "interrupt arbitration differs from the B4.2 rules");
+    a_irq_cover_s: cover property (InterruptPending && IrqToS && |pend_m == 0 && |pend_s);
+    a_irq_cover_m_first: cover property (|pend_m && |pend_s && InterruptPending && !IrqToS);
+    a_trap_s: assert property (TrapTaken && ToS |-> CsrOutPC == ({Stvec[FINAL_DATA_WIDTH-1:2], 2'b00} +
+                                                               ((InterruptPending && Stvec[0]) ? (InterruptCause << 2) : '0)))
+        else uvm_report_error("SVA_CSR", "delegated trap did not redirect to stvec");
+    a_trap_s_state: assert property (TrapTaken && ToS |=> Sepc == {$past(PC[FINAL_DATA_WIDTH-1:2]), 2'b00} &&
+                                     Scause == $past(InterruptPending ? {1'b1, InterruptCause[FINAL_DATA_WIDTH-2:0]} : ExceptionCause) &&
+                                     Stval == $past((InterruptPending || CsrIllegal) ? '0 : Address) &&
+                                     MStatusSPP == ($past(PrivMode) == SupervisorMode) && MStatusSPIE == $past(MStatusSIE) && !MStatusSIE &&
+                                     PrivMode == SupervisorMode &&
+                                     $stable({Mepc, Mcause, Mtval, MStatusMIE, MStatusMPIE, MStatusMPP}))
+        else uvm_report_error("SVA_CSR", "delegated trap entry wrong (sepc/scause/stval/SPP/SPIE/SIE) or changed an M CSR");
+    a_trap_s_cover: cover property (TrapTaken && ToS && InterruptPending ##1 PrivMode == SupervisorMode);
+    a_trap_s_cover_exc: cover property (TrapTaken && ToS && !InterruptPending ##1 PrivMode == SupervisorMode);
+
+    // ── mstatus.FS (B4): an FP register or fcsr write dirties it, nothing else changes it ──
+    a_fs_dirty: assert property (Commit && !TrapTaken && FpOp && FpRegWrite |=> MStatusFS == 2'b11)
+        else uvm_report_error("SVA_CSR", "FP register write did not set FS = Dirty");
+    a_fs_dirty_cover: cover property (Commit && !TrapTaken && FpOp && FpRegWrite && MStatusFS != 2'b11 ##1 MStatusFS == 2'b11);
+    a_fs_hold: assert property (!(Commit && CsrAccess && CsrWrite && CsrIndex inside {mstatus, sstatus, fflags, frm, fcsr}) &&
+                                !(Commit && !TrapTaken && FpOp && FpRegWrite) |=> $stable(MStatusFS))
+        else uvm_report_error("SVA_CSR", "FS changed without an mstatus write, FPR write or fcsr write");
+    a_fs_off_trap: assert property (Commit && FpOp && MStatusFS == 2'b00 |-> TrapTaken && CsrIllegal)
+        else uvm_report_error("SVA_CSR", "FP instruction with FS = Off did not raise illegal instruction");
+    a_fs_off_trap_cover: cover property (Commit && FpOp && MStatusFS == 2'b00 && TrapTaken);
 
     // ── WFI wait / wake (B3.4) ──────────────────────────────────────────────
     a_wfi_stall: assert property (WfiStall == (WfiWait && !(|(MipValue & MieValue))))

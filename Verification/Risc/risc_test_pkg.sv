@@ -3,7 +3,7 @@
 // -----------------------------------------------------------------------------
 // Full-core tests.
 //
-// risc_test           : random program (Python/riscv_testcase_generator.py) with
+// risc_test           : random program (Program/riscv_testcase_generator.py) with
 //                       random interrupt pulses; every stage environment is
 //                       passive and commit_checker lock-steps the ISS (and Spike).
 // risc_compliance_test: one riscv-tests program (Verification/Compliance), no
@@ -180,16 +180,18 @@ package risc_test_pkg;
         task drive_interrupts();
             forever
             begin
-                repeat($urandom_range(40, 200)) @(intf.cb);
-                case($urandom_range(0, 2))
+                repeat($urandom_range(8, 40)) @(intf.cb);
+                case($urandom_range(0, 3))
                     0: intf.cb.ExternalInterrupt <= 1;
                     1: intf.cb.TimerInterrupt    <= 1;
                     2: intf.cb.SoftwareInterrupt <= 1;
+                    3: intf.cb.SExternalInterrupt <= 1;
                 endcase
-                repeat($urandom_range(1, 3)) @(intf.cb);
+                repeat($urandom_range(1, 8)) @(intf.cb);
                 intf.cb.ExternalInterrupt <= 0;
                 intf.cb.TimerInterrupt    <= 0;
                 intf.cb.SoftwareInterrupt <= 0;
+                intf.cb.SExternalInterrupt <= 0;
             end
         endtask:drive_interrupts
 
@@ -222,6 +224,7 @@ package risc_test_pkg;
             intf.cb.ExternalInterrupt <= 0;
             intf.cb.TimerInterrupt    <= 0;
             intf.cb.SoftwareInterrupt <= 0;
+            intf.cb.SExternalInterrupt <= 0;
             repeat(PROGRAM_EXIT_DRAIN_CYCLES) @(posedge intf.clk);
             final_ev.trigger();
             @(posedge intf.clk);

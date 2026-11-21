@@ -6,7 +6,7 @@ stimulus reached it. A feature is **closed** when its checker reports no error
 over a full regression and its coverage items are at 100 % (or each hole has a
 written waiver).
 
-Status is from `Questa/regress.sh -c` (merged coverage per XLEN, see
+Status is from `Scripts/regress.sh -c` (merged coverage per XLEN, see
 [Status](#status)).
 
 ## Verification levels
@@ -14,8 +14,8 @@ Status is from `Questa/regress.sh -c` (merged coverage per XLEN, see
 | Level | Where | Stimulus | Checking |
 |---|---|---|---|
 | Unit | `<Unit>/<unit>_top.sv` | Constrained-random items (`<unit>_seq`) | Predictor + in-order scoreboard, RAL backdoor checkers, SVA |
-| Full core | `Risc/risc_top.sv`, `risc_test` | Random programs (`Python/riscv_testcase_generator.py`) + random interrupts | `commit_checker`: every commit vs the in-house ISS, ISS vs Spike (`+SPIKE`), all unit environments passive, SVA |
-| ISA compliance | `Risc/risc_top.sv`, `risc_compliance_test` | riscv-tests `rv<XLEN>{ui,um,ua,uf,mi}-p-*` (`Compliance/build_tests.py`) | Self-checking `tohost` value + ISS lock-step |
+| Full core | `Risc/risc_top.sv`, `risc_test` | Random programs (`Program/riscv_testcase_generator.py`) + random interrupts | `commit_checker`: every commit vs the in-house ISS, ISS vs Spike (`+SPIKE`), all unit environments passive, SVA |
+| ISA compliance | `Risc/risc_top.sv`, `risc_compliance_test` | riscv-tests `rv<XLEN>{ui,um,ua,uf,mi}-p-*` (`Program/build_tests.py`) | Self-checking `tohost` value + ISS lock-step |
 | Protocol | `Protocol/AXI_Assertions.sv` | Any of the above | AXI channel rules on the I/D master ports |
 
 Every level runs at XLEN 32 and 64.
@@ -114,7 +114,7 @@ WB write-back, HZ hazards, CORE full core, ISA compliance.
 | ISA-3 | A extension | `rv<XLEN>ua-p-*` | same | pass count |
 | ISA-4 | F extension (implemented subset) | `rv<XLEN>uf-p-*` | same | pass count |
 | ISA-5 | Machine mode CSRs and traps | `rv<XLEN>mi-p-*` | same | pass count |
-| ISA-6 | Zifencei and instruction refetch at PC+4 | `rv<XLEN>ui-p-fence_i` and `rv<XLEN>ui-p-fence_i_smc` (`Questa/regress.sh -t "" -f`) | `tohost == 1` + ISS lock-step | Two modified cached lines, pre-fence fetch accepts either instruction, reserved fields ignored |
+| ISA-6 | Zifencei and instruction refetch at PC+4 | `rv<XLEN>ui-p-fence_i` and `rv<XLEN>ui-p-fence_i_smc` (`Scripts/regress.sh -t "" -f`) | `tohost == 1` + ISS lock-step | Two modified cached lines, pre-fence fetch accepts either instruction, reserved fields ignored |
 
 ## Known limits
 
@@ -129,14 +129,14 @@ WB write-back, HZ hazards, CORE full core, ISA compliance.
 
 ### Zifencei
 
-`Questa/regress.sh -t hazard_top -s 1234 -f` passed the upstream and directed
+`Scripts/regress.sh -t hazard_top -s 1234 -f` passed the upstream and directed
 FENCE.I tests and the hazard bench for XLEN 32 and 64. Coverage recorded both
 the maintenance stall and the younger-stage flush.
 
 ### Baseline before Zifencei
 
-Measured 2026-11-17 with `Questa/regress.sh -s 1234` (all nine tops) and
-`Questa/regress.sh -t "" -c` (compliance).
+Measured 2026-11-17 with `Scripts/regress.sh -s 1234` (all nine tops) and
+`Scripts/regress.sh -t "" -c` (compliance).
 
 #### Random regression, seed 1234: 18/18 pass
 

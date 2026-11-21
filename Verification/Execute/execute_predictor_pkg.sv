@@ -139,11 +139,11 @@ package execute_predictor_pkg;
         // ── Reference model ─────────────────────────────────────────────────
         virtual function void write (execute_item t);
             execute_item exp;
-            x_t pce, res_m, srca, wdata, srcb, a_alu, result, target, addr, tval, csr_rv, wv, src;
+            x_t csr_base, tvec, pce, res_m, srca, wdata, srcb, a_alu, result, target, addr, tval, csr_rv, wv, src;
             logic [31:0] fa, fb, fres;
             logic ov, un, nan, inf, zr, inv;
             round_mode_t rm;
-            bit taken, commit, exc, csr_exists, csr_legal, csr_illegal, csr_unpred, irq, wake, trap_taken, mret_taken, wr, minstret_written;
+            bit taken, commit, exc, csr_exists, csr_legal, csr_illegal, csr_unpred, irq, wake, trap_taken, mret_taken, sret_taken, to_s, wr, minstret_written;
             int code, irq_code;
             logic [1:0] priv;
             iss_commit_t dummy;
@@ -211,14 +211,14 @@ package execute_predictor_pkg;
             if(t.IllegaleInstructionE)                       code = 2;
             else if(taken && target[1])                      begin code = 0; tval = target; end
             else if(t.EbreakE)                               code = 3;
-            else if(t.EcallE)                                code = csr.ecall_code();    // 8 from U, 11 from M
+            else if(t.EcallE)                                code = csr.ecall_code();    // 8 from U, 9 from S, 11 from M
             // A load (or LR) faults as a load; a store, SC or AMO* (reads and writes) as a store/AMO
             else if(t.MemWriteE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0)) begin code = 6; tval = addr; end
             else if(t.MemReadE && ((addr & x_t'(access_size(t.funct3E) - 1)) != 0))  begin code = 4; tval = addr; end
             else exc = 0;
 
             // ── CSR read and existence ──────────────────────────────────────
-            csr.irq_ext = t.ExternalInterrupt; csr.irq_tmr = t.TimerInterrupt; csr.irq_sw = t.SoftwareInterrupt;
+            csr.irq_ext = t.ExternalInterrupt; csr.irq_tmr = t.TimerInterrupt; csr.irq_sw = t.SoftwareInterrupt; csr.irq_sext = t.SExternalInterrupt;
             csr.dut_csr_rdata = '0;
             csr.mtime = t.MTime;
             priv = csr.priv;
@@ -227,20 +227,22 @@ package execute_predictor_pkg;
             csr_exists = csr.csr_read(t.CsrIndexE, csr_rv);  // read mux value, whatever the mode
             csr.priv = priv;
             csr_unpred = (t.CsrIndexE inside {mcycle, cycle, mcycleh, cycleh});
-            csr_illegal = (t.CsrAccessE && !csr_legal) || csr.sys_illegal(t.MRetE, t.WfiE);
+            csr_illegal = (t.CsrAccessE && !csr_legal) || csr.sys_illegal(t.MRetE, t.SRetE, t.WfiE) ||
+                          (t.FPUValidE && csr.mstatus_fs == 2'b00);   // FP instruction with FS Off
             if(csr_illegal)
             begin
                 exc = 1; code = 2; tval = '0;                // CSR / MRET / WFI illegal here
             end
 
             // ── Interrupts (MEI > MSI > MTI; always on below M), traps, MRET ─
-            irq_code = csr.irq_code(t.ExternalInterrupt, t.TimerInterrupt, t.SoftwareInterrupt);
+            irq_code = csr.irq_code(t.ExternalInterrupt, t.TimerInterrupt, t.SoftwareInterrupt, t.SExternalInterrupt);
             irq  = (irq_code >= 0);
-            wake = (csr.mie_meie && t.ExternalInterrupt) || (csr.mie_msie && t.SoftwareInterrupt) ||
-                   (csr.mie_mtie && t.TimerInterrupt);       // mip & mie, ignores MIE and mode
+            wake = |(csr.mip_value() & csr.mie_value());     // mip & mie, ignores MIE and mode
             commit     = t.ValidE && !t.StallE;
             trap_taken = commit && (irq || exc);
             mret_taken = commit && t.MRetE && !trap_taken;
+            sret_taken = commit && t.SRetE && !trap_taken;
+            to_s = csr.trap_to_s(irq, irq ? irq_code : code);
 
             // ── Emit: registered shadow + combinational outputs ─────────────
             exp = execute_item::type_id::create("exp");
@@ -248,16 +250,17 @@ package execute_predictor_pkg;
             if(shadow_inputs != null) exp.copy_inputs(shadow_inputs);
             exp.PCSrcE    = commit && taken && !trap_taken;
             exp.PCTargetE = target;
-            exp.TrapIsSet = trap_taken || mret_taken;
+            exp.TrapIsSet = trap_taken || mret_taken || sret_taken;
             exp.WfiStallE = wfi_wait && !wake;
             if(trap_taken)
             begin
-                exp.CsrOutPC = {csr.mtvec[XL-1:2], 2'b00};
-                if(irq && (csr.mtvec[1:0] == 2'b01))
-                    exp.CsrOutPC = {csr.mtvec[XL-1:2], 2'b00} + x_t'(4 * irq_code);
+                tvec = to_s ? csr.stvec : csr.mtvec;
+                exp.CsrOutPC = {tvec[XL-1:2], 2'b00};
+                if(irq && (tvec[1:0] == 2'b01))
+                    exp.CsrOutPC = {tvec[XL-1:2], 2'b00} + x_t'(4 * irq_code);
             end
             else
-                exp.CsrOutPC = csr.mepc;
+                exp.CsrOutPC = sret_taken ? csr.sepc : csr.mepc;
             exp_port.write(exp);
 
             // ── EX/MEM register for the next edge ───────────────────────────
@@ -284,17 +287,23 @@ package execute_predictor_pkg;
                 end
                 else if(mret_taken)
                     csr.do_mret();
+                else if(sret_taken)
+                    csr.do_sret();
                 else if(commit && t.CsrAccessE)
                 begin
                     src = (t.CsrOperationE inside {csrrwi, csrrsi, csrrci}) ? x_t'(t.Rs1E) : srca;
                     wr  = (t.CsrOperationE inside {csrrw, csrrwi}) || (t.Rs1E != zero);
+                    csr_base = csr_rv;
+                    if(t.CsrIndexE == mip) csr_base[9] = csr.mip_seip_sw;   // RMW base: software SEIP, not the line
                     case(t.CsrOperationE)
                         csrrw, csrrwi: wv = src;
-                        csrrs, csrrsi: wv = csr_rv | src;
-                        default:       wv = csr_rv & ~src;
+                        csrrs, csrrsi: wv = csr_base | src;
+                        default:       wv = csr_base & ~src;
                     endcase
                     if(wr) minstret_written = csr.csr_write(t.CsrIndexE, wv);
                 end
+                if(commit && !trap_taken && t.FPUValidE && t.FPURegWriteE)
+                    csr.mstatus_fs = 2'b11;                      // an FPR write dirties FS
                 if(commit && !trap_taken && !minstret_written)
                     csr.minstret = csr.minstret + 1;
                 if(commit && t.WfiE && !trap_taken) wfi_wait = 1;

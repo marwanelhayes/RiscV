@@ -98,15 +98,21 @@ RiscV/
 │   │
 │   └── Hazard/                 # Hazard unit verification
 │
-├── Python/                      # Test program generation
+├── Program/                     # Test program generation and builders
 │   ├── riscv_testcase_generator.py  # Python test generator
-│   ├── sample_output/           # Sample hex output files
-│   └── hex1.v                  # Hex file example
+│   ├── build_tests.py           # riscv-tests builder
+│   ├── fpu_golden.py            # FPU golden model
+│   └── Dump/                    # Generator outputs (hex1.v, binary1.txt, ...)
 │
-├── vault/                      # Documentation and backups
+├── Scripts/                    # Questa do files, regress.sh, synth.sh, untrack.sh
 │
-├── COMMENTING_STYLE.md         # Commenting conventions
-├── CODE_STYLE.md              # Code style guide
+├── Documentation/
+│   ├── Spec/                    # Reference PDFs, Linux-boot specs
+│   ├── Notes/                   # Plans, CODE_STYLE.md, COMMENTING_STYLE.md, verification notes
+│   └── RiscV block diagram.png
+│
+├── ThirdParty/                 # External sources (gitignored)
+├── Scratch/                    # Run outputs (gitignored)
 └── README.md                  # Project README
 ```
 
@@ -158,9 +164,9 @@ Each pipeline stage has a complete UVM verification environment with:
 
 ## Build and Simulation
 
-See `Questa/README.md` (`Questa/do/compile.do` + one `sim_*.do` per environment).
+See `Scripts/README.md` (`Scripts/compile.do` + one `sim_*.do` per environment).
 
 ## Documentation
 
-- `COMMENTING_STYLE.md`: Detailed commenting conventions
-- `vault/`: Additional design documentation
+- `Documentation/Notes/COMMENTING_STYLE.md`: Detailed commenting conventions
+- `Documentation/Notes/CODE_STYLE.md`: Code style guide

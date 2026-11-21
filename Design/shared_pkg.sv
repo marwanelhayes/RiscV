@@ -129,6 +129,17 @@ package shared_pkg;
         fflags      = 12'h001 ,
         frm         = 12'h002 ,
         fcsr        = 12'h003 ,
+        sstatus     = 12'h100 ,
+        sie         = 12'h104 ,
+        stvec       = 12'h105 ,
+        scounteren  = 12'h106 ,
+        senvcfg     = 12'h10A ,  // reads zero
+        sscratch    = 12'h140 ,
+        sepc        = 12'h141 ,
+        scause      = 12'h142 ,
+        stval       = 12'h143 ,
+        sip         = 12'h144 ,
+        satp        = 12'h180 ,  // read-zero WARL until B5
         mstatus     = 12'h300 ,
         misa        = 12'h301 ,
         medeleg     = 12'h302 ,
@@ -144,6 +155,7 @@ package shared_pkg;
         mtval       = 12'h343 ,
         mip         = 12'h344 , 
         mstatush    = 12'h310 ,  // RV32 only, reads zero
+        medelegh    = 12'h312 ,  // RV32 only, reads zero
         mcycle      = 12'hB00 ,
         minstret    = 12'hB02 ,
         mcycleh     = 12'hB80 ,  // RV32 only
@@ -163,7 +175,7 @@ package shared_pkg;
     typedef enum logic [1:0]
     {
         UserMode        = 2'b00 ,
-        SupervisorMode  = 2'b01 ,   // not implemented before B4.1
+        SupervisorMode  = 2'b01 ,
         MachineMode     = 2'b11
     } priv_mode_t;
 
@@ -416,7 +428,7 @@ package shared_pkg;
     // ── Verification reference image path ─────────────────────────────────
     // Used by the instruction-memory model, predictors and scoreboards so
     // they all load the same program image. Relative to the simulation
-    // working directory (Questa/Scratch).
-    parameter string INSTR_MEM_PATH         = "../../Python/binary1.txt";
+    // working directory (Scratch/syn, see Scripts/synth.sh).
+    parameter string INSTR_MEM_PATH         = "../../Program/Dump/binary1.txt";
 
 endpackage:shared_pkg

@@ -55,6 +55,7 @@ module commit_checker
     input logic                        ExternalInterrupt,
     input logic                        TimerInterrupt,
     input logic                        SoftwareInterrupt,
+    input logic                        SExternalInterrupt,   // S external line (TB pulse until the PLIC)
     input logic [63:0]                 MTime,                // TB mtime (time/timeh)
 
     // ── EX stage (commit point) ───────────────────────────────────────────────
@@ -70,6 +71,9 @@ module commit_checker
     input logic [FINAL_DATA_WIDTH-1:0] MepcE,
     input logic [FINAL_DATA_WIDTH-1:0] McauseE,
     input logic [FINAL_DATA_WIDTH-1:0] MtvalE,
+    input logic [FINAL_DATA_WIDTH-1:0] SepcE,
+    input logic [FINAL_DATA_WIDTH-1:0] ScauseE,
+    input logic [FINAL_DATA_WIDTH-1:0] StvalE,
     input priv_mode_t                  PrivModeE,            // csr_file.PrivMode
 
     // ── MEM stage (stores) ────────────────────────────────────────────────────
@@ -104,7 +108,7 @@ module commit_checker
     // ── Spike lock-step (Verification/Risc/spike/spike_dpi.cc) ─────────────────
     import "DPI-C" function int  spike_init(int xlen, string image, int unsigned mvendorid, string data_image);
     import "DPI-C" function void spike_reset();
-    import "DPI-C" function void spike_step(input bit ext, input bit tmr, input bit sw,
+    import "DPI-C" function void spike_step(input bit ext, input bit tmr, input bit sw, input bit sext,
         input longint unsigned csr_rdata, input longint unsigned mtime,
         output longint unsigned pc, output int unsigned insn, output bit trap, output bit interrupt,
         output longint unsigned cause, output longint unsigned tval,
@@ -201,7 +205,7 @@ module commit_checker
     endfunction
 
     // Step Spike with the inputs the ISS just used and compare the two records
-    function automatic void spike_check(iss_commit_t r, bit ext, bit tmr, bit sw, logic [XL-1:0] csr_rdata,
+    function automatic void spike_check(iss_commit_t r, bit ext, bit tmr, bit sw, bit sext, logic [XL-1:0] csr_rdata,
                                         logic [63:0] mtime);
         iss_commit_t s;
         longint unsigned pc, cause, tval, rd_val, st_addr, st_data, next_pc;
@@ -211,7 +215,7 @@ module commit_checker
         logic [XL-1:0]   st_mask;
         string           diff;
 
-        spike_step(ext, tmr, sw, 64'(csr_rdata), mtime, pc, insn, trap, intr, cause, tval,
+        spike_step(ext, tmr, sw, sext, 64'(csr_rdata), mtime, pc, insn, trap, intr, cause, tval,
                    rd_we, rd, rd_val, frd_we, frd, frd_val, st_we, st_addr, st_size, st_data, next_pc);
         spike_commits++;
         s = '{default:0};
@@ -278,7 +282,13 @@ module commit_checker
             // ── Trap CSRs one cycle after a trap ───────────────────────────────
             if(check_trap_csrs)
             begin
-                if((MepcE !== iss.mepc) || (McauseE !== iss.mcause) || (MtvalE !== iss.mtval))
+                if(iss.last_trap_to_s)
+                begin
+                    if((SepcE !== iss.sepc) || (ScauseE !== iss.scause) || (StvalE !== iss.stval))
+                        fail($sformatf("trap CSRs: DUT sepc=%h scause=%h stval=%h, ISS sepc=%h scause=%h stval=%h",
+                                       SepcE, ScauseE, StvalE, iss.sepc, iss.scause, iss.stval));
+                end
+                else if((MepcE !== iss.mepc) || (McauseE !== iss.mcause) || (MtvalE !== iss.mtval))
                     fail($sformatf("trap CSRs: DUT mepc=%h mcause=%h mtval=%h, ISS mepc=%h mcause=%h mtval=%h",
                                    MepcE, McauseE, MtvalE, iss.mepc, iss.mcause, iss.mtval));
                 check_trap_csrs = 0;
@@ -355,8 +365,8 @@ module commit_checker
                 iss_commit_t r;
                 logic [XL-1:0] dut_pc, dut_next;
                 dut_pc = PCPlus4E - XL'(4);
-                r = iss.step(ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, CsrReadE, MTime);
-                if(spike_on) spike_check(r, ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, CsrReadE, MTime);
+                r = iss.step(ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, CsrReadE, MTime, SExternalInterrupt);
+                if(spike_on) spike_check(r, ExternalInterrupt, TimerInterrupt, SoftwareInterrupt, SExternalInterrupt, CsrReadE, MTime);
                 commits++;
                 check_priv = 1;
                 hist.push_back(r);

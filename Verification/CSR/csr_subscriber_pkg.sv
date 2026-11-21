@@ -57,6 +57,7 @@ package csr_subscriber_pkg;
             {
                 bins fp_idx[]      = {fflags, frm, fcsr};
                 bins status_idx[]  = {mstatus, mstatush, misa, mie, mip, medeleg, mideleg};
+                bins s_idx[]       = {sstatus, sie, stvec, scounteren, senvcfg, sscratch, sepc, scause, stval, sip, satp, medelegh};
                 bins trap_idx[]    = {mtvec, mscratch, mepc, mcause, mtval};
                 bins counter_idx[] = {mcycle, minstret, mcycleh, minstreth, cycle, instret, cycleh, instreth, time_csr, timeh_csr};
                 bins umode_idx[]   = {mcounteren, menvcfg, menvcfgh};
@@ -93,9 +94,14 @@ package csr_subscriber_pkg;
                 bins mret    = {1};
             }
 
+            // Supervisor return, FP instruction and S external line (B4)
+            sret_cg: coverpoint sub_item.sret iff(sub_item.rst)            { bins no = {0}; bins yes = {1}; }
+            FpOp_cg: coverpoint sub_item.FpOp iff(sub_item.rst)            { bins no = {0}; bins yes = {1}; }
+            SExternalInterrupt_cg: coverpoint sub_item.SExternalInterrupt iff(sub_item.rst) { bins low = {0}; bins high = {1}; }
+
             // WFI, privilege mode and the WFI hold (B3; mode crosses are in the predictor)
             Wfi_cg:      coverpoint sub_item.Wfi iff(sub_item.rst)      { bins no = {0}; bins yes = {1}; }
-            PrivMode_cg: coverpoint sub_item.PrivMode iff(sub_item.rst) { bins u = {UserMode}; bins m = {MachineMode}; }
+            PrivMode_cg: coverpoint sub_item.PrivMode iff(sub_item.rst) { bins u = {UserMode}; bins s = {SupervisorMode}; bins m = {MachineMode}; }
             WfiStall_cg: coverpoint sub_item.WfiStall iff(sub_item.rst) { bins no = {0}; bins yes = {1}; }
 
             // Interrupt request lines.
@@ -148,6 +154,9 @@ package csr_subscriber_pkg;
             Timer_x_Trap_cx:    cross TimerInterrupt_cg,    TrapIsSet_cg;
             External_x_Trap_cx: cross ExternalInterrupt_cg, TrapIsSet_cg;
             Software_x_Trap_cx: cross SoftwareInterrupt_cg, TrapIsSet_cg;
+            SExternal_x_Trap_cx: cross SExternalInterrupt_cg, TrapIsSet_cg;
+            // SRET in each mode
+            sret_x_mode_cx: cross sret_cg, PrivMode_cg;
 
         endgroup:cvr_grp
 

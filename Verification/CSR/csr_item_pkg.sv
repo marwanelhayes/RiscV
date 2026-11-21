@@ -28,16 +28,20 @@ package csr_item_pkg;
         rand gpr_t                         Rs;
         rand traps_t                       Traps;
         rand logic                         mret;
+        rand logic                         sret;
         rand logic [FINAL_DATA_WIDTH-1:0]  PC;
         rand logic [FINAL_DATA_WIDTH-1:0]  Address;
         rand logic                         CsrAccess;
         rand logic [FINAL_DATA_WIDTH-1:0]  CsrIn;
         rand logic                         Commit;
         rand logic                         Wfi;
+        rand logic                         FpOp;
+        rand logic                         FpRegWrite;
         rand logic [63:0]                  MTime;
         rand logic                         TimerInterrupt;
         rand logic                         ExternalInterrupt;
         rand logic                         SoftwareInterrupt;
+        rand logic                         SExternalInterrupt;
         rand csr_index_t                   CsrIndex;
         logic [FINAL_DATA_WIDTH-1:0]       CsrOutPC;
         logic [FINAL_DATA_WIDTH-1:0]       CsrOut;
@@ -56,36 +60,32 @@ package csr_item_pkg;
             if(CsrAccess)
                 CsrOperation inside {csrrw,csrrs,csrrc,csrrwi,csrrsi,csrrci};
         }
-        // One instruction is either a CSR access, an MRET, a WFI or a trapping one
+        // One instruction is either a CSR access, an MRET, an SRET, a WFI, an FP
+        // instruction or a trapping one
         constraint DirectedTraffic
         {
             Traps dist {NoTraps := 80, [InstructionAddressMisalignedOrUserSoftwareInterrupt:EcallMOrMachineExternalInterrupt] :/ 20};
             $countones(Traps) <= 1;
-            if(Traps != NoTraps)
-            {
-                CsrAccess == 1'b0;
-                mret == 1'b0;
-                Wfi == 1'b0;
-            }
-            if(mret)
-                CsrAccess == 1'b0;
-            if(Wfi)
-            {
-                CsrAccess == 1'b0;
-                mret == 1'b0;
-            }
+            $countones({CsrAccess, mret, sret, Wfi, FpOp}) <= 1;
+            (Traps != NoTraps) -> !(CsrAccess || mret || sret || Wfi || FpOp);
+            FpRegWrite -> FpOp;
             mret dist {0:=92, 1:=8};
+            sret dist {0:=94, 1:=6};
             Wfi dist {0:=95, 1:=5};
+            FpOp dist {0:=92, 1:=8};
+            FpRegWrite dist {0:=30, 1:=70};
             CsrAccess dist {0:=40, 1:=60};
         }
         constraint CsrSelection
         {
             CsrIndex dist {
-                [fflags:fcsr] :/ 6, mstatus := 8, misa := 2, medeleg := 1, mideleg := 1, mie := 6, mtvec := 6,
+                [fflags:fcsr] :/ 6, mstatus := 8, misa := 2, medeleg := 3, mideleg := 3, mie := 6, mtvec := 6,
                 mscratch := 6, mepc := 6, mcause := 6, mtval := 6, mip := 3, mstatush := 1, mcycle := 2,
                 minstret := 4, mcycleh := 1, minstreth := 3, cycle := 2, instret := 3, cycleh := 1, instreth := 1,
                 mcounteren := 6, menvcfg := 1, menvcfgh := 1, time_csr := 3, timeh_csr := 2,
-                mvendorid := 1, marchid := 1, mimpid := 1, mhartid := 1
+                mvendorid := 1, marchid := 1, mimpid := 1, mhartid := 1,
+                sstatus := 6, sie := 4, stvec := 4, scounteren := 4, senvcfg := 1, sscratch := 4,
+                sepc := 4, scause := 4, stval := 4, sip := 4, satp := 1, medelegh := 1
             };
         }
         // A rand enum only takes its named values, so CSR numbers csr_index_t
@@ -96,7 +96,7 @@ package csr_item_pkg;
         constraint RawCsr
         {
             raw_csr dist {0:=88, 1:=12};
-            raw_index inside {12'hB03, 12'hB1F, 12'h323, 12'h320, 12'h7C0, 12'h180, 12'h100, 12'h200};
+            raw_index inside {12'hB03, 12'hB1F, 12'h323, 12'h320, 12'h7C0, 12'h5A8, 12'h10B, 12'h200};
         }
         function void post_randomize();
             if(raw_csr) CsrIndex = csr_index_t'(raw_index);
@@ -106,6 +106,7 @@ package csr_item_pkg;
             TimerInterrupt dist {0:=8,1:=1};
             ExternalInterrupt dist {0:=8,1:=1};
             SoftwareInterrupt dist {0:=8,1:=1};
+            SExternalInterrupt dist {0:=8,1:=1};
         }
         constraint Alignment { PC[1:0] == 2'b00; }
 
@@ -174,16 +175,20 @@ package csr_item_pkg;
             this.Rs = o.Rs;
             this.Traps = o.Traps;
             this.mret = o.mret;
+            this.sret = o.sret;
             this.PC = o.PC;
             this.Address = o.Address;
             this.CsrAccess = o.CsrAccess;
             this.CsrIn = o.CsrIn;
             this.Commit = o.Commit;
             this.Wfi = o.Wfi;
+            this.FpOp = o.FpOp;
+            this.FpRegWrite = o.FpRegWrite;
             this.MTime = o.MTime;
             this.TimerInterrupt = o.TimerInterrupt;
             this.ExternalInterrupt = o.ExternalInterrupt;
             this.SoftwareInterrupt = o.SoftwareInterrupt;
+            this.SExternalInterrupt = o.SExternalInterrupt;
             this.CsrIndex = o.CsrIndex;
         endfunction:copy_inputs
 

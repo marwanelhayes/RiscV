@@ -13,14 +13,14 @@
 // Core profile: the implementation choices the specs leave open, set the way
 // the core documents them (riscv_iss_pkg.sv header). Everything else is
 // Spike's own reading of the specs.
-//   - ISA rv<XLEN>imaf_zicsr_zicntr_zifencei, M and U modes (priv "MU", no S),
-//     no PMP CSRs, no mcountinhibit, WFI is a NOP (wfi_as_nop)
+//   - ISA rv<XLEN>imaf_zicsr_zicntr_zifencei, M, S and U modes (priv "MSU", no
+//     MMU: satp reads 0, SUM/MXR/TVM read 0, SFENCE.VMA is illegal), no PMP CSRs, no mcountinhibit, WFI is a NOP (wfi_as_nop)
 //   - f0-f31 reset to +0 like x0-x31 (Spike's raw reset value is not a boxed
 //     single and would read as NaN)
-//   - medeleg/mideleg exist and read zero (kept although there is no S-mode)
+//   - scontext does not exist; medeleg bit 19 (Zicntr fault) is writable, as in Spike
 //   - misa is read-only; mvendorid = the core's value, marchid = 0
-//   - mtval = 0 for illegal-instruction and breakpoint traps
-//   - mstatus.FS is hardwired to Dirty
+//   - mtval/stval = 0 for illegal-instruction and breakpoint traps
+//   - mstatus.FS is real (reset Off); only an FP register or fcsr write dirties it
 //   - FP operations do not accrue fflags (known core gap B9.1)
 //   - mcycle/cycle(h) reads return the DUT's value (not predictable)
 //   - time/timeh read the TB's mtime: spike_step syncs it into Spike's time
@@ -85,23 +85,16 @@ uint32_t     mvendorid;
 
 uint64_t mask(uint64_t v) { return xlen == 64 ? v : (v & 0xFFFFFFFFull); }
 
-void force_fs_dirty() {
-    state_t* s = proc->get_state();
-    s->mstatus->write(s->mstatus->read() | MSTATUS_FS);
-}
-
 void apply_profile() {
     state_t* s = proc->get_state();
     auto& m = s->csrmap;
     for (reg_t i = 0; i < 16; i++) m.erase(CSR_PMPCFG0 + i);
     for (reg_t i = 0; i < 64; i++) m.erase(CSR_PMPADDR0 + i);
-    m[CSR_MEDELEG]   = std::make_shared<const_csr_t>(proc, CSR_MEDELEG, 0);
-    m[CSR_MIDELEG]   = std::make_shared<const_csr_t>(proc, CSR_MIDELEG, 0);
     m[CSR_MISA]      = std::make_shared<const_csr_t>(proc, CSR_MISA, s->misa->read());
     m[CSR_MVENDORID] = std::make_shared<const_csr_t>(proc, CSR_MVENDORID, mvendorid);
     m[CSR_MARCHID]   = std::make_shared<const_csr_t>(proc, CSR_MARCHID, 0);
     m.erase(CSR_MCOUNTINHIBIT);
-    force_fs_dirty();
+    m.erase(CSR_SCONTEXT);
 }
 
 uint32_t fetch32(uint64_t pc) {
@@ -140,7 +133,7 @@ int spike_init(int xlen_in, const char* image, unsigned int mvendorid_in, const 
 
     isa = "rv" + std::to_string(xlen) + "imaf_zicsr_zicntr_zifencei";
     sim->cfg.isa = isa.c_str();
-    sim->cfg.priv = "MU";
+    sim->cfg.priv = "MSU";
     sim->cfg.pmpregions = 0;
     sim->cfg.wfi_as_nop = true;
     devnull = std::fopen("/dev/null", "w");
@@ -161,7 +154,7 @@ void spike_reset() {
 
 // One step: an interrupt taken before the instruction, an exception, or one
 // retired instruction. Outputs mirror riscv_iss_pkg::iss_commit_t.
-void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mtime,
+void spike_step(svBit ext, svBit tmr, svBit sw, svBit sext, uint64_t csr_rdata, uint64_t mtime,
                 uint64_t* pc, unsigned int* insn, svBit* trap, svBit* interrupt,
                 uint64_t* cause, uint64_t* tval,
                 svBit* rd_we, int* rd, uint64_t* rd_val,
@@ -169,8 +162,9 @@ void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mti
                 svBit* st_we, uint64_t* st_addr, int* st_size, uint64_t* st_data,
                 uint64_t* next_pc) {
     state_t* s = proc->get_state();
-    s->mip->backdoor_write_with_mask(MIP_MEIP | MIP_MTIP | MIP_MSIP,
-                                     (ext ? MIP_MEIP : 0) | (tmr ? MIP_MTIP : 0) | (sw ? MIP_MSIP : 0));
+    s->mip->backdoor_write_with_mask(MIP_MEIP | MIP_MTIP | MIP_MSIP | MIP_SEIP,
+                                     (ext ? MIP_MEIP : 0) | (tmr ? MIP_MTIP : 0) | (sw ? MIP_MSIP : 0) |
+                                     (sext ? MIP_SEIP : 0));
     s->time->sync(mtime);
     s->log_reg_write.clear();
     s->log_mem_read.clear();
@@ -180,11 +174,14 @@ void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mti
     *insn = fetch32(s->pc);
     const uint32_t in = *insn;
     const reg_t fflags_before = s->fflags->read();
+    const reg_t fs_before = s->mstatus->read() & MSTATUS_FS;
 
     proc->step(1);
 
     const auto& w = s->log_reg_write;
-    const bool trapped = w.count((CSR_MEPC << 4) | 4) && w.count((CSR_MCAUSE << 4) | 4);
+    const bool trapped_m = w.count((CSR_MEPC << 4) | 4) && w.count((CSR_MCAUSE << 4) | 4);
+    const bool trapped_s = w.count((CSR_SEPC << 4) | 4) && w.count((CSR_SCAUSE << 4) | 4);
+    const bool trapped = trapped_m || trapped_s;
     *trap = trapped;
     *interrupt = 0; *cause = 0; *tval = 0;
     *rd_we = 0; *rd = 0; *rd_val = 0;
@@ -192,11 +189,14 @@ void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mti
     *st_we = 0; *st_addr = 0; *st_size = 0; *st_data = 0;
 
     if (trapped) {
-        *cause = mask(s->mcause->read());
+        // the delegated trap lands in the S registers
+        csr_t_p c = trapped_s ? s->nonvirtual_scause : s->mcause;
+        csr_t_p t = trapped_s ? s->nonvirtual_stval : s->mtval;
+        *cause = mask(c->read());
         *interrupt = (*cause >> (xlen - 1)) & 1;
         if (!*interrupt && (*cause == CAUSE_ILLEGAL_INSTRUCTION || *cause == CAUSE_BREAKPOINT))
-            s->mtval->write(0);                                    // profile: mtval = 0
-        *tval = mask(s->mtval->read());
+            t->write(0);                                           // profile: mtval/stval = 0
+        *tval = mask(t->read());
     } else {
         for (const auto& [key, val] : w) {
             const int r = int(key >> 4);
@@ -216,11 +216,14 @@ void spike_step(svBit ext, svBit tmr, svBit sw, uint64_t csr_rdata, uint64_t mti
             s->XPR.write(*rd, v);
             *rd_val = mask(v);
         }
-        // profile: FP operations do not accrue fflags
-        if ((in & 0x7F) == 0x53)
+        // profile: FP operations do not accrue fflags, so only an FP register write
+        // dirties FS (Spike also dirties it when a flag would be raised)
+        if ((in & 0x7F) == 0x53) {
             s->fflags->write(fflags_before);
+            if (!*frd_we)
+                s->mstatus->write((s->mstatus->read() & ~reg_t(MSTATUS_FS)) | fs_before);
+        }
     }
-    force_fs_dirty();
     *next_pc = mask(s->pc);
 }
 

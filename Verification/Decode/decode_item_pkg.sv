@@ -68,6 +68,7 @@ package decode_item_pkg;
         logic EcallE;
         logic EbreakE;
         logic MRetE;
+        logic SRetE;
         logic WfiE;
         logic IllegaleInstructionE;
         fpr_t RdFE;
@@ -119,7 +120,7 @@ package decode_item_pkg;
             if(legalish && (opcode_t'(InstructionD[6:0]) inside {R_TYPE, OP_32}))
                 InstructionD[31:25] dist {7'b000_0000 := 40, 7'b010_0000 := 20, 7'b000_0001 := 30, [7'h02:7'h1F] := 10};
             if(legalish && (opcode_t'(InstructionD[6:0]) == CSR) && (InstructionD[14:12] == 3'b000))
-                InstructionD[31:20] dist {12'h000 := 25, 12'h001 := 25, 12'h302 := 25, 12'h105 := 10, [12'h003:12'hFFF] := 15};
+                InstructionD[31:20] dist {12'h000 := 25, 12'h001 := 25, 12'h302 := 25, 12'h102 := 10, 12'h105 := 10, [12'h003:12'hFFF] := 15};
             if(legalish && (opcode_t'(InstructionD[6:0]) == CSR) && (InstructionD[14:12] == 3'b000))
                 InstructionD[19:7] dist {13'h0 := 85, [13'h1:13'h1FFF] := 15};
             if(legalish && (opcode_t'(InstructionD[6:0]) == FLOATING_PT))
@@ -149,13 +150,13 @@ package decode_item_pkg;
             Outputs: ValidE = %0d | Rs1E = %s | Rs2E = %s | Rs1D = %s | Rs2D = %s | RdE = %s | JumpE = %0h | JalrE = %0h | ALUControlE = %s | 
             CsrOperationE = %s | RD1E = %0h | RD2E = %0h | SignImmE = %0h | PCBranchE = %0h | CsrIndexE = %s | 
             funct3E = %0h | PCPlus4E = %0h | RegWriteE = %0h | SelectorE = %s | MemWriteE = %0h | MemReadE = %0h | BranchE = %0h | 
-            CsrAccessE = %0h | ALUSrcE = %0h | AuipcE = %0h | WordOpE = %0h | EcallE = %0h | EbreakE = %0h | MRetE =  %0h | WfiE = %0h | IllegaleInstructionE = %0h |
+            CsrAccessE = %0h | ALUSrcE = %0h | AuipcE = %0h | WordOpE = %0h | EcallE = %0h | EbreakE = %0h | MRetE =  %0h | SRetE = %0h | WfiE = %0h | IllegaleInstructionE = %0h |
             RdFE = %s | RD1FE = %0h | RD2FE = %0h | FPUControlE = %s | RoundModeE %s | FPURegWriteE = %0h | 
             MoveOperationE = %s | Rs1FE = %s | Rs2FE = %s | FPUValidE = %0h",
             rst,PCPlus4D,opcode.name(),InstructionD,ValidD,RdW.name(),FlushE,StallE,RegWriteW,ResultW,RdFW.name(),FPUOutW,FPURegWriteW,
             ValidE, Rs1E.name(), Rs2E.name(), Rs1D.name(), Rs2D.name(), RdE.name(), JumpE, JalrE, ALUControlE.name(), CsrOperationE.name(),
             RD1E, RD2E, SignImmE, PCBranchE, CsrIndexE.name(), funct3E, PCPlus4E, RegWriteE, SelectorE.name(), MemWriteE, MemReadE,
-            BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, EcallE, EbreakE, MRetE, WfiE, IllegaleInstructionE, RdFE.name(), RD1FE, RD2FE,
+            BranchE, CsrAccessE, ALUSrcE, AuipcE, WordOpE, EcallE, EbreakE, MRetE, SRetE, WfiE, IllegaleInstructionE, RdFE.name(), RD1FE, RD2FE,
             FPUControlE.name(), RoundModeE.name(), FPURegWriteE, MoveOperationE.name(), Rs1FE.name(), Rs2FE.name(), FPUValidE);
         endfunction: convert2str
 
@@ -200,7 +201,7 @@ package decode_item_pkg;
                 ok &= chk("WordOpE", WordOpE, e.WordOpE) & chk("CsrAccessE", CsrAccessE, e.CsrAccessE);
                 ok &= chk("AmoE", AmoE, e.AmoE);
                 if(e.AmoE) ok &= chk("AmoOpE", AmoOpE, e.AmoOpE);
-                ok &= chk("EcallE", EcallE, e.EcallE) & chk("EbreakE", EbreakE, e.EbreakE) & chk("MRetE", MRetE, e.MRetE);
+                ok &= chk("EcallE", EcallE, e.EcallE) & chk("EbreakE", EbreakE, e.EbreakE) & chk("MRetE", MRetE, e.MRetE) & chk("SRetE", SRetE, e.SRetE);
                 ok &= chk("FPURegWriteE", FPURegWriteE, e.FPURegWriteE) & chk("FPUValidE", FPUValidE, e.FPUValidE);
                 ok &= chk("funct3E", funct3E, e.funct3E);
                 if(e.chk_rs1) ok &= chk("Rs1E", Rs1E, e.Rs1E) & chk("RD1E", RD1E, e.RD1E);
@@ -260,6 +261,7 @@ package decode_item_pkg;
             this.EcallE               = other.EcallE;
             this.EbreakE              = other.EbreakE;
             this.MRetE                = other.MRetE;
+            this.SRetE                = other.SRetE;
             this.WfiE                 = other.WfiE;
             this.IllegaleInstructionE = other.IllegaleInstructionE;
             this.RdFE                 = other.RdFE;

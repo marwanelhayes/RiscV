@@ -55,6 +55,7 @@ interface decode_wr
     input logic EcallE,
     input logic EbreakE,
     input logic MRetE,
+    input logic SRetE,
     input logic WfiE,
     input logic IllegaleInstructionE,
     input logic [2:0] funct3E,
@@ -119,6 +120,7 @@ interface decode_wr
         decode_intf.EcallE = EcallE;
         decode_intf.EbreakE = EbreakE;
         decode_intf.MRetE = MRetE;
+        decode_intf.SRetE = SRetE;
         decode_intf.WfiE = WfiE;
         decode_intf.IllegaleInstructionE = IllegaleInstructionE;
         decode_intf.funct3E = funct3E;

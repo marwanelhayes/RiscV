@@ -42,6 +42,7 @@ module riscv_processor
     input ExternalInterrupt,    // External hardware interrupt
     input TimerInterrupt,       // Timer interrupt
     input SoftwareInterrupt,    // Software interrupt
+    input SExternalInterrupt,   // Supervisor external interrupt (PLIC context 1)
     input [63:0] MTime,         // Machine timer (time/timeh CSRs)
 
     // ─── AXI4 master interface: ICache write address channel ─────────────────────────
@@ -167,6 +168,7 @@ module riscv_processor
     csr_index_t CsrIndexE;                 // CSR register index
     wire IllegaleInstructionE;              // Illegal instruction flag
     wire MRetE;                            // MRET instruction flag
+    wire SRetE;                            // SRET instruction flag
     wire FenceIE;                          // Instruction-fetch fence
     wire FenceIStartE;                     // Accepted fence flushes younger instructions
     wire WfiE;                             // WFI instruction flag
@@ -343,6 +345,7 @@ module riscv_processor
         .AmoE(AmoE),
         .AmoOpE(AmoOpE),
         .MRetE(MRetE),
+        .SRetE(SRetE),
         .FenceIE(FenceIE),
         .WfiE(WfiE),
         .EcallE(EcallE),
@@ -394,6 +397,7 @@ module riscv_processor
         .ALUSrcE(ALUSrcE),
         .CsrAccessE(CsrAccessE),
         .MRetE(MRetE),
+        .SRetE(SRetE),
         .FenceIE(FenceIE),
         .FenceIStartE(FenceIStartE),
         .FenceIM(FenceIM),
@@ -402,6 +406,7 @@ module riscv_processor
         .ExternalInterrupt(ExternalInterrupt),
         .TimerInterrupt(TimerInterrupt),
         .SoftwareInterrupt(SoftwareInterrupt),
+        .SExternalInterrupt(SExternalInterrupt),
         .MTime(MTime),
         .WfiE(WfiE),
         .WfiStallE(WfiStallE),

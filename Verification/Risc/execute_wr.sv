@@ -41,6 +41,7 @@ interface execute_wr
     input logic MemWriteE,
     input logic MemReadE,
     input logic MRetE,
+    input logic SRetE,
     input logic WfiE,
     input logic [63:0] MTime,
     input logic EcallE,
@@ -63,6 +64,7 @@ interface execute_wr
     input logic TimerInterrupt,
     input logic ExternalInterrupt,
     input logic SoftwareInterrupt,
+    input logic SExternalInterrupt,
     input logic StallE,
     input logic StallM,
     input logic FlushM,
@@ -132,6 +134,7 @@ interface execute_wr
         execute_intf.MemWriteE = MemWriteE;
         execute_intf.MemReadE = MemReadE;
         execute_intf.MRetE = MRetE;
+        execute_intf.SRetE = SRetE;
         execute_intf.WfiE = WfiE;
         execute_intf.MTime = MTime;
         execute_intf.EcallE = EcallE;
@@ -154,6 +157,7 @@ interface execute_wr
         execute_intf.TimerInterrupt = TimerInterrupt;
         execute_intf.ExternalInterrupt = ExternalInterrupt;
         execute_intf.SoftwareInterrupt = SoftwareInterrupt;
+        execute_intf.SExternalInterrupt = SExternalInterrupt;
         execute_intf.StallE = StallE;
         execute_intf.StallM = StallM;
         execute_intf.FlushM = FlushM;

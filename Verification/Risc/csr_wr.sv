@@ -19,16 +19,20 @@ interface csr_wr
     input gpr_t Rs,
     input traps_t Traps,
     input logic mret,
+    input logic sret,
     input logic [FINAL_DATA_WIDTH-1:0] PC,
     input logic [FINAL_DATA_WIDTH-1:0] Address,
     input logic CsrAccess,
     input logic [FINAL_DATA_WIDTH-1:0] CsrIn,
     input logic Commit,
     input logic Wfi,
+    input logic FpOp,
+    input logic FpRegWrite,
     input logic [63:0] MTime,
     input logic TimerInterrupt,
     input logic ExternalInterrupt,
     input logic SoftwareInterrupt,
+    input logic SExternalInterrupt,
     input csr_index_t CsrIndex,
     input logic [FINAL_DATA_WIDTH-1:0] CsrOutPC,
     input logic [FINAL_DATA_WIDTH-1:0] CsrOut,
@@ -51,16 +55,20 @@ interface csr_wr
         csr_intf.Rs = Rs;
         csr_intf.Traps = Traps;
         csr_intf.mret = mret;
+        csr_intf.sret = sret;
         csr_intf.PC = PC;
         csr_intf.Address = Address;
         csr_intf.CsrAccess = CsrAccess;
         csr_intf.CsrIn = CsrIn;
         csr_intf.Commit = Commit;
         csr_intf.Wfi = Wfi;
+        csr_intf.FpOp = FpOp;
+        csr_intf.FpRegWrite = FpRegWrite;
         csr_intf.MTime = MTime;
         csr_intf.TimerInterrupt = TimerInterrupt;
         csr_intf.ExternalInterrupt = ExternalInterrupt;
         csr_intf.SoftwareInterrupt = SoftwareInterrupt;
+        csr_intf.SExternalInterrupt = SExternalInterrupt;
         csr_intf.CsrIndex = CsrIndex;
         csr_intf.CsrOutPC = CsrOutPC;
         csr_intf.CsrOut = CsrOut;

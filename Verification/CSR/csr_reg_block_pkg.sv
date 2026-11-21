@@ -5,9 +5,10 @@
 //
 // csr_file keeps each CSR as explicit registers (no CSR array), so every RAL
 // register is built from the fields that have storage, each with its own
-// backdoor path. Bits without storage (constant or derived: mstatus.FS/
-// SD/UXL, misa, mip, the counters' live increment) are not part of the RAL; the
-// predictor checks their read value through CsrOut instead.
+// backdoor path. Bits without storage (constant or derived: mstatus SD/UXL/SXL,
+// misa, the mip line bits, sie/sip (mie/mip masked by mideleg), senvcfg/satp, the
+// counters' live increment) are not part of the RAL; the predictor checks their
+// read value through CsrOut instead. sstatus shares the mstatus storage.
 // =============================================================================
 package csr_reg_block_pkg;
 
@@ -58,9 +59,34 @@ package csr_reg_block_pkg;
                                                r.add_stored_field("mpp", `MPPS, 2, "MStatusMPP");
                                                r.add_stored_field("mprv", `MPRV, 1, "MStatusMPRV");
                                                r.add_stored_field("tw", `TW, 1, "MStatusTW");
+                                               r.add_stored_field("fs", `FSS, 2, "MStatusFS");
+                                               r.add_stored_field("sie", `SIE, 1, "MStatusSIE");
+                                               r.add_stored_field("spie", `SPIE, 1, "MStatusSPIE");
+                                               r.add_stored_field("spp", `SPP, 1, "MStatusSPP");
+                                               r.add_stored_field("tsr", `TSR, 1, "MStatusTSR");
+            r = add_csr(sstatus,  "sstatus");  r.add_stored_field("sie", `SIE, 1, "MStatusSIE");
+                                               r.add_stored_field("spie", `SPIE, 1, "MStatusSPIE");
+                                               r.add_stored_field("spp", `SPP, 1, "MStatusSPP");
+                                               r.add_stored_field("fs", `FSS, 2, "MStatusFS");
             r = add_csr(mie,      "mie");      r.add_stored_field("msie", `MS_I, 1, "MieMSIE");
                                                r.add_stored_field("mtie", `MT_I, 1, "MieMTIE");
                                                r.add_stored_field("meie", `ME_I, 1, "MieMEIE");
+                                               r.add_stored_field("ssie", `SS_I, 1, "MieSSIE");
+                                               r.add_stored_field("stie", `ST_I, 1, "MieSTIE");
+                                               r.add_stored_field("seie", `SE_I, 1, "MieSEIE");
+            r = add_csr(mip,      "mip");      r.add_stored_field("ssip", `SS_I, 1, "MipSsip");   // software bits
+                                               r.add_stored_field("stip", `ST_I, 1, "MipStip");
+                                               r.add_stored_field("seip", `SE_I, 1, "MipSeipSw");
+            r = add_csr(medeleg,  "medeleg");  r.add_stored_field("value", 0, 20, "Medeleg");
+            r = add_csr(mideleg,  "mideleg");  r.add_stored_field("ssi", `SS_I, 1, "Mideleg[0]");
+                                               r.add_stored_field("sti", `ST_I, 1, "Mideleg[1]");
+                                               r.add_stored_field("sei", `SE_I, 1, "Mideleg[2]");
+            r = add_csr(scounteren, "scounteren"); r.add_stored_field("value", 0, 3, "Scounteren");
+            r = add_csr(stvec,    "stvec");    r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Stvec");
+            r = add_csr(sscratch, "sscratch"); r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Sscratch");
+            r = add_csr(sepc,     "sepc");     r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Sepc");
+            r = add_csr(scause,   "scause");   r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Scause");
+            r = add_csr(stval,    "stval");    r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Stval");
             r = add_csr(mcounteren, "mcounteren"); r.add_stored_field("value", 0, 3, "Mcounteren");
             r = add_csr(mtvec,    "mtvec");    r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Mtvec");
             r = add_csr(mscratch, "mscratch"); r.add_stored_field("value", 0, FINAL_DATA_WIDTH, "Mscratch");

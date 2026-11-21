@@ -47,6 +47,7 @@ interface execute_interface
     logic                                    MemWriteE;
     logic                                    MemReadE;
     logic                                    MRetE;
+    logic                                    SRetE;
     logic                                    WfiE;
     logic                                    EcallE;
     logic                                    EbreakE;
@@ -68,6 +69,7 @@ interface execute_interface
     logic                                    TimerInterrupt;
     logic                                    ExternalInterrupt;
     logic                                    SoftwareInterrupt;
+    logic                                    SExternalInterrupt;
     logic                                    MemStallBit;
     logic [63:0]                             MTime;
 
@@ -112,9 +114,9 @@ interface execute_interface
         output ValidE, RD1E, RD2E, SignImmE, PCPlus4E, PCBranchE, ALUControlE, funct3E;
         output BranchE, JumpE, JalrE, AuipcE, WordOpE, ForwardAE, ForwardBE, Rs1E;
         output RdE, RegWriteE, CsrAccessE, CsrOperationE, CsrIndexE, SelectorE, ALUSrcE, MemWriteE;
-        output MemReadE, MRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
+        output MemReadE, MRetE, SRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
         output FPUControlE, RoundModeE, FPURegWriteE, FPUValidE, MoveOperationE, ForwardFloatingAE, ForwardFloatingBE, Rs1FE;
-        output Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit, MTime;
+        output Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, SExternalInterrupt, MemStallBit, MTime;
         input  StallE, StallM, FlushM, ValidM, ALUOutM, WriteDataM, RdM, PCSrcE;
         input  PCTargetE, RegWriteM, PCPlus4M, SelectorM, funct3M, CsrOutM, MemWriteM, MemReadM;
         input  TrapIsSet, CsrOutPC, RdFM, OverflowM, UnderflowM, NaNM, InfM, ZeroM;
@@ -127,9 +129,9 @@ interface execute_interface
         input ValidE, RD1E, RD2E, SignImmE, PCPlus4E, PCBranchE, ALUControlE, funct3E;
         input BranchE, JumpE, JalrE, AuipcE, WordOpE, ForwardAE, ForwardBE, Rs1E;
         input RdE, RegWriteE, CsrAccessE, CsrOperationE, CsrIndexE, SelectorE, ALUSrcE, MemWriteE;
-        input MemReadE, MRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
+        input MemReadE, MRetE, SRetE, WfiE, EcallE, EbreakE, IllegaleInstructionE, RdFE, RD1FE, RD2FE;
         input FPUControlE, RoundModeE, FPURegWriteE, FPUValidE, MoveOperationE, ForwardFloatingAE, ForwardFloatingBE, Rs1FE;
-        input Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, MemStallBit, MTime, StallE;
+        input Rs2FE, ResultW, FPUOutW, TimerInterrupt, ExternalInterrupt, SoftwareInterrupt, SExternalInterrupt, MemStallBit, MTime, StallE;
         input StallM, FlushM, ValidM, ALUOutM, WriteDataM, RdM, PCSrcE, PCTargetE;
         input RegWriteM, PCPlus4M, SelectorM, funct3M, CsrOutM, MemWriteM, MemReadM, TrapIsSet;
         input CsrOutPC, RdFM, OverflowM, UnderflowM, NaNM, InfM, ZeroM, InvalidDivM;
@@ -164,6 +166,7 @@ interface execute_interface
         MemWriteE <= 1'b0;
         MemReadE <= 1'b0;
         MRetE <= 1'b0;
+        SRetE <= 1'b0;
         WfiE <= 1'b0;
         EcallE <= 1'b0;
         EbreakE <= 1'b0;
@@ -185,6 +188,7 @@ interface execute_interface
         TimerInterrupt <= 1'b0;
         ExternalInterrupt <= 1'b0;
         SoftwareInterrupt <= 1'b0;
+        SExternalInterrupt <= 1'b0;
         MemStallBit <= 1'b0;
         MTime <= '0;
         repeat(5) @(posedge clk);
@@ -201,6 +205,7 @@ interface execute_interface
         mck.TimerInterrupt <= drv.TimerInterrupt;
         mck.ExternalInterrupt <= drv.ExternalInterrupt;
         mck.SoftwareInterrupt <= drv.SoftwareInterrupt;
+        mck.SExternalInterrupt <= drv.SExternalInterrupt;
         mck.MemStallBit <= drv.MemStallBit;
         mck.MTime <= drv.MTime;
         if(!pck.StallE || !pck.rst)
@@ -231,6 +236,7 @@ interface execute_interface
             mck.MemWriteE <= drv.MemWriteE;
             mck.MemReadE <= drv.MemReadE;
             mck.MRetE <= drv.MRetE;
+            mck.SRetE <= drv.SRetE;
             mck.WfiE <= drv.WfiE;
             mck.EcallE <= drv.EcallE;
             mck.EbreakE <= drv.EbreakE;
@@ -279,6 +285,7 @@ interface execute_interface
         mon.MemWriteE = pck.MemWriteE;
         mon.MemReadE = pck.MemReadE;
         mon.MRetE = pck.MRetE;
+        mon.SRetE = pck.SRetE;
         mon.WfiE = pck.WfiE;
         mon.EcallE = pck.EcallE;
         mon.EbreakE = pck.EbreakE;
@@ -300,6 +307,7 @@ interface execute_interface
         mon.TimerInterrupt = pck.TimerInterrupt;
         mon.ExternalInterrupt = pck.ExternalInterrupt;
         mon.SoftwareInterrupt = pck.SoftwareInterrupt;
+        mon.SExternalInterrupt = pck.SExternalInterrupt;
         mon.MemStallBit = pck.MemStallBit;
         mon.MTime = pck.MTime;
         mon.StallE = pck.StallE;

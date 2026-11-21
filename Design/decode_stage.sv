@@ -83,6 +83,7 @@ module decode_stage
     output logic EcallE,                    // ECALL instruction flag
     output logic EbreakE,                   // EBREAK instruction flag
     output logic MRetE,                     // MRET instruction flag
+    output logic SRetE,                     // SRET instruction flag
     output logic FenceIE,                   // Instruction-fetch fence
     output logic WfiE,                      // WFI instruction flag
     output logic IllegaleInstructionE,      // Illegal instruction flag
@@ -150,6 +151,7 @@ module decode_stage
     logic EcallD;
     logic EbreakD;
     logic MRetD;
+    logic SRetD;
     logic WfiD;
     logic FenceID;
     logic SystemIllegalD;                  // Unknown SYSTEM (funct3 = 000) encoding
@@ -246,6 +248,7 @@ module decode_stage
             CsrIndexE <= mstatus; // Default CSR index
             PCPlus4E <= 'b0; // Default PCPlus4 value
             MRetE <= 0;
+            SRetE <= 0;
             FenceIE <= 0;
             WfiE <= 0;
             EcallE <= 0;
@@ -291,6 +294,7 @@ module decode_stage
             CsrAccessE <= 0; // Reset CSR access
             PCPlus4E <= 'b0;
             MRetE <= 0;
+            SRetE <= 0;
             FenceIE <= 0;
             WfiE <= 0;
             EcallE <= 0;
@@ -336,6 +340,7 @@ module decode_stage
             CsrIndexE <= CsrIndexD; // Pass CSR index to the next stage
             PCPlus4E <= PCPlus4D;
             MRetE <= MRetD;
+            SRetE <= SRetD;
             FenceIE <= FenceID;
             WfiE <= WfiD;
             EcallE <= EcallD;
@@ -430,11 +435,12 @@ module decode_stage
         RoundModeD = round_mode_t'(InstructionD[14:12]);
     end
 
-    // SYSTEM with funct3 = 000: ECALL, EBREAK, MRET and WFI;
+    // SYSTEM with funct3 = 000: ECALL, EBREAK, MRET, SRET and WFI;
     // rs1 and rd must be zero, any other encoding is illegal.
     always_comb
     begin
         MRetD = 0;
+        SRetD = 0;
         WfiD = 0;
         EcallD = 0;
         EbreakD = 0;
@@ -445,6 +451,8 @@ module decode_stage
                 SystemIllegalD = 1;
             else if(InstructionD[31:20] == 12'b0011_0000_0010)
                 MRetD = 1;
+            else if(InstructionD[31:20] == 12'b0001_0000_0010)
+                SRetD = 1;
             else if(InstructionD[31:20] == 12'b0000_0000_0000)
                 EcallD = 1;
             else if(InstructionD[31:20] == 12'b0000_0000_0001)
